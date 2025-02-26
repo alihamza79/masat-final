@@ -67,13 +67,13 @@ const profile: ProfileType[] = [
   },
   {
     href: "/",
-    title: "My Inbox",
+    title: "My Subscriptions",
     subtitle: "Messages & Emails",
     icon: "/images/svgs/icon-inbox.svg",
   },
   {
     href: "/",
-    title: "My Tasks",
+    title: "My Payments",
     subtitle: "To-do and Daily Tasks",
     icon: "/images/svgs/icon-tasks.svg",
   },
