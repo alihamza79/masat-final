@@ -1,0 +1,102 @@
+{
+  "productThreshold": [
+    {
+      "code": "OCT-DEC-30-0",
+      "period": "October - December",
+      "threshold": "<= 30",
+      "thresholdRandom": 30,
+      "feePerCubicMeterPerDay": 0
+    },
+    {
+      "code": "JAN-SEP-90-2",
+      "period": "January - September",
+      "threshold": "<= 90",
+      "thresholdRandom": 90,
+      "feePerCubicMeterPerDay": 2
+    },
+    {
+      "code": "OCT-DEC-90-2.5",
+      "period": "October - December",
+      "threshold": "<= 90",
+      "thresholdRandom": 90,
+      "feePerCubicMeterPerDay": 2.5
+    },
+    {
+      "code": "JAN-SEP-60-1.5",
+      "period": "January - September",
+      "threshold": "<= 60",
+      "thresholdRandom": 60,
+      "feePerCubicMeterPerDay": 1.5
+    },
+    {
+      "code": "OCT-DEC-365-8",
+      "period": "October - December",
+      "threshold": "> 365",
+      "thresholdRandom": 365,
+      "feePerCubicMeterPerDay": 8
+    },
+    {
+      "code": "OCT-DEC-365-6",
+      "period": "October - December",
+      "threshold": "<= 365",
+      "thresholdRandom": 365,
+      "feePerCubicMeterPerDay": 6
+    },
+    {
+      "code": "JAN-SEP-30-0",
+      "period": "January - September",
+      "threshold": "<= 30",
+      "thresholdRandom": 30,
+      "feePerCubicMeterPerDay": 0
+    },
+    {
+      "code": "OCT-DEC-270-5",
+      "period": "October - December",
+      "threshold": "<= 270",
+      "thresholdRandom": 270,
+      "feePerCubicMeterPerDay": 5
+    },
+    {
+      "code": "OCT-DEC-60-2",
+      "period": "October - December",
+      "threshold": "<= 60",
+      "thresholdRandom": 60,
+      "feePerCubicMeterPerDay": 2
+    },
+    {
+      "code": "JAN-SEP-180-2.5",
+      "period": "January - September",
+      "threshold": "<= 180",
+      "thresholdRandom": 180,
+      "feePerCubicMeterPerDay": 2.5
+    },
+    {
+      "code": "JAN-SEP-365-7",
+      "period": "January - September",
+      "threshold": "> 365",
+      "thresholdRandom": 365,
+      "feePerCubicMeterPerDay": 7
+    },
+    {
+      "code": "OCT-DEC-180-3",
+      "period": "October - December",
+      "threshold": "<= 180",
+      "thresholdRandom": 180,
+      "feePerCubicMeterPerDay": 3
+    },
+    {
+      "code": "JAN-SEP-270-4.5",
+      "period": "January - September",
+      "threshold": "<= 270",
+      "thresholdRandom": 270,
+      "feePerCubicMeterPerDay": 4.5
+    },
+    {
+      "code": "JAN-SEP-365-5.5",
+      "period": "January - September",
+      "threshold": "<= 365",
+      "thresholdRandom": 365,
+      "feePerCubicMeterPerDay": 5.5
+    }
+  ]
+} 

@@ -1,7 +1,5 @@
 // app/services/fulfillment.ts
-import ProductFees from '../models/ProductFees';
-import productMaxWeight from '../models/productMaxWeight';
-import productThreshold from '../models/productThreshold';
+import { getProductFees, getProductMaxWeight, getProductThreshold, ProductFee, ProductMaxWeight, ProductThreshold } from '@/utils/dataReader';
 
 export class Fulfillment {
     private height: number;
@@ -59,9 +57,11 @@ export class Fulfillment {
             this.throwError("Product with these dimensions does not exist.");
         }
 
-        const data = await ProductFees
-            .find({ girth: { $gte: GirthValue }, plcName: plcName })
-            .sort({ girth: 1 });
+        // Get data from local JSON instead of MongoDB
+        const allProductFees = getProductFees();
+        const data = allProductFees
+            .filter(fee => fee.girth >= GirthValue && fee.plcName === plcName)
+            .sort((a, b) => a.girth - b.girth);
 
         console.log("Weight calculation logic here");
         return { data, GirthValue, plcName };
@@ -93,27 +93,23 @@ export class Fulfillment {
         let volume = length * height * width;
         let thresholdPrice = 0;
 
+        // Get data from local JSON instead of MongoDB
+        const allThresholds = getProductThreshold();
+
         for (let item of dayRange) {
             try {
-                const result = await productThreshold.findOne({
-                    $or: [
-                        {
-                            thresholdRandom: { $gte: item.end },
-                            period: "January - September"
-                        },
-                        {
-                            threshold: "> 365",
-                            period: "January - September"
-                        }
-                    ]
-                });
+                // Find matching threshold from local data
+                const result = allThresholds.find(threshold => 
+                    ((threshold.thresholdRandom >= item.end && threshold.period === "January - September") ||
+                    (threshold.threshold === "> 365" && threshold.period === "January - September"))
+                );
 
                 if (result) {
                     const sum = volume * item.days * result.feePerCubicMeterPerDay;
                     thresholdPrice += sum;
                 }
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error processing data:", error);
             }
         }
 
@@ -122,16 +118,19 @@ export class Fulfillment {
     }
 
     async fulFillmentWeightCheck(result: any, GirthValue: number, plcName: string) {
-        const results = await ProductFees.find({
-            plcName: plcName,
-            $or: [
-                { weight: { $regex: "^≤" }, weightLimit: { $gte: this.weight } },
-                { weight: { $regex: "^>" }, weightLimit: { $lt: this.weight } }
-            ]
-        });
+        // Get data from local JSON instead of MongoDB
+        const allProductFees = getProductFees();
+        const allMaxWeights = getProductMaxWeight();
+
+        // Filter product fees based on criteria
+        const results = allProductFees.filter(fee => 
+            fee.plcName === plcName && 
+            ((fee.weight.startsWith("≤") && parseFloat(fee.weightLimit) >= this.weight) ||
+             (fee.weight.startsWith(">") && parseFloat(fee.weightLimit) < this.weight))
+        );
 
         console.log("ProductFees results:", results);
-        let weightCheck = [];
+        let weightCheck: any[] = [];
 
         if (this.weight <= 2 && results.length > 0) {
             console.log("Weight exists in the valid range: within 2 kg");
@@ -145,10 +144,9 @@ export class Fulfillment {
             }
         } else {
             // Get the base fee from ProductFees
-            const baseFeeRecord = await ProductFees.findOne({
-                plcName: plcName,
-                weight: "> 2 kg"
-            });
+            const baseFeeRecord = allProductFees.find(fee =>
+                fee.plcName === plcName && fee.weight === "> 2 kg"
+            );
 
             console.log("Base fee record:", baseFeeRecord);
             
@@ -156,11 +154,11 @@ export class Fulfillment {
             let weightLimit = baseFeeRecord ? parseFloat(baseFeeRecord.weightLimit) : 0;
 
             // Get the weight multiplier from productMaxWeight
-            weightCheck = await productMaxWeight.find({
-                minWeight: { $lte: this.weight },
-                maxWeight: { $gte: this.weight },
-                plcName: plcName
-            });
+            weightCheck = allMaxWeights.filter(weight =>
+                weight.minWeight <= this.weight &&
+                weight.maxWeight >= this.weight &&
+                weight.plcName === plcName
+            );
 
             if (weightCheck && weightCheck.length > 0) {
                 let extraWeight = this.weight - weightLimit;
@@ -173,9 +171,9 @@ export class Fulfillment {
                     finalFee: weightCheck[0].localOrderFee
                 });
             } else {
-                weightCheck = await productMaxWeight.find({
-                    plcName: plcName
-                });
+                weightCheck = allMaxWeights.filter(weight =>
+                    weight.plcName === plcName
+                );
                 let weightKg = '';
                 if (weightCheck && weightCheck.length > 0) {
                     weightKg = weightCheck.length === 1 

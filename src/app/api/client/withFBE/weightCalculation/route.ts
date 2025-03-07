@@ -1,12 +1,9 @@
 // app/api/client/withFBE/weightCalculation/route.ts
 import { NextResponse } from 'next/server';
-import connectDB from '@/app/lib/mongodb';
 import { Fulfillment } from '@/app/services/fulfillment';
 
 export async function POST(request: Request) {
     try {
-        await connectDB();
-
         const body = await request.json();
         const { length, height, width, weight, days } = body;
 

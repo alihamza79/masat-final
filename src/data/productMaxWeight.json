@@ -1,0 +1,94 @@
+{
+  "productMaxWeight": [
+    {
+      "plcName": "PLC-7",
+      "minWeight": 2,
+      "maxWeight": 60,
+      "localOrderFee": 1,
+      "localReturnFee": 0.5,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-3",
+      "minWeight": 2,
+      "maxWeight": 10,
+      "localOrderFee": 0.5,
+      "localReturnFee": 0.25,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-9",
+      "minWeight": 10,
+      "maxWeight": 60,
+      "localOrderFee": 1,
+      "localReturnFee": 0.5,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-1",
+      "minWeight": 2,
+      "maxWeight": 5,
+      "localOrderFee": 0.5,
+      "localReturnFee": 0.25,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-4",
+      "minWeight": 2,
+      "maxWeight": 10,
+      "localOrderFee": 0.5,
+      "localReturnFee": 0.25,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-8",
+      "minWeight": 5,
+      "maxWeight": 60,
+      "localOrderFee": 1,
+      "localReturnFee": 0.5,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-2",
+      "minWeight": 2,
+      "maxWeight": 10,
+      "localOrderFee": 0.5,
+      "localReturnFee": 0.25,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-5",
+      "minWeight": 2,
+      "maxWeight": 15,
+      "localOrderFee": 0.5,
+      "localReturnFee": 0.25,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-9",
+      "minWeight": 60,
+      "maxWeight": 90,
+      "localOrderFee": 1,
+      "localReturnFee": 0.5,
+      "removalFee": 2,
+      "disposalFee": 2
+    },
+    {
+      "plcName": "PLC-6",
+      "minWeight": 2,
+      "maxWeight": 40,
+      "localOrderFee": 0.5,
+      "localReturnFee": 0.25,
+      "removalFee": 2,
+      "disposalFee": 2
+    }
+  ]
+} 

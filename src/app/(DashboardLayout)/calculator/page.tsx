@@ -2,7 +2,7 @@
 import React from 'react';
 import { Grid, Box, Card } from "@mui/material";
 import PageContainer from '@/app/components/container/PageContainer';
-import PageHeader from './components/PageHeader';
+import PageHeader from '../../components/analytics-header/PageHeader';
 import Calculator from '@/app/(DashboardLayout)/calculator/components/Calculator';
 import TradeProfiles from './components/TradeProfiles';
 import { CalculatorProvider } from './context/CalculatorContext';
@@ -14,17 +14,19 @@ const CalculatorPage = () => {
         <PageHeader />
         <Grid container spacing={3} mt={1}>
           <Grid item xs={12}>
-            <CalculatorProvider>
-              {/* Trade Profiles Section */}
-              <Box sx={{ mb: 3, px: { xs: 1, sm: 2 } }}>
-                <TradeProfiles />
-              </Box>
+            <Box sx={{ px: { xs: 2, md: 1.5 } }}>
+              <CalculatorProvider>
+                {/* Trade Profiles Section */}
+                <Box sx={{ mb: 4 }}>
+                  <TradeProfiles />
+                </Box>
 
-              {/* Calculator Section */}
-              <Box sx={{ mb: 4, mt: 5, px: { xs: 1, sm: 2 } }}>
-                <Calculator />
-              </Box>
-            </CalculatorProvider>
+                {/* Calculator Section */}
+                <Box>
+                  <Calculator />
+                </Box>
+              </CalculatorProvider>
+            </Box>
           </Grid>
         </Grid>
       </Box>

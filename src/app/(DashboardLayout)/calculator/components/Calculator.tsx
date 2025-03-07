@@ -845,10 +845,9 @@ const Calculator = () => {
       </Box>
 
       {/* Sales Estimator Section */}
-      <Box sx={{ mb: 4, mt: 5, px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ mt: 5 }}>
         <SalesEstimator
           onDistributionChange={handleDistributionChange}
-          
           taxRate={state.taxRate}
         />
       </Box>

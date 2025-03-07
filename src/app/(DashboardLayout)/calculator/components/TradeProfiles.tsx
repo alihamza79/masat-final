@@ -172,6 +172,18 @@ const TradeProfiles = () => {
         >
           {/* Profile Type Toggle */}
           <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Stack direction="row" spacing={0.5} alignItems="center" mb={0.5}>
+              <Typography 
+                variant="caption" 
+                color="textSecondary"
+                sx={{ fontSize: { xs: '11px', sm: '12px' } }}
+              >
+                Profile Type
+              </Typography>
+              <Tooltip title="Select your business profile type">
+                <IconInfoCircle size={14} />
+              </Tooltip>
+            </Stack>
             <ToggleButtonGroup
               value={profileType}
               exclusive

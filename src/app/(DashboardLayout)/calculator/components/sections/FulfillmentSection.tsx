@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Collapse, Stack, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
+import { Box, Collapse, Stack, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Alert } from '@mui/material';
 import { CategoryData, useCalculator } from '../../context/CalculatorContext';
 import NumberInput from '../NumberInput';
 import SectionHeader from '../SectionHeader';
@@ -44,6 +44,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
     days: 30
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // For FBM-Genius, show 5 only if FBM-NonGenius fulfillmentShippingCost is greater than 0, otherwise 0
   const geniusShippingCost = state.categories['FBM-NonGenius'].fulfillmentShippingCost > 0 ? 5 : 0;
@@ -66,6 +67,8 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
       ...prev,
       [field]: Number(value)
     }));
+    // Clear error when user changes values
+    if (error) setError(null);
   };
 
   const handleShippingCostChange = (value: number) => {
@@ -86,6 +89,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
   const handleSubmitDimensions = async () => {
     if (category === 'FBE') {
       setIsLoading(true);
+      setError(null);
       try {
         const response = await fetch('/api/client/withFBE/weightCalculation', {
           method: 'POST',
@@ -101,14 +105,16 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
           // Round to 2 decimal places
           const fulfillmentCost = Number(result.totalFulFilmentPrice).toFixed(2);
           onUpdateCategory(category, { fulfillmentCost: Number(fulfillmentCost) });
+          setOpenDimensionsModal(false);
         } else {
-          console.error('Error calculating fulfillment cost:', result.message);
+          // Display the error message from the API
+          setError(result.message);
         }
       } catch (error) {
         console.error('Error calculating fulfillment cost:', error);
+        setError('An unexpected error occurred. Please try again.');
       } finally {
         setIsLoading(false);
-        setOpenDimensionsModal(false);
       }
     }
   };
@@ -116,6 +122,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
   const handleFulfillmentClick = () => {
     if (category === 'FBE') {
       setOpenDimensionsModal(true);
+      setError(null);
     }
   };
 
@@ -326,6 +333,14 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
       >
         <DialogTitle>Enter Product Dimensions</DialogTitle>
         <DialogContent>
+          {error && (
+            <Alert 
+              severity="error" 
+              sx={{ mt: 2, mb: 2 }}
+            >
+              {error}
+            </Alert>
+          )}
           <Stack spacing={2} sx={{ mt: 2 }}>
             <Stack direction="row" spacing={2}>
               <Box sx={{ flex: 1 }}>
@@ -380,6 +395,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                   InputProps={{
                     endAdornment: <Typography variant="caption">Kg</Typography>
                   }}
+                  error={!!error && error.includes("weight")}
                 />
               </Box>
             </Stack>
