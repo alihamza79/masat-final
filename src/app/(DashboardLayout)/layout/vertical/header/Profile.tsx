@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import Typography from '@mui/material/Typography';
+import {
+  Box,
+  Menu,
+  Avatar,
+  Typography,
+  Divider,
+  Button,
+  IconButton,
+} from '@mui/material';
 import * as dropdownData from './data';
 
 import { IconMail } from '@tabler/icons-react';
@@ -26,7 +28,6 @@ const Profile = () => {
   return (
     <Box>
       <IconButton
-        size="large"
         aria-label="show 11 new notifications"
         color="inherit"
         aria-controls="msgs-menu"
@@ -152,10 +153,10 @@ const Profile = () => {
                   Upgrade
                 </Button>
               </Box>
-              <Image src={"/images/backgrounds/unlimited-bg.png"} width={150} height={183} alt="unlimited" className="signup-bg" />
+              <Image src={"/images/backgrounds/unlimited-bg.png"} width={150} height={183} style={{ height: 'auto', width: 'auto' }} alt="unlimited" className="signup-bg" />
             </Box>
           </Box>
-          <Button href="/auth/auth1/login" variant="outlined" color="primary" component={Link} fullWidth>
+          <Button href="/auth" variant="outlined" color="primary" component={Link} fullWidth>
             Logout
           </Button>
         </Box>

@@ -29,6 +29,7 @@ import { useFulfillmentStore } from '../store/fulfillmentStore';
 import { useExpenditureStore } from '../store/expenditureStore';
 import { useProductCostStore } from '../store/productCostStore';
 import { useProfitStore } from '../store/profitStore';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   value: string;
@@ -41,6 +42,8 @@ type SectionKey = 'sales' | 'commission' | 'fulfillment' | 'expenditures' | 'pro
 type ExpandedSections = Record<CardKey, Record<SectionKey, boolean>>;
 
 const Calculator = () => {
+  const { t } = useTranslation();
+
   const allMenuItems: MenuItem[] = [
     { value: 'emag-1', label: 'iPhone 14 Pro Max' },
     { value: 'emag-2', label: 'MacBook Air M2' },
@@ -286,7 +289,7 @@ const Calculator = () => {
           color: 'text.primary'
         }}
       >
-        Calculator
+        {t('calculator.general.title')}
       </Typography>
 
       {/* Controls */}
@@ -327,7 +330,7 @@ const Calculator = () => {
             <Stack direction="row" spacing={1} alignItems="center">
               <IconPackage size={18} />
               <Typography sx={{ fontSize: '13px' }}>
-                {selectedProduct ? allMenuItems.find(item => item.value === selectedProduct)?.label : 'Select Product'}
+                {selectedProduct ? allMenuItems.find(item => item.value === selectedProduct)?.label : t('calculator.general.selectProduct')}
               </Typography>
             </Stack>
             <IconChevronRight size={18} />
@@ -370,7 +373,7 @@ const Calculator = () => {
                 color="textSecondary"
                 sx={{ fontSize: '12px' }}
               >
-                Sync All Values
+                {t('calculator.general.syncAllValues')}
               </Typography>
               <Switch
                 size="small"
@@ -402,7 +405,7 @@ const Calculator = () => {
                 }
               }}
             >
-              {isAnySectionExpanded ? 'Collapse All' : 'Expand All'}
+              {isAnySectionExpanded ? t('calculator.general.collapseAll') : t('calculator.general.expandAll')}
             </Button>
 
             {/* Settings Button */}
@@ -428,7 +431,7 @@ const Calculator = () => {
                 }
               }}
             >
-              Choose Calculator
+              {t('calculator.general.chooseCalculator')}
             </Button>
 
             {/* Save Calculation Button */}
@@ -453,7 +456,7 @@ const Calculator = () => {
                 whiteSpace: 'nowrap'
               }}
             >
-              Save Calculation
+              {t('calculator.general.saveCalculation')}
             </Button>
           </Stack>
 
@@ -489,7 +492,7 @@ const Calculator = () => {
                 }
               }}
             >
-              Choose Calculator
+              {t('calculator.general.chooseCalculator')}
             </Button>
 
             {/* Sync and Expand Controls - Mobile */}
@@ -512,7 +515,7 @@ const Calculator = () => {
                   color="textSecondary"
                   sx={{ fontSize: '11px' }}
                 >
-                  Sync All Values
+                  {t('calculator.general.syncAllValues')}
                 </Typography>
                 <Switch
                   size="small"
@@ -543,7 +546,7 @@ const Calculator = () => {
                   }
                 }}
               >
-                {isAnySectionExpanded ? 'Collapse All' : 'Expand All'}
+                {isAnySectionExpanded ? t('calculator.general.collapseAll') : t('calculator.general.expandAll')}
               </Button>
             </Stack>
           </Box>
@@ -570,7 +573,7 @@ const Calculator = () => {
                 color: 'text.secondary'
               }}
             >
-              Show/Hide Cards
+              {t('calculator.general.showHideCards')}
             </Typography>
             {(Object.keys(visibleCards) as CardKey[]).map((cardKey) => (
               <MenuItem
@@ -598,7 +601,7 @@ const Calculator = () => {
                     className="MuiSwitch-root"
                   />
                   <Typography variant="body2">
-                    {cardKey === 'FBE' ? 'FBE - Fulfilled by EMAG' : cardKey}
+                    {t(`calculator.cards.${cardKey}`)}
                   </Typography>
                 </Stack>
               </MenuItem>
@@ -652,7 +655,7 @@ const Calculator = () => {
                     textAlign: { xs: 'center', sm: 'left' }
                   }}
                 >
-                  {category === 'FBE' ? 'FBE - Fulfilled by EMAG' : category}
+                  {t(`calculator.cards.${category}`)}
                 </Typography>
 
                 {/* Net Profit & Margin Summary */}
@@ -674,7 +677,7 @@ const Calculator = () => {
                       color="textSecondary"
                       sx={{ fontSize: { xs: '10px', sm: '11px' } }}
                     >
-                      Net Profit
+                      {t('calculator.sections.profit.netProfit')}
                     </Typography>
                     <Typography 
                       variant="h6" 
@@ -698,7 +701,7 @@ const Calculator = () => {
                       color="textSecondary"
                       sx={{ fontSize: { xs: '10px', sm: '11px' } }}
                     >
-                      Profit Margin
+                      {t('calculator.sections.profit.profitMargin')}
                     </Typography>
                     <Typography 
                       variant="h6" 
@@ -840,7 +843,7 @@ const Calculator = () => {
             mt: 3
           }}
         >
-          Save Calculation
+          {t('calculator.general.saveCalculation')}
         </Button>
       </Box>
 

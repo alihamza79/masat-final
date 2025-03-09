@@ -67,7 +67,7 @@ const baseDarkTheme = {
   palette: {
     primary: {
       main: '#5D87FF',
-      light: '#ECF2FF',
+      light: '#253662',
       dark: '#4570EA',
     },
     secondary: {
@@ -113,19 +113,19 @@ const baseDarkTheme = {
       600: '#F2F6FA'
     },
     text: {
-      primary: '#EAEFF4',
-      secondary: '#7C8FAC',
+      primary: '#ffffff',
+      secondary: '#94A3B8',
     },
     action: {
       disabledBackground: 'rgba(73,82,88,0.12)',
       hoverOpacity: 0.02,
-      hover: '#333F55',
+      hover: '#1E293B',
     },
     divider: '#333F55',
     background: {
-      default: '#171c23',
-      dark: '#171c23',
-      paper: '#171c23',
+      default: '#141A21',
+      dark: '#141A21',
+      paper: '#1A2330',
     },
   },
 };

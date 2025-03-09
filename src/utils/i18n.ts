@@ -4,27 +4,39 @@ import english from '../utils/languages/en.json';
 import french from '../utils/languages/fr.json';
 import arabic from '../utils/languages/ar.json';
 import chinese from '../utils/languages/ch.json';
+import romanian from '../utils/languages/ro.json';
 
 const resources = {
   en: {
     translation: english,
   },
-  fr: {
-    translation: french,
+  // fr: {
+  //   translation: french,
+  // },
+  // ar: {
+  //   translation: arabic,
+  // },
+  // ch: {
+  //   translation: chinese,
+  // },
+  ro: {
+    translation: romanian,
   },
-  ar: {
-    translation: arabic,
-  },
-  ch: {
-    translation: chinese,
-  },
+};
+
+// Get stored language preference or default to 'en'
+const getStoredLanguage = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('language') || 'en';
+  }
+  return 'en';
 };
 
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     resources,
-    lng: 'en',
+    lng: getStoredLanguage(),
     interpolation: {
       escapeValue: false, // react already safes from xss
     },

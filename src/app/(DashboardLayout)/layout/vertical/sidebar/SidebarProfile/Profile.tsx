@@ -1,9 +1,4 @@
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import { Box, Avatar, Typography, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { useSelector } from '@/store/hooks';
 import { IconPower } from '@tabler/icons-react';
 import { AppState } from '@/store/store';

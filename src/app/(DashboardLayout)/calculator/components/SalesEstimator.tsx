@@ -21,6 +21,7 @@ import { useExpenditureStore, ExpenditureStore } from '../store/expenditureStore
 import { useProductCostStore, ProductCostStore } from '../store/productCostStore';
 import { useTaxStore, TaxStore } from '../store/taxStore';
 import { useProfitStore, ProfitStore } from '../store/profitStore';
+import { useTranslation } from 'react-i18next';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -97,6 +98,7 @@ const CustomSlider = styled(Slider)(({ theme }) => ({
 }));
 
 const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, taxRate }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [totalPieces, setTotalPieces] = useState<number>(1);
   const [sliderValue, setSliderValue] = useState<number[]>([33.33, 66.66]);
@@ -571,7 +573,7 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
           color: 'text.primary'
         }}
       >
-        Sales Estimator
+        {t('calculator.salesEstimator.title')}
       </Typography>
 
       {/* Content */}
@@ -600,7 +602,7 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
                     lineHeight: '20px'
                   }}
                 >
-                  Number of sales (PCS)
+                  {t('calculator.salesEstimator.numberOfSales')}
                 </Typography>
                 <Box sx={{ 
                   display: 'flex', 
@@ -613,7 +615,7 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
                   position: 'relative'
                 }}>
                   <SalesEstimatorInput
-                    label="Number of sales"
+                    label={t('calculator.salesEstimator.numberOfSales')}
                     value={totalPieces}
                     onChange={(value) => {
                       setTotalPieces(value);
@@ -658,9 +660,9 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
                     }
                   }}
                 >
-                  <Typography>FBM-NonGenius</Typography>
-                  <Typography>FBM-Genius</Typography>
-                  <Typography>FBE</Typography>
+                  <Typography>{t('calculator.cards.FBM-NonGenius')}</Typography>
+                  <Typography>{t('calculator.cards.FBM-Genius')}</Typography>
+                  <Typography>{t('calculator.cards.FBE')}</Typography>
                 </Stack>
                 <Box sx={{ height: '35px', display: 'flex', alignItems: 'center' }}>
                   <CustomSlider
@@ -725,11 +727,11 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
         {/* Metrics Cards */}
         <Grid container spacing={{ xs: 2, sm: 2, md: 2 }} mb={3}>
           {[
-            { label: 'Total Revenue', value: totalRevenue, percent: '100.00%' },
-            { label: 'Total Expense', value: totalExpense, percent: totalRevenue !== 0 ? `${(Math.abs(totalExpense) / totalRevenue * 100).toFixed(2)}%` : '0.00%' },
-            { label: 'Total Taxes', value: totalTaxes, percent: `${taxPercentage.toFixed(2)}%` },
-            { label: 'Total VAT to be paid', value: totalVatToBePaid, percent: `${vatPercentage.toFixed(2)}%` },
-            { label: 'Total Net Profit', value: totalNetProfit, percent: `${netProfitPercentage.toFixed(2)}%` }
+            { label: t('calculator.salesEstimator.totalRevenue'), value: totalRevenue, percent: '100.00%' },
+            { label: t('calculator.salesEstimator.totalExpenses'), value: totalExpense, percent: totalRevenue !== 0 ? `${(Math.abs(totalExpense) / totalRevenue * 100).toFixed(2)}%` : '0.00%' },
+            { label: t('calculator.sections.taxes.title'), value: totalTaxes, percent: `${taxPercentage.toFixed(2)}%` },
+            { label: t('calculator.sections.taxes.vatToBePaid'), value: totalVatToBePaid, percent: `${vatPercentage.toFixed(2)}%` },
+            { label: t('calculator.salesEstimator.totalProfit'), value: totalNetProfit, percent: `${netProfitPercentage.toFixed(2)}%` }
           ].map((metric) => (
             <Grid item xs={12} sm={6} md={2.4} key={metric.label}>
               <Card 
@@ -749,16 +751,16 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
                   justifyContent: 'center'
                 }}
               >
-                  <Typography 
+                <Typography 
                   variant="subtitle2" 
-                    sx={{ 
+                  sx={{ 
                     color: 'text.secondary',
                     fontSize: { xs: '11px', sm: '12px' },
                     mb: { xs: 0.5, sm: 1 }
-                    }}
-                  >
-                    {metric.label}
-                  </Typography>
+                  }}
+                >
+                  {metric.label}
+                </Typography>
                 <Stack 
                   direction="row" 
                   alignItems="center" 
@@ -808,7 +810,7 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
                   fontSize: { xs: '13px', sm: '14px' }
                 }}
               >
-                Revenue Distribution
+                {t('calculator.salesEstimator.distribution')}
               </Typography>
               <Box sx={{ 
                 flex: 1,

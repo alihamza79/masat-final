@@ -3,6 +3,7 @@ import { Box, Collapse, Stack, Typography } from '@mui/material';
 import { CategoryData } from '../../context/CalculatorContext';
 import SectionHeader from '../SectionHeader';
 import { useTaxStore, TaxStore } from '../../store/taxStore';
+import { useTranslation } from 'react-i18next';
 
 interface TaxesSectionProps {
   category: string;
@@ -49,6 +50,7 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
 }) => {
   const setTaxValues = useTaxStore((state: TaxStore) => state.setTaxValues);
   const valueWidth = '80px';
+  const { t } = useTranslation();
 
   // Calculate income tax based on tax rate
   const calculateIncomeTax = () => {
@@ -119,16 +121,6 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
     // 6. Final VAT to be paid calculation
     const vatToBePaid = vatSales - vatEmag - vatFulfillment - vatExpenditures - vatProductCost;
 
-    // Log all VAT fields for debugging with proper labels
-    console.log({
-      'VAT Sales': vatSales,
-      'VAT eMAG': vatEmag,
-      'VAT Fulfillment': vatFulfillment, 
-      'VAT Expenditures': vatExpenditures,
-      'VAT Product Cost': vatProductCost,
-      'VAT To Be Paid': vatToBePaid,
-      
-    });
 
     // Round to 2 decimal places
     return Number(vatToBePaid.toFixed(2));
@@ -152,7 +144,7 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
       <SectionHeader
         category={category}
         section="taxes"
-        title="Taxes and Charges"
+        title={t('calculator.sections.taxes.title')}
         value={formatCurrency(totalTaxes, true)}
         expandedSections={expandedSections}
         onToggle={() => onToggle(category, 'taxes')}

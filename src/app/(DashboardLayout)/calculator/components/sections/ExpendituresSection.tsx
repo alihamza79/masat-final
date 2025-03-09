@@ -4,6 +4,7 @@ import { CategoryData } from '../../context/CalculatorContext';
 import NumberInput from '../NumberInput';
 import SectionHeader from '../SectionHeader';
 import { useExpenditureStore, ExpenditureStore } from '../../store/expenditureStore';
+import { useTranslation } from 'react-i18next';
 
 interface ExpendituresSectionProps {
   category: string;
@@ -24,6 +25,7 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
   onToggle,
   onUpdateCategory,
 }) => {
+  const { t } = useTranslation();
   const valueWidth = '80px';
   const setExpenditureHeaderValue = useExpenditureStore((state: ExpenditureStore) => state.setExpenditureHeaderValue);
   const otherExpensesWithVAT = (data.otherExpenses || 0) * (1 + vatRate / 100);
@@ -39,7 +41,7 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
       <SectionHeader
         category={category}
         section="expenditures"
-        title="Expenditures"
+        title={t('calculator.sections.expenditures.title')}
         value={formatCurrency(-otherExpensesWithVAT, true)}
         expandedSections={expandedSections}
         onToggle={() => onToggle(category, 'expenditures')}
@@ -68,13 +70,13 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Other expenses
+                  {t('calculator.sections.expenditures.otherExpenses')}
                 </Typography>
                 <Box sx={{ 
                   width: valueWidth
                 }}>
                   <NumberInput
-                    label="Other expenses"
+                    label={t('calculator.sections.expenditures.otherExpenses')}
                     value={data.otherExpenses || 0}
                     onChange={(value) => onUpdateCategory(category, { otherExpenses: value })}
                     showLabel={false}
@@ -98,7 +100,7 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  With VAT
+                  {t('calculator.sections.sales.withVAT')}
                 </Typography>
                 <Typography
                   sx={{

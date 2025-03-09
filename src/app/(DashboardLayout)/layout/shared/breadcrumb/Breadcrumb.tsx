@@ -1,13 +1,8 @@
 'use client'
 import React from "react";
-import Box from '@mui/material/Box';
-import Breadcrumbs from '@mui/material/Breadcrumbs';
-import Grid from '@mui/material/Grid';
-import { Theme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import NextLink from "next/link";
+import { Grid, Typography, Box, Breadcrumbs, Theme } from "@mui/material";
+import Link from "next/link";
 
-import breadcrumbImg from "/public/images/breadcrumb/ChatBc.png";
 import { IconCircle } from "@tabler/icons-react";
 import Image from "next/image";
 
@@ -57,9 +52,9 @@ const Breadcrumb = ({ subtitle, items, title, children }: BreadCrumbType) => (
           ? items.map((item) => (
               <div key={item.title}>
                 {item.to ? (
-                  <NextLink href={item.to} passHref>
+                  <Link href={item.to} passHref>
                     <Typography color="textSecondary">{item.title}</Typography>
-                  </NextLink>
+                  </Link>
                 ) : (
                   <Typography color="textPrimary">{item.title}</Typography>
                 )}
@@ -83,10 +78,12 @@ const Breadcrumb = ({ subtitle, items, title, children }: BreadCrumbType) => (
           <>
             <Box sx={{ top: "0px", position: "absolute" }}>
               <Image
-                src={breadcrumbImg}
+                src="/images/breadcrumb/ChatBc.png"
                 alt={"breadcrumbImg"}
                 style={{ width: "165px", height: "165px" }}
                 priority
+                width={165}
+                height={165}
               />
             </Box>
           </>

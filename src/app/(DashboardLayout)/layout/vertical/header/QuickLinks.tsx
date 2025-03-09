@@ -1,5 +1,4 @@
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { Typography, Stack } from '@mui/material';
 import * as dropdownData from './data';
 import Link from 'next/link';
 

@@ -23,6 +23,7 @@ import {
   IconBuildingStore,
   IconDots 
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 interface ProductSelectionModalProps {
   open: boolean;
@@ -110,6 +111,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   selectedProduct,
   onSelectProduct
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = React.useState(0);
@@ -161,7 +163,9 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               letterSpacing: '0.5px'
             }}
           >
-            {title === 'eMAG Products' ? 'Official Store Products' : 'Custom Created Products'}
+            {title === t('calculator.productSelection.emagProducts.title') 
+              ? t('calculator.productSelection.emagProducts.subtitle')
+              : t('calculator.productSelection.createdProducts.subtitle')}
           </Typography>
         </Box>
       </Stack>
@@ -275,7 +279,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               mt: 'auto'
             }}
           >
-            {product.price} RON
+            {product.price} {t('calculator.productSelection.price')}
           </Typography>
         </Stack>
       </Stack>
@@ -311,7 +315,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
             }}
           >
-            Select Product
+            {t('calculator.productSelection.title')}
           </Typography>
           <IconButton
             onClick={onClose}
@@ -351,12 +355,12 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
           <Tab 
             icon={<IconShoppingCart size={18} />}
             iconPosition="start"
-            label="eMAG Products" 
+            label={t('calculator.productSelection.emagProducts.title')}
           />
           <Tab 
             icon={<IconBuildingStore size={18} />}
             iconPosition="start"
-            label="Created Products" 
+            label={t('calculator.productSelection.createdProducts.title')}
           />
         </Tabs>
       )}
@@ -379,7 +383,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
             <Box sx={{ pr: { xs: 0, sm: 3 } }}>
               {!isMobile && (
                 <SectionHeader 
-                  title="eMAG Products" 
+                  title={t('calculator.productSelection.emagProducts.title')}
                   icon={<IconShoppingCart size={18} />}
                   color="primary"
                 />
@@ -434,7 +438,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
             <Box sx={{ pl: { xs: 0, sm: 3 } }}>
               {!isMobile && (
                 <SectionHeader 
-                  title="Created Products" 
+                  title={t('calculator.productSelection.createdProducts.title')}
                   icon={<IconBuildingStore size={18} />}
                   color="success"
                 />

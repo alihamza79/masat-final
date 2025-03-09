@@ -4,6 +4,7 @@ import { CategoryData } from '../../context/CalculatorContext';
 import NumberInput from '../NumberInput';
 import SectionHeader from '../SectionHeader';
 import { useProductCostStore, ProductCostStore } from '../../store/productCostStore';
+import { useTranslation } from 'react-i18next';
 
 interface ProductCostSectionProps {
   category: string;
@@ -30,6 +31,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
   vatRateOfPurchase,
   state,
 }) => {
+  const { t } = useTranslation();
   const valueWidth = '80px';
   const setProductCostHeaderValue = useProductCostStore((state: ProductCostStore) => state.setProductCostHeaderValue);
   const isFromChina = purchaseType === 'china';
@@ -97,7 +99,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
       <SectionHeader
         category={category}
         section="productCost"
-        title="Product Cost"
+        title={t('calculator.sections.productCost.title')}
         value={formatCurrency(-totalCost, true)}
         expandedSections={expandedSections}
         onToggle={() => onToggle(category, 'productCost')}
@@ -126,7 +128,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                   flex: '0 0 140px'
                 }}
               >
-                VAT rate of purchase
+                {t('calculator.tradeProfile.purchaseVAT')}
               </Typography>
               <Typography
                 sx={{
@@ -158,13 +160,13 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Purchase price
+                  {t('calculator.sections.productCost.productCost')}
                 </Typography>
                 <Box sx={{ 
                   width: valueWidth
                 }}>
                   <NumberInput
-                    label="Purchase price"
+                    label={t('calculator.sections.productCost.productCost')}
                     value={data.productCost}
                     onChange={handleProductCostChange}
                     showLabel={false}
@@ -189,7 +191,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                       flex: '0 0 140px'
                     }}
                   >
-                    With VAT
+                    {t('calculator.sections.sales.withVAT')}
                   </Typography>
                   <Typography
                     sx={{
@@ -224,13 +226,13 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Shipping cost
+                  {t('calculator.sections.productCost.shippingCost')}
                 </Typography>
                 <Box sx={{ 
                   width: valueWidth
                 }}>
                   <NumberInput
-                    label="Shipping cost"
+                    label={t('calculator.sections.productCost.shippingCost')}
                     value={data.shippingCost}
                     onChange={handleShippingCostChange}
                     showLabel={false}
@@ -255,7 +257,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                       flex: '0 0 140px'
                     }}
                   >
-                    With VAT
+                    {t('calculator.sections.sales.withVAT')}
                   </Typography>
                   <Typography
                     sx={{
@@ -293,14 +295,14 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                         flex: '0 0 140px'
                       }}
                     >
-                      Customs duties rate
+                      {t('calculator.sections.productCost.customsDuty')}
                     </Typography>
                     <Box sx={{ 
                       width: valueWidth
                     }}>
                       {isFirstCalculator ? (
                         <NumberInput
-                          label="Customs duties rate"
+                          label={t('calculator.sections.productCost.customsDuty')}
                           value={data.customsDuty}
                           onChange={handleCustomsDutyChange}
                           suffix="%"
@@ -344,7 +346,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                         flex: '0 0 140px'
                       }}
                     >
-                      Customs duties
+                      {t('calculator.sections.productCost.customsDuty')}
                     </Typography>
                     <Typography
                       sx={{
@@ -378,7 +380,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                         flex: '0 0 140px'
                       }}
                     >
-                      Customs VAT rate
+                      {t('calculator.sections.taxes.vatToBePaid')}
                     </Typography>
                     <Typography
                       sx={{
@@ -407,7 +409,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                         flex: '0 0 140px'
                       }}
                     >
-                      VAT to be paid at customs
+                      {t('calculator.sections.taxes.vatToBePaid')}
                     </Typography>
                     <Typography
                       sx={{

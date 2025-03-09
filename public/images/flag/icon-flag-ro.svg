@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20px" height="15px" viewBox="0 0 20 15" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Romanian Flag</title>
+    <g id="Romanian-Flag" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="blue-stripe" fill="#002B7F" x="0" y="0" width="6.66667" height="15"></rect>
+        <rect id="yellow-stripe" fill="#FCD116" x="6.66667" y="0" width="6.66667" height="15"></rect>
+        <rect id="red-stripe" fill="#CE1126" x="13.33333" y="0" width="6.66667" height="15"></rect>
+    </g>
+</svg> 

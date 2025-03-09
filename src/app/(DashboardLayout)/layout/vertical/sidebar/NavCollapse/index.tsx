@@ -1,7 +1,7 @@
-import React from 'react';
+import React from "react";
 
-import { useState } from 'react';
-import { useSelector } from '@/store/hooks';
+import { useState } from "react";
+import { useSelector } from "@/store/hooks";
 import { usePathname } from "next/navigation";
 
 // mui imports
@@ -14,13 +14,13 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { styled, useTheme } from '@mui/material/styles';
 
 // custom imports
-import NavItem from '../NavItem';
+import NavItem from "../NavItem";
+import { isNull } from "lodash";
 
 // plugins
-import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
-import { useTranslation } from 'react-i18next';
-import { AppState } from '@/store/store';
-import { isNull } from "lodash";
+import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
+import { AppState } from "@/store/store";
 
 type NavGroupProps = {
   [x: string]: any;
@@ -41,23 +41,28 @@ interface NavCollapseProps {
 }
 
 // FC Component For Dropdown Menu
-export default  function NavCollapse ({
+export default function NavCollapse({
   menu,
   level,
   pathWithoutLastPart,
   pathDirect,
   hideMenu,
-  onClick
-}: NavCollapseProps)  {
+  onClick,
+}: NavCollapseProps) {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down("lg"));
+
   const customizer = useSelector((state: AppState) => state.customizer);
   const Icon = menu?.icon;
   const theme = useTheme();
-  const pathname  = usePathname();
+  const pathname = usePathname();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuIcon =
-    level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.3rem" />;
+    level > 1 ? (
+      <Icon stroke={1.5} size="1rem" />
+    ) : (
+      <Icon stroke={1.5} size="1.3rem" />
+    );
 
   const handleClick = () => {
     setOpen(!open);
@@ -74,21 +79,25 @@ export default  function NavCollapse ({
   }, [pathname, menu.children]);
 
   const ListItemStyled = styled(ListItemButton)(() => ({
-    marginBottom: '2px',
-    padding: '8px 10px',
-    paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
-    backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
-    whiteSpace: 'nowrap',
-    '&:hover': {
-      backgroundColor: pathname.includes(menu.href) || open
-        ? theme.palette.primary.main
-        : theme.palette.primary.light,
-      color: pathname.includes(menu.href)|| open ? 'white' : theme.palette.primary.main,
+    marginBottom: "2px",
+    padding: "8px 10px",
+    paddingLeft: hideMenu ? "10px" : level > 2 ? `${level * 15}px` : "10px",
+    backgroundColor: open && level < 2 ? theme.palette.primary.main : "",
+    whiteSpace: "nowrap",
+    "&:hover": {
+      backgroundColor:
+        pathname.includes(menu.href) || open
+          ? theme.palette.primary.main
+          : theme.palette.primary.light,
+      color:
+        pathname.includes(menu.href) || open
+          ? "white"
+          : theme.palette.primary.main,
     },
     color:
-      open && level < 2
-        ? 'white'
-        : `inherit` && level > 1 && open
+      open || pathWithoutLastPart === menu.href
+        ? "white !important"
+        : level > 1 && open
         ? theme.palette.primary.main
         : theme.palette.text.secondary,
     borderRadius: `${customizer.borderRadius}px`,
@@ -131,21 +140,25 @@ export default  function NavCollapse ({
       >
         <ListItemIcon
           sx={{
-            minWidth: '36px',
-            p: '3px 0',
-            color: 'inherit',
+            minWidth: "36px",
+            p: "3px 0",
+            color: "inherit",
           }}
         >
           {menuIcon}
         </ListItemIcon>
-        <ListItemText color="inherit">{hideMenu ? '' : <>{t(`${menu.title}`)}</>}</ListItemText>
-        {!open ? <IconChevronDown size="1rem" /> : <IconChevronUp size="1rem" />}
+        <ListItemText color="inherit">
+          {hideMenu ? "" : <>{t(`${menu.title}`)}</>}
+        </ListItemText>
+        {!open ? (
+          <IconChevronDown size="1rem" />
+        ) : (
+          <IconChevronUp size="1rem" />
+        )}
       </ListItemStyled>
       <Collapse in={open} timeout="auto">
         {submenus}
       </Collapse>
     </>
   );
-};
-
-
+}

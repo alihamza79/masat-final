@@ -1,0 +1,263 @@
+{
+    "navigation": {
+        "Modern": "Modern",    
+        "eCommerce": "eCommerce",
+        "Contacts": "Contacte",
+        "Blog": "Blog",
+        "Posts": "Postări",
+        "Detail": "Detaliu",
+        "Ecommerce": "Ecommerce",
+        "Shop": "Magazin",
+        "List": "Listă",
+        "Checkout": "Finalizare",
+        "Chats": "Chat-uri",
+        "Users": "Utilizatori",
+        "Profile": "Profil",
+        "Followers": "Urmăritori",
+        "Friends": "Prieteni",
+        "Gallery": "Galerie",
+        "Notes": "Note",
+        "Calendar": "Calendar",
+        "Email": "Email",
+        "Tickets": "Tichete",
+        "Kanban": "Kanban",
+        "Invoice": "Factură",
+        "Details": "Detalii",
+        "Create": "Creare",
+        "Edit": "Editare"
+    },
+    "menu": {
+        "apps": "Aplicații",
+        "myAccount": "Contul Meu",
+        "dashboard": "Panou de Control",
+        "businessProfile": "Profil de Afaceri",
+        "subscriptionPayment": "Abonament și Plată",
+        "integrations": "Integrări",
+        "campaignCalculator": "Calculator Campanii",
+        "listingOptimizer": "Optimizator Listări",
+        "keywordTracker": "Urmăritor Cuvinte Cheie",
+        "xScan": "X Scan",
+        "reports": "Rapoarte"
+    },
+    "calculator": {
+        "tradeProfile": {
+            "title": "Profil Comercial",
+            "profileType": "Tip Profil",
+            "profileTypeTooltip": "Selectați tipul profilului de afaceri",
+            "sellerProfile": "Profil Vânzător",
+            "vatProfile": "Profil TVA",
+            "commission": "Comision + TVA",
+            "commissionTooltip": "Comision eMAG inclusiv TVA",
+            "vatRateFromSale": "Cota TVA la Vânzare",
+            "vatRateFromSaleTooltip": "Cota TVA aplicată vânzărilor",
+            "taxRate": "Cota de Impozitare",
+            "taxRateTooltip": "Categoria de impozitare a afacerii",
+            "purchaseType": "Tip Achiziție",
+            "purchaseTypeTooltip": "Sursa achizițiilor",
+            "fromRomania": "Din România",
+            "fromChina": "Din China",
+            "fromEurope": "Din Europa",
+            "purchaseVAT": "TVA la Achiziție",
+            "purchaseVATTooltip": "Cota TVA pentru achiziții",
+            "customCalculation": "Calcul Personalizat"
+        },
+        "general": {
+            "title": "Calculator",
+            "settings": "Setări",
+            "save": "Salvare",
+            "product": "Produs",
+            "syncValues": "Sincronizare Valori",
+            "expandAll": "Extinde Tot",
+            "collapseAll": "Restrânge Tot",
+            "showHideCards": "Arată/Ascunde Carduri",
+            "selectProduct": "Selectează Produs",
+            "saveCalculation": "Salvează Calculul",
+            "chooseCalculator": "Alege Calculator",
+            "syncAllValues": "Sincronizează Toate Valorile"
+        },
+        "cards": {
+            "FBM-NonGenius": "FBM-NonGenius",
+            "FBM-Genius": "FBM-Genius",
+            "FBE": "FBE - Fulfilled by EMAG"
+        },
+        "salesEstimator": {
+            "title": "Estimator Vânzări",
+            "totalPieces": "Total Bucăți",
+            "totalRevenue": "Venit Total",
+            "totalExpenses": "Cheltuieli Totale",
+            "totalProfit": "Profit Net Total",
+            "profitMargin": "Marjă de Profit",
+            "distribution": "Distribuție Venituri",
+            "numberOfSales": "Număr de vânzări (BUC)"
+        },
+        "sections": {
+            "sales": {
+                "title": "Vânzări",
+                "salePrice": "Preț de vânzare",
+                "withVAT": "Cu TVA",
+                "shippingPrice": "Preț livrare către client",
+                "totalSellingPrice": "Preț total de vânzare",
+                "vatToBeCollected": "TVA de colectat"
+            },
+            "commission": {
+                "title": "Comision",
+                "commissionRate": "Rată comision",
+                "commissionAmount": "Sumă comision"
+            },
+            "fulfillment": {
+                "title": "Fulfillment",
+                "fulfillmentCost": "Cost fulfillment",
+                "shippingCost": "Cost livrare către client",
+                "dimensions": {
+                    "title": "Introduceți Dimensiunile Produsului",
+                    "length": "Lungime",
+                    "height": "Înălțime",
+                    "width": "Lățime",
+                    "weight": "Greutate",
+                    "days": "Număr mediu de zile în depozitul emag",
+                    "cm": "CM",
+                    "kg": "Kg",
+                    "days_unit": "Zile",
+                    "calculating": "Se calculează...",
+                    "submit": "Trimite",
+                    "cancel": "Anulează"
+                }
+            },
+            "expenditures": {
+                "title": "Cheltuieli",
+                "otherExpenses": "Alte cheltuieli"
+            },
+            "productCost": {
+                "title": "Cost Produs",
+                "productCost": "Preț de achiziție",
+                "shippingCost": "Cost transport",
+                "customsDuty": "Taxe vamale"
+            },
+            "taxes": {
+                "title": "Taxe și Impozite",
+                "incomeTax": "Impozit pe venit",
+                "vatToBePaid": "TVA de plată"
+            },
+            "profit": {
+                "title": "Profit",
+                "grossProfit": "Profit brut",
+                "netProfit": "Profit net",
+                "profitMargin": "Marjă de profit",
+                "roi": "ROI"
+            }
+        },
+        "productSelection": {
+            "title": "Selectează Produs",
+            "emagProducts": {
+                "title": "Produse eMAG",
+                "subtitle": "Produse Magazin Oficial"
+            },
+            "createdProducts": {
+                "title": "Produse Create",
+                "subtitle": "Produse Create Personalizat"
+            },
+            "price": "RON"
+        }
+    },
+    "analytics": {
+        "header": {
+            "chooseMetrics": "Alege Metrici",
+            "revenue": "VENITURI",
+            "grossRevenue": "Venit Brut",
+            "orders": "Comenzi",
+            "unitsSold": "Unități Vândute",
+            "refunds": "Returnări",
+            "currency": "lei"
+        }
+    },
+    "integrations": {
+        "title": "Integrări eMAG",
+        "addButton": "Adaugă Integrare",
+        "addingButton": "Se adaugă...",
+        "refreshButton": "Reîmprospătare Date",
+        "refreshingButton": "Se reîmprospătează...",
+        "noIntegrations": "Nu s-au găsit integrări. Faceți clic pe \"Adaugă Integrare\" pentru a crea una.",
+        "table": {
+            "accountName": "Nume Cont",
+            "username": "Nume Utilizator",
+            "region": "Regiune",
+            "importStatus": "Stare Import",
+            "productOffers": "Nr. Oferte Produse",
+            "orderCount": "Nr. Comenzi",
+            "actions": "Acțiuni",
+            "status": {
+                "importing": "Se importă",
+                "completed": "Finalizat",
+                "failed": "Eșuat",
+                "pending": "În așteptare"
+            },
+            "menu": {
+                "edit": "Editează",
+                "delete": "Șterge"
+            }
+        },
+        "form": {
+            "addTitle": "Adaugă Integrare Nouă eMAG",
+            "editTitle": "Editează Integrarea eMAG",
+            "infoAdd": "Plugin-ul vă permite să preluați comenzi de la eMAG în managerul de comenzi Base.com. După rularea plugin-ului, trebuie să îl configurați introducând datele de autentificare ale contului.",
+            "infoEdit": "Actualizați setările integrării eMAG mai jos. Asigurați-vă că păstrați datele de autentificare în siguranță.",
+            "ipInfo": "În panoul eMAG (Contul Meu \"Profil\" Detalii tehnice) adăugați IP-ul partenerului 51.77.52.107",
+            "fields": {
+                "accountName": "Nume Cont",
+                "region": "Regiune",
+                "username": "Nume Utilizator",
+                "password": "Parolă",
+                "passwordPlaceholder": "••••••••",
+                "passwordHelp": "Lăsați gol pentru a păstra parola actuală"
+            },
+            "buttons": {
+                "cancel": "Anulează",
+                "add": "Adaugă Integrare",
+                "update": "Actualizează Integrare",
+                "processing": "Se procesează..."
+            },
+            "menu": {
+                "edit": "Editează",
+                "delete": "Șterge"
+            }
+        },
+        "delete": {
+            "title": "Șterge Integrare",
+            "message": "Sigur doriți să ștergeți această integrare? Această acțiune nu poate fi anulată."
+        },
+        "toast": {
+            "addSuccess": "Integrare adăugată cu succes!",
+            "addError": "Eroare la adăugarea integrării: ",
+            "updateSuccess": "Integrare actualizată cu succes!",
+            "updateError": "Eroare la actualizarea integrării: ",
+            "deleteSuccess": "Integrare ștearsă cu succes!",
+            "deleteError": "Eroare la ștergerea integrării: ",
+            "missingId": "Nu se poate actualiza integrarea: ID lipsă",
+            "fillFields": "Vă rugăm să completați toate câmpurile obligatorii",
+            "invalidCredentials": "Date de autentificare invalide",
+            "processingError": "Eroare la procesarea integrării"
+        },
+        "ipDialog": {
+            "title": "Configurare IP Necesară",
+            "message": "Înainte de a continua, vă rugăm să vă asigurați că ați adăugat adresa noastră IP în panoul eMAG:",
+            "ipAddress": "51.77.52.107",
+            "stepsTitle": "Vă rugăm să urmați acești pași:",
+            "step1": "Accesați Portalul eMAG Seller",
+            "step2": "Navigați la Contul Meu → Profil → Detalii tehnice",
+            "step3": "Adăugați următoarea adresă IP:",
+            "importance": "Acest pas este crucial pentru funcționarea corectă a integrării.",
+            "confirm": "Am Adăugat IP-ul",
+            "cancel": "Anulează"
+        }
+    },
+    "common": {
+        "deleteDialog": {
+            "title": "Ștergere Element",
+            "confirmationQuestion": "Sigur doriți să ștergeți acest element?",
+            "defaultMessage": "Sunteți pe cale să ștergeți {{name}}. Această acțiune nu poate fi anulată și toate datele asociate vor fi șterse definitiv.",
+            "thisItem": "acest element",
+            "cancel": "Anulează",
+            "delete": "Șterge"
+        }
+    }
+} 

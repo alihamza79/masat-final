@@ -8,7 +8,7 @@ import NavItem from './NavItem';
 import NavCollapse from './NavCollapse';
 import NavGroup from './NavGroup/NavGroup';
 import { AppState } from '@/store/store'
-import { toggleMobileSidebar, setDarkMode } from '@/store/customizer/CustomizerSlice';
+import { toggleMobileSidebar } from '@/store/customizer/CustomizerSlice';
 
 
 const SidebarItems = () => {

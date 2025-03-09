@@ -24,6 +24,12 @@ const components: any = (theme: Theme) => {
         "#root": {
           height: "100%",
         },
+        '.ql-container.ql-snow, .ql-toolbar.ql-snow': {
+          border: '0 !important', borderRadius: '7px'
+        },
+        '.ql-editor, .ql-snow *': {
+          fontFamiy: 'inherit !important'
+        },
         "*[dir='rtl'] .buyNowImg": {
           transform: "scaleX(-1)",
         },
@@ -42,6 +48,10 @@ const components: any = (theme: Theme) => {
         },
         ".hover-text-primary:hover .text-hover": {
           color: theme.palette.primary.main,
+        },
+        ".code-dialog pre": {
+          background: `${theme.palette.primary.light} !important`,
+          borderRadius: theme.shape.borderRadius,
         },
         ".hoverCard:hover": {
           scale: "1.01",
@@ -76,6 +86,27 @@ const components: any = (theme: Theme) => {
         },
         " .simplebar-scrollbar:before": {
           background: `${theme.palette.grey[300]} !important`,
+        },
+        hr: {
+          height: "1px",
+          border: 0,
+          borderTop: `1px solid ${theme.palette.divider}`,
+        },
+        "@keyframes marquee": {
+          "0%": {
+            transform: "translate3d(0,0,0)",
+          },
+          "100% ": {
+            transform: "translate3d(-2086px,0,0)",
+          },
+        },
+        "@keyframes marquee2": {
+          "0%": {
+            transform: "translate3d(-2086px,0,0)",
+          },
+          "100% ": {
+            transform: "translate3d(0,0,0)",
+          },
         },
         "@keyframes gradient": {
           "0%": {
@@ -145,39 +176,39 @@ const components: any = (theme: Theme) => {
           },
         },
         colorPrimary: {
-          '&:hover': {
+          "&:hover": {
             backgroundColor: theme.palette.primary.main,
-            color: 'white',
+            color: "white",
           },
         },
         colorSecondary: {
-          '&:hover': {
+          "&:hover": {
             backgroundColor: theme.palette.secondary.main,
-            color: 'white',
+            color: "white",
           },
         },
         colorSuccess: {
-          '&:hover': {
+          "&:hover": {
             backgroundColor: theme.palette.success.main,
-            color: 'white',
+            color: "white",
           },
         },
         colorError: {
-          '&:hover': {
+          "&:hover": {
             backgroundColor: theme.palette.error.main,
-            color: 'white',
+            color: "white",
           },
         },
         colorWarning: {
-          '&:hover': {
+          "&:hover": {
             backgroundColor: theme.palette.warning.main,
-            color: 'white',
+            color: "white",
           },
         },
         colorInfo: {
-          '&:hover': {
+          "&:hover": {
             backgroundColor: theme.palette.info.main,
-            color: 'white',
+            color: "white",
           },
         },
       },
@@ -187,7 +218,6 @@ const components: any = (theme: Theme) => {
         root: {
           textTransform: "none",
           boxShadow: "none",
-          
         },
         text: {
           padding: "5px 15px",
@@ -279,18 +309,18 @@ const components: any = (theme: Theme) => {
     MuiCardHeader: {
       styleOverrides: {
         root: {
-          padding: "16px 24px",
+          padding: '12px 16px',
         },
         title: {
-          fontSize: "1.125rem",
+          fontSize: '1rem',
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          width: "100%",
-          padding: "15px",
+          width: '100%',
+          padding: '12px',
           backgroundImage: "none",
         },
       },
@@ -298,7 +328,7 @@ const components: any = (theme: Theme) => {
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: "24px",
+          padding: '16px',
         },
       },
     },
@@ -321,8 +351,8 @@ const components: any = (theme: Theme) => {
     MuiGridItem: {
       styleOverrides: {
         root: {
-          paddingTop: "30px",
-          paddingLeft: "30px !important",
+          paddingTop: '20px',
+          paddingLeft: '20px !important',
         },
       },
     },
@@ -422,12 +452,21 @@ const components: any = (theme: Theme) => {
           },
         },
         input: {
-          padding: "12px 14px",
+          padding: '8px 12px',
         },
         inputSizeSmall: {
-          padding: "8px 14px",
+          padding: '6px 10px',
         },
       },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            padding: '3px 6px'
+          }
+        }
+      }
     },
     MuiTooltip: {
       styleOverrides: {

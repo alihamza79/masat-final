@@ -5,7 +5,9 @@ import { styled, useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
 import Header from "./layout/vertical/header/Header";
 import Sidebar from "./layout/vertical/sidebar/Sidebar";
-
+// import Customizer from "./layout/shared/customizer/Customizer";
+import Navigation from "./layout/horizontal/navbar/Navigation";
+import HorizontalHeader from "./layout/horizontal/header/Header";
 import { useSelector } from "@/store/hooks";
 import { AppState } from "@/store/store";
 
@@ -40,7 +42,8 @@ export default function RootLayout({
   const theme = useTheme();
 
   return (
-    <MainWrapper>
+    <MainWrapper className={customizer.activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>
+      <title>Modernize NextJs</title>
       {/* ------------------------------------------- */}
       {/* Sidebar */}
       {/* ------------------------------------------- */}
@@ -61,11 +64,12 @@ export default function RootLayout({
         {/* ------------------------------------------- */}
         {/* Header */}
         {/* ------------------------------------------- */}
-        {<Header />}
+        {customizer.isHorizontal ? <HorizontalHeader /> : <Header />}
         {/* PageContent */}
-        
+        {customizer.isHorizontal ? <Navigation /> : ""}
         <Container
           sx={{
+            pt: '30px',
             maxWidth: customizer.isLayout === "boxed" ? "lg" : "100%!important",
           }}
         >
@@ -83,6 +87,7 @@ export default function RootLayout({
           {/* End Page */}
           {/* ------------------------------------------- */}
         </Container>
+        {/* <Customizer /> */}
       </PageWrapper>
     </MainWrapper>
   );

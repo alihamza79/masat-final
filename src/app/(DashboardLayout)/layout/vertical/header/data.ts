@@ -8,42 +8,42 @@ interface notificationType {
 
 const notifications: notificationType[] = [
   {
-    avatar: "/images/profile/user-10.jpg",
+    avatar: "/images/profile/user-2.jpg",
     title: "Roman Joined the Team!",
     subtitle: "Congratulate him",
   },
   {
-    avatar: "/images/profile/user-2.jpg",
+    avatar: "/images/profile/user-3.jpg",
     title: "New message received",
     subtitle: "Salma sent you new message",
   },
   {
-    avatar: "/images/profile/user-3.jpg",
+    avatar: "/images/profile/user-4.jpg",
     title: "New Payment received",
     subtitle: "Check your earnings",
   },
   {
-    avatar: "/images/profile/user-4.jpg",
+    avatar: "/images/profile/user-5.jpg",
     title: "Jolly completed tasks",
     subtitle: "Assign her new tasks",
   },
   {
-    avatar: "/images/profile/user-5.jpg",
+    avatar: "/images/profile/user-6.jpg",
     title: "Roman Joined the Team!",
     subtitle: "Congratulate him",
   },
   {
-    avatar: "/images/profile/user-6.jpg",
+    avatar: "/images/profile/user-7.jpg",
     title: "New message received",
     subtitle: "Salma sent you new message",
   },
   {
-    avatar: "/images/profile/user-7.jpg",
+    avatar: "/images/profile/user-8.jpg",
     title: "New Payment received",
     subtitle: "Check your earnings",
   },
   {
-    avatar: "/images/profile/user-8.jpg",
+    avatar: "/images/profile/user-9.jpg",
     title: "Jolly completed tasks",
     subtitle: "Assign her new tasks",
   },
@@ -60,21 +60,21 @@ interface ProfileType {
 }
 const profile: ProfileType[] = [
   {
-    href: "/",
-    title: "My Profile",
+    href: "/apps/user-profile/profile",
+    title: "My Account",
     subtitle: "Account Settings",
     icon: "/images/svgs/icon-account.svg",
   },
   {
-    href: "/",
-    title: "My Subscriptions",
-    subtitle: "Messages & Emails",
+    href: "/payments",
+    title: "Integrations",
+    subtitle: "eMAG Integrations",
     icon: "/images/svgs/icon-inbox.svg",
   },
   {
-    href: "/",
-    title: "My Payments",
-    subtitle: "To-do and Daily Tasks",
+    href: "/subscriptions",
+    title: "Subscriptions",
+    subtitle: "Payments & Subscriptions",
     icon: "/images/svgs/icon-tasks.svg",
   },
 ];
@@ -90,49 +90,49 @@ interface appsLinkType {
 
 const appsLink: appsLinkType[] = [
   {
-    href: "/",
+    href: "/apps/chats",
     title: "Chat Application",
     subtext: "New messages arrived",
     avatar: "/images/svgs/icon-dd-chat.svg",
   },
   {
-    href: "/",
+    href: "/apps/ecommerce/shop",
     title: "eCommerce App",
     subtext: "New stock available",
     avatar: "/images/svgs/icon-dd-cart.svg",
   },
   {
-    href: "/",
+    href: "/apps/notes",
     title: "Notes App",
     subtext: "To-do and Daily tasks",
     avatar: "/images/svgs/icon-dd-invoice.svg",
   },
   {
-    href: "/",
+    href: "/apps/calendar",
     title: "Calendar App",
     subtext: "Get dates",
     avatar: "/images/svgs/icon-dd-date.svg",
   },
   {
-    href: "/",
+    href: "/apps/contacts",
     title: "Contact Application",
     subtext: "2 Unsaved Contacts",
     avatar: "/images/svgs/icon-dd-mobile.svg",
   },
   {
-    href: "/",
+    href: "/apps/tickets",
     title: "Tickets App",
     subtext: "Submit tickets",
     avatar: "/images/svgs/icon-dd-lifebuoy.svg",
   },
   {
-    href: "/",
+    href: "/apps/email",
     title: "Email App",
     subtext: "Get new emails",
     avatar: "/images/svgs/icon-dd-message-box.svg",
   },
   {
-    href: "/",
+    href: "/apps/blog/post",
     title: "Blog App",
     subtext: "added new blog",
     avatar: "/images/svgs/icon-dd-application.svg",
@@ -146,7 +146,7 @@ interface LinkType {
 
 const pageLinks: LinkType[] = [
   {
-    href: "/",
+    href: "/theme-pages/pricing",
     title: "Pricing Page",
   },
   {
@@ -162,19 +162,19 @@ const pageLinks: LinkType[] = [
     title: "404 Error Page",
   },
   {
-    href: "/",
+    href: "/apps/note",
     title: "Notes App",
   },
   {
-    href: "/",
+    href: "/apps/user-profile/profile",
     title: "User Application",
   },
   {
-    href: "/",
+    href: "/apps/blog/post",
     title: "Blog Design",
   },
   {
-    href: "/",
+    href: "/apps/ecommerce/checkout",
     title: "Shopping Cart",
   },
 ];

@@ -1,9 +1,263 @@
 {
-    "Starter": "Starter",
-    "Menu Level": "Menu Level",
-    "Disabled": "Disabled",
-    "SubCaption": "SubCaption",
-    "Chip": "Chip",
-    "Outlined": "Outlined",
-    "External Link": "External Link"
+    "navigation": {
+        "Modern": "Modern",    
+        "eCommerce": "eCommerce",
+        "Contacts": "Contacts",
+        "Blog": "Blog",
+        "Posts": "Posts",
+        "Detail": "Detail",
+        "Ecommerce": "Ecommerce",
+        "Shop": "Shop",
+        "List": "List",
+        "Checkout": "Checkout",
+        "Chats": "Chats",
+        "Users": "Users",
+        "Profile": "Profile",
+        "Followers": "Followers",
+        "Friends": "Friends",
+        "Gallery": "Gallery",
+        "Notes": "Notes",
+        "Calendar": "Calendar",
+        "Email": "Email",
+        "Tickets": "Tickets",
+        "Kanban": "Kanban",
+        "Invoice": "Invoice",
+        "Details": "Details",
+        "Create": "Create",
+        "Edit": "Edit"
+    },
+    "menu": {
+        "apps": "Apps",
+        "myAccount": "My Account",
+        "dashboard": "Dashboard",
+        "businessProfile": "Business Profile",
+        "subscriptionPayment": "Subscription and Payment",
+        "integrations": "Integrations",
+        "campaignCalculator": "Campaign Calculator",
+        "listingOptimizer": "Listing Optimizer",
+        "keywordTracker": "Keyword Tracker",
+        "xScan": "X Scan",
+        "reports": "Reports"
+    },
+    "calculator": {
+        "tradeProfile": {
+            "title": "Trade Profile",
+            "profileType": "Profile Type",
+            "profileTypeTooltip": "Select your business profile type",
+            "sellerProfile": "Seller Profile",
+            "vatProfile": "VAT Profile",
+            "commission": "Commission + VAT",
+            "commissionTooltip": "eMAG commission including VAT",
+            "vatRateFromSale": "VAT Rate From Sale",
+            "vatRateFromSaleTooltip": "VAT rate applied to your sales",
+            "taxRate": "Tax Rate",
+            "taxRateTooltip": "Business tax rate category",
+            "purchaseType": "Purchase Type",
+            "purchaseTypeTooltip": "Source of your purchases",
+            "fromRomania": "From Romania",
+            "fromChina": "From China",
+            "fromEurope": "From Europe",
+            "purchaseVAT": "Purchase VAT",
+            "purchaseVATTooltip": "VAT rate for your purchases",
+            "customCalculation": "Custom Calculation"
+        },
+        "general": {
+            "title": "Calculator",
+            "settings": "Settings",
+            "save": "Save",
+            "product": "Product",
+            "syncValues": "Sync Values",
+            "expandAll": "Expand All",
+            "collapseAll": "Collapse All",
+            "showHideCards": "Show/Hide Cards",
+            "selectProduct": "Select Product",
+            "saveCalculation": "Save Calculation",
+            "chooseCalculator": "Choose Calculator",
+            "syncAllValues": "Sync All Values"
+        },
+        "cards": {
+            "FBM-NonGenius": "FBM-NonGenius",
+            "FBM-Genius": "FBM-Genius",
+            "FBE": "FBE - Fulfilled by EMAG"
+        },
+        "salesEstimator": {
+            "title": "Sales Estimator",
+            "totalPieces": "Total Pieces",
+            "totalRevenue": "Total Revenue",
+            "totalExpenses": "Total Expenses",
+            "totalProfit": "Total Net Profit",
+            "profitMargin": "Profit Margin",
+            "distribution": "Revenue Distribution",
+            "numberOfSales": "Number of sales (PCS)"
+        },
+        "sections": {
+            "sales": {
+                "title": "Sales",
+                "salePrice": "Sale price",
+                "withVAT": "With VAT",
+                "shippingPrice": "Price of shipping to customer",
+                "totalSellingPrice": "Total selling price",
+                "vatToBeCollected": "VAT to be collected"
+            },
+            "commission": {
+                "title": "Commission",
+                "commissionRate": "Commission rate",
+                "commissionAmount": "Commission amount"
+            },
+            "fulfillment": {
+                "title": "Fulfillment",
+                "fulfillmentCost": "Fulfillment cost",
+                "shippingCost": "Cost of shipping to customer",
+                "dimensions": {
+                    "title": "Enter Product Dimensions",
+                    "length": "Length",
+                    "height": "Height",
+                    "width": "Width",
+                    "weight": "Weight",
+                    "days": "Average number of days in emag warehouse",
+                    "cm": "CM",
+                    "kg": "Kg",
+                    "days_unit": "Days",
+                    "calculating": "Calculating...",
+                    "submit": "Submit",
+                    "cancel": "Cancel"
+                }
+            },
+            "expenditures": {
+                "title": "Expenditures",
+                "otherExpenses": "Other expenses"
+            },
+            "productCost": {
+                "title": "Product Cost",
+                "productCost": "Purchase price",
+                "shippingCost": "Shipping cost",
+                "customsDuty": "Customs duties"
+            },
+            "taxes": {
+                "title": "Taxes and Charges",
+                "incomeTax": "Income tax",
+                "vatToBePaid": "VAT to be paid"
+            },
+            "profit": {
+                "title": "Profit",
+                "grossProfit": "Gross profit",
+                "netProfit": "Net profit",
+                "profitMargin": "Profit margin",
+                "roi": "ROI"
+            }
+        },
+        "productSelection": {
+            "title": "Select Product",
+            "emagProducts": {
+                "title": "eMAG Products",
+                "subtitle": "Official Store Products"
+            },
+            "createdProducts": {
+                "title": "Created Products",
+                "subtitle": "Custom Created Products"
+            },
+            "price": "RON"
+        }
+    },
+    "analytics": {
+        "header": {
+            "chooseMetrics": "Choose Metrics",
+            "revenue": "REVENUE",
+            "grossRevenue": "Gross Revenue",
+            "orders": "Orders",
+            "unitsSold": "Units Sold",
+            "refunds": "Refunds",
+            "currency": "lei"
+        }
+    },
+    "integrations": {
+        "title": "eMAG Integrations",
+        "addButton": "Add Integration",
+        "addingButton": "Adding...",
+        "refreshButton": "Refresh Data",
+        "refreshingButton": "Refreshing...",
+        "noIntegrations": "No integrations found. Click \"Add Integration\" to create one.",
+        "table": {
+            "accountName": "Account Name",
+            "username": "Username",
+            "region": "Region",
+            "importStatus": "Import Status",
+            "productOffers": "No. Product Offers",
+            "orderCount": "No. Orders",
+            "actions": "Actions",
+            "status": {
+                "importing": "Importing",
+                "completed": "Completed",
+                "failed": "Failed",
+                "pending": "Pending"
+            },
+            "menu": {
+                "edit": "Edit",
+                "delete": "Delete"
+            }
+        },
+        "form": {
+            "addTitle": "Add New eMAG Integration",
+            "editTitle": "Edit eMAG Integration",
+            "infoAdd": "The plugin allows you to take orders from eMAG to the Base.com order manager. After running the plugin, you must configure it by entering your account login and password.",
+            "infoEdit": "Update your eMAG integration settings below. Make sure to keep your credentials secure.",
+            "ipInfo": "In the eMAG panel (My Account \"Profile\" Technical details) add the partner's IP 51.77.52.107",
+            "fields": {
+                "accountName": "Account Name",
+                "region": "Region",
+                "username": "Username",
+                "password": "Password",
+                "passwordPlaceholder": "••••••••",
+                "passwordHelp": "Leave blank to keep current password"
+            },
+            "buttons": {
+                "cancel": "Cancel",
+                "add": "Add Integration",
+                "update": "Update Integration",
+                "processing": "Processing..."
+            },
+            "menu": {
+                "edit": "Edit",
+                "delete": "Delete"
+            }
+        },
+        "delete": {
+            "title": "Delete Integration",
+            "message": "Are you sure you want to delete this integration? This action cannot be undone."
+        },
+        "toast": {
+            "addSuccess": "Integration added successfully!",
+            "addError": "Failed to add integration: ",
+            "updateSuccess": "Integration updated successfully!",
+            "updateError": "Failed to update integration: ",
+            "deleteSuccess": "Integration deleted successfully!",
+            "deleteError": "Failed to delete integration: ",
+            "missingId": "Cannot update integration: Missing ID",
+            "fillFields": "Please fill in all required fields",
+            "invalidCredentials": "Invalid credentials",
+            "processingError": "Failed to process integration"
+        },
+        "ipDialog": {
+            "title": "IP Configuration Required",
+            "message": "Before proceeding, please ensure you have added our IP address to your eMAG panel:",
+            "ipAddress": "51.77.52.107",
+            "stepsTitle": "Please follow these steps:",
+            "step1": "Go to eMAG Seller Portal",
+            "step2": "Navigate to My Account → Profile → Technical details",
+            "step3": "Add the following IP address:",
+            "importance": "This step is crucial for the integration to work properly.",
+            "confirm": "I've Added the IP",
+            "cancel": "Cancel"
+        }
+    },
+    "common": {
+        "deleteDialog": {
+            "title": "Delete Item",
+            "confirmationQuestion": "Are you sure you want to delete this item?",
+            "defaultMessage": "You are about to delete {{name}}. This action cannot be undone and all associated data will be permanently removed.",
+            "thisItem": "this item",
+            "cancel": "Cancel",
+            "delete": "Delete"
+        }
+    }
 }

@@ -24,10 +24,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import dynamic from 'next/dynamic';
 import { format, addDays, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ApexOptions } from 'apexcharts';
+import { useTranslation } from 'react-i18next';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const PageHeader = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [frequency, setFrequency] = useState('Daily');
@@ -232,7 +234,7 @@ const PageHeader = () => {
               minWidth: '200px'
             }}
           >
-            Choose Metrics
+            {t('analytics.header.chooseMetrics')}
           </Button>
         </Box>
       </Stack>
@@ -298,7 +300,7 @@ const PageHeader = () => {
                 whiteSpace: 'nowrap'
               }}
             >
-              REVENUE
+              {t('analytics.header.revenue')}
             </Typography>
           </Box>
 
@@ -310,7 +312,7 @@ const PageHeader = () => {
               onClick={handleClick}
               endIcon={<IconSettings size={18} />}
             >
-              Choose Metrics
+              {t('analytics.header.chooseMetrics')}
             </Button>
           </Box>
         </Stack>
@@ -331,7 +333,7 @@ const PageHeader = () => {
               display: { xs: 'block', md: 'none' }
             }}
           >
-            REVENUE
+            {t('analytics.header.revenue')}
           </Typography>
 
           {/* Rest of the metrics content */}
@@ -349,7 +351,7 @@ const PageHeader = () => {
                 mb={0.5}
                 sx={{ textAlign: { xs: 'center', md: 'left' } }}
               >
-                Gross Revenue
+                {t('analytics.header.grossRevenue')}
               </Typography>
               <Stack 
                 direction="row" 
@@ -358,10 +360,10 @@ const PageHeader = () => {
                 justifyContent={{ xs: 'center', md: 'flex-start' }}
               >
                 <Typography variant="h4" sx={{ fontSize: '20px' }}>
-                  lei 1925.48
+                  {t('analytics.header.currency')} 1925.48
                 </Typography>
                 <Chip
-                  label="-lei 1966.29"
+                  label={`-${t('analytics.header.currency')} 1966.29`}
                   size="small"
                   color="error"
                   sx={{ borderRadius: '4px', height: '20px' }}
@@ -408,7 +410,7 @@ const PageHeader = () => {
                   mb={0.5}
                   sx={{ textAlign: { xs: 'center', md: 'left' } }}
                 >
-                  Orders
+                  {t('analytics.header.orders')}
                 </Typography>
                 <Stack 
                   direction="row" 
@@ -435,7 +437,7 @@ const PageHeader = () => {
                   mb={0.5}
                   sx={{ textAlign: { xs: 'center', md: 'left' } }}
                 >
-                  Units Sold
+                  {t('analytics.header.unitsSold')}
                 </Typography>
                 <Stack 
                   direction="row" 
@@ -462,7 +464,7 @@ const PageHeader = () => {
                   mb={0.5}
                   sx={{ textAlign: { xs: 'center', md: 'left' } }}
                 >
-                  Refunds
+                  {t('analytics.header.refunds')}
                 </Typography>
                 <Stack 
                   direction="row" 
@@ -503,7 +505,7 @@ const PageHeader = () => {
             display: { xs: 'block', md: 'none' }
           }}
         >
-          REVENUE
+          {t('analytics.header.revenue')}
         </Typography>
 
         <Stack
@@ -519,7 +521,7 @@ const PageHeader = () => {
               mb={0.5}
               sx={{ textAlign: { xs: 'center', md: 'left' } }}
             >
-              Gross Revenue
+              {t('analytics.header.grossRevenue')}
             </Typography>
             <Stack 
               direction="row" 
@@ -528,10 +530,10 @@ const PageHeader = () => {
               justifyContent={{ xs: 'center', md: 'flex-start' }}
             >
               <Typography variant="h4" sx={{ fontSize: '20px' }}>
-                lei 1925.48
+                {t('analytics.header.currency')} 1925.48
               </Typography>
               <Chip
-                label="-lei 1966.29"
+                label={`-${t('analytics.header.currency')} 1966.29`}
                 size="small"
                 color="error"
                 sx={{ borderRadius: '4px', height: '20px' }}
@@ -578,7 +580,7 @@ const PageHeader = () => {
                 mb={0.5}
                 sx={{ textAlign: { xs: 'center', md: 'left' } }}
               >
-                Orders
+                {t('analytics.header.orders')}
               </Typography>
               <Stack 
                 direction="row" 
@@ -605,7 +607,7 @@ const PageHeader = () => {
                 mb={0.5}
                 sx={{ textAlign: { xs: 'center', md: 'left' } }}
               >
-                Units Sold
+                {t('analytics.header.unitsSold')}
               </Typography>
               <Stack 
                 direction="row" 
@@ -632,7 +634,7 @@ const PageHeader = () => {
                 mb={0.5}
                 sx={{ textAlign: { xs: 'center', md: 'left' } }}
               >
-                Refunds
+                {t('analytics.header.refunds')}
               </Typography>
               <Stack 
                 direction="row" 

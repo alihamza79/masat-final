@@ -4,6 +4,7 @@ import { CategoryData } from '../../context/CalculatorContext';
 import NumberInput from '../NumberInput';
 import SectionHeader from '../SectionHeader';
 import { useCommissionStore } from '../../store/commissionStore';
+import { useTranslation } from 'react-i18next';
 
 interface CommissionSectionProps {
   category: string;
@@ -24,6 +25,7 @@ const CommissionSection: React.FC<CommissionSectionProps> = ({
   onToggle,
   onUpdateCategory
 }) => {
+  const { t } = useTranslation();
   const setCommissionHeaderValue = useCommissionStore((state) => state.setCommissionHeaderValue);
   const totalPrice = data.salePrice + data.shippingPrice;
   const commissionAmount = totalPrice * (data.commission / 100);
@@ -42,7 +44,7 @@ const CommissionSection: React.FC<CommissionSectionProps> = ({
       <SectionHeader
         category={category}
         section="commission"
-        title="eMAG Commission"
+        title={t('calculator.sections.commission.title')}
         value={formatCurrency(-commissionWithVAT, true)}
         expandedSections={expandedSections}
         onToggle={() => onToggle(category, 'commission')}
@@ -71,7 +73,7 @@ const CommissionSection: React.FC<CommissionSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Emag commission
+                  {t('calculator.sections.commission.commissionAmount')}
                 </Typography>
                 <Typography
                   sx={{
@@ -100,7 +102,7 @@ const CommissionSection: React.FC<CommissionSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  With VAT
+                  {t('calculator.sections.sales.withVAT')}
                 </Typography>
                 <Typography
                   sx={{

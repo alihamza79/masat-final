@@ -1,8 +1,4 @@
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { Avatar, Box, Typography, Grid, Stack } from '@mui/material';
 import * as dropdownData from './data';
 import Link from 'next/link';
 import React from 'react';

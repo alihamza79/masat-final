@@ -16,8 +16,10 @@ import CustomSelect from '@/app/components/forms/theme-elements/CustomSelect';
 import CustomTextField from '@/app/components/forms/theme-elements/CustomTextField';
 import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
 import { useCalculator } from '../context/CalculatorContext';
+import { useTranslation } from 'react-i18next';
 
 const TradeProfiles = () => {
+  const { t } = useTranslation();
   const { state, dispatch } = useCalculator();
 
   // State for form values
@@ -156,7 +158,7 @@ const TradeProfiles = () => {
           mb: 3
         }}
       >
-        Trade Profile
+        {t('calculator.tradeProfile.title')}
       </Typography>
 
       {/* Controls Row */}
@@ -178,9 +180,9 @@ const TradeProfiles = () => {
                 color="textSecondary"
                 sx={{ fontSize: { xs: '11px', sm: '12px' } }}
               >
-                Profile Type
+                {t('calculator.tradeProfile.profileType')}
               </Typography>
-              <Tooltip title="Select your business profile type">
+              <Tooltip title={t('calculator.tradeProfile.profileTypeTooltip')}>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -199,10 +201,10 @@ const TradeProfiles = () => {
               }}
             >
               <ToggleButton value="profile">
-                Seller Profile
+                {t('calculator.tradeProfile.sellerProfile')}
               </ToggleButton>
               <ToggleButton value="vat">
-                VAT Profile
+                {t('calculator.tradeProfile.vatProfile')}
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -215,9 +217,9 @@ const TradeProfiles = () => {
                 color="textSecondary"
                 sx={{ fontSize: { xs: '11px', sm: '12px' } }}
               >
-                Commission + VAT
+                {t('calculator.tradeProfile.commission')}
               </Typography>
-              <Tooltip title="eMAG commission including VAT">
+              <Tooltip title={t('calculator.tradeProfile.commissionTooltip')}>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -262,9 +264,9 @@ const TradeProfiles = () => {
                 color="textSecondary"
                 sx={{ fontSize: { xs: '11px', sm: '12px' } }}
               >
-                VAT Rate From Sale
+                {t('calculator.tradeProfile.vatRateFromSale')}
               </Typography>
-              <Tooltip title="VAT rate applied to your sales">
+              <Tooltip title={t('calculator.tradeProfile.vatRateFromSaleTooltip')}>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -288,9 +290,9 @@ const TradeProfiles = () => {
                 color="textSecondary"
                 sx={{ fontSize: { xs: '11px', sm: '12px' } }}
               >
-                Tax Rate
+                {t('calculator.tradeProfile.taxRate')}
               </Typography>
-              <Tooltip title="Business tax rate category">
+              <Tooltip title={t('calculator.tradeProfile.taxRateTooltip')}>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -314,9 +316,9 @@ const TradeProfiles = () => {
                 color="textSecondary"
                 sx={{ fontSize: { xs: '11px', sm: '12px' } }}
               >
-                Purchase Type
+                {t('calculator.tradeProfile.purchaseType')}
               </Typography>
-              <Tooltip title="Source of your purchases">
+              <Tooltip title={t('calculator.tradeProfile.purchaseTypeTooltip')}>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -326,9 +328,9 @@ const TradeProfiles = () => {
               fullWidth
               sx={selectStyles}
             >
-              <MenuItem value="romania">From Romania</MenuItem>
-              <MenuItem value="china">From China</MenuItem>
-              <MenuItem value="europe">From Europe</MenuItem>
+              <MenuItem value="romania">{t('calculator.tradeProfile.fromRomania')}</MenuItem>
+              <MenuItem value="china">{t('calculator.tradeProfile.fromChina')}</MenuItem>
+              <MenuItem value="europe">{t('calculator.tradeProfile.fromEurope')}</MenuItem>
             </CustomSelect>
           </Box>
 
@@ -340,9 +342,9 @@ const TradeProfiles = () => {
                 color="textSecondary"
                 sx={{ fontSize: { xs: '11px', sm: '12px' } }}
               >
-                Purchase VAT
+                {t('calculator.tradeProfile.purchaseVAT')}
               </Typography>
-              <Tooltip title="VAT rate for your purchases">
+              <Tooltip title={t('calculator.tradeProfile.purchaseVATTooltip')}>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -354,7 +356,7 @@ const TradeProfiles = () => {
               disabled={purchaseType === 'china'}
             >
               {purchaseType === 'china' ? (
-                <MenuItem value="customs">Custom Calculation</MenuItem>
+                <MenuItem value="customs">{t('calculator.tradeProfile.customCalculation')}</MenuItem>
               ) : (
                 [
                   <MenuItem key="19" value="19">19%</MenuItem>,

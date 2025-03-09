@@ -4,6 +4,7 @@ import { CategoryData, useCalculator } from '../../context/CalculatorContext';
 import NumberInput from '../NumberInput';
 import SectionHeader from '../SectionHeader';
 import { useFulfillmentStore } from '../../store/fulfillmentStore';
+import { useTranslation } from 'react-i18next';
 
 interface FulfillmentSectionProps {
   category: string;
@@ -32,6 +33,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
   onToggle,
   onUpdateCategory,
 }) => {
+  const { t } = useTranslation();
   const { state } = useCalculator();
   const setFulfillmentHeaderValue = useFulfillmentStore((state) => state.setFulfillmentHeaderValue);
   const valueWidth = '80px';
@@ -131,7 +133,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
       <SectionHeader
         category={category}
         section="fulfillment"
-        title="Fulfillment"
+        title={t('calculator.sections.fulfillment.title')}
         value={formatCurrency(-(
           (category === 'FBE' ? 0 : category === 'FBM-Genius' ? geniusShippingCost : data.fulfillmentShippingCost) * (1 + vatRate / 100) + 
           data.fulfillmentCost * (1 + vatRate / 100)
@@ -164,13 +166,13 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Cost of shipping to customer
+                  {t('calculator.sections.fulfillment.shippingCost')}
                 </Typography>
                 <Box sx={{ 
                   width: valueWidth
                 }}>
                   <NumberInput
-                    label="Cost of shipping to customer"
+                    label={t('calculator.sections.fulfillment.shippingCost')}
                     value={data.fulfillmentShippingCost}
                     onChange={handleShippingCostChange}
                     showLabel={false}
@@ -194,7 +196,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Cost of shipping to customer
+                  {t('calculator.sections.fulfillment.shippingCost')}
                 </Typography>
                 <Typography
                   sx={{
@@ -224,7 +226,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                   flex: '0 0 140px'
                 }}
               >
-                With VAT
+                {t('calculator.sections.sales.withVAT')}
               </Typography>
               <Typography
                 sx={{
@@ -257,7 +259,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Fulfillment cost
+                  {t('calculator.sections.fulfillment.fulfillmentCost')}
                 </Typography>
                 <Box sx={{ 
                   width: valueWidth
@@ -280,7 +282,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                     </Box>
                   ) : (
                     <NumberInput
-                      label="Fulfillment cost"
+                      label={t('calculator.sections.fulfillment.fulfillmentCost')}
                       value={data.fulfillmentCost}
                       onChange={handleFulfillmentCostChange}
                       showLabel={false}
@@ -305,7 +307,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  With VAT
+                  {t('calculator.sections.sales.withVAT')}
                 </Typography>
                 <Typography
                   sx={{
@@ -331,7 +333,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Enter Product Dimensions</DialogTitle>
+        <DialogTitle>{t('calculator.sections.fulfillment.dimensions.title')}</DialogTitle>
         <DialogContent>
           {error && (
             <Alert 
@@ -345,27 +347,27 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
             <Stack direction="row" spacing={2}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="textSecondary" mb={0.5}>
-                  Length
+                  {t('calculator.sections.fulfillment.dimensions.length')}
                 </Typography>
                 <TextField
                   fullWidth
                   value={dimensions.length}
                   onChange={(e) => handleDimensionChange('length', e.target.value)}
                   InputProps={{
-                    endAdornment: <Typography variant="caption">CM</Typography>
+                    endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.cm')}</Typography>
                   }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="textSecondary" mb={0.5}>
-                  Height
+                  {t('calculator.sections.fulfillment.dimensions.height')}
                 </Typography>
                 <TextField
                   fullWidth
                   value={dimensions.height}
                   onChange={(e) => handleDimensionChange('height', e.target.value)}
                   InputProps={{
-                    endAdornment: <Typography variant="caption">CM</Typography>
+                    endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.cm')}</Typography>
                   }}
                 />
               </Box>
@@ -373,27 +375,27 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
             <Stack direction="row" spacing={2}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="textSecondary" mb={0.5}>
-                  Width
+                  {t('calculator.sections.fulfillment.dimensions.width')}
                 </Typography>
                 <TextField
                   fullWidth
                   value={dimensions.width}
                   onChange={(e) => handleDimensionChange('width', e.target.value)}
                   InputProps={{
-                    endAdornment: <Typography variant="caption">CM</Typography>
+                    endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.cm')}</Typography>
                   }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="textSecondary" mb={0.5}>
-                  Weight
+                  {t('calculator.sections.fulfillment.dimensions.weight')}
                 </Typography>
                 <TextField
                   fullWidth
                   value={dimensions.weight}
                   onChange={(e) => handleDimensionChange('weight', e.target.value)}
                   InputProps={{
-                    endAdornment: <Typography variant="caption">Kg</Typography>
+                    endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.kg')}</Typography>
                   }}
                   error={!!error && error.includes("weight")}
                 />
@@ -401,27 +403,29 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
             </Stack>
             <Box>
               <Typography variant="caption" color="textSecondary" mb={0.5}>
-                Average number of days in emag warehouse
+                {t('calculator.sections.fulfillment.dimensions.days')}
               </Typography>
               <TextField
                 fullWidth
                 value={dimensions.days}
                 onChange={(e) => handleDimensionChange('days', e.target.value)}
                 InputProps={{
-                  endAdornment: <Typography variant="caption">Days</Typography>
+                  endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.days_unit')}</Typography>
                 }}
               />
             </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDimensionsModal(false)} disabled={isLoading}>Cancel</Button>
+          <Button onClick={() => setOpenDimensionsModal(false)} disabled={isLoading}>
+            {t('calculator.sections.fulfillment.dimensions.cancel')}
+          </Button>
           <Button 
             variant="contained" 
             onClick={handleSubmitDimensions} 
             disabled={isLoading}
           >
-            {isLoading ? 'Calculating...' : 'Submit'}
+            {isLoading ? t('calculator.sections.fulfillment.dimensions.calculating') : t('calculator.sections.fulfillment.dimensions.submit')}
           </Button>
         </DialogActions>
       </Dialog>

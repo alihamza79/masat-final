@@ -9,6 +9,7 @@ import { useFulfillmentStore } from '../../store/fulfillmentStore';
 import { useExpenditureStore, ExpenditureStore } from '../../store/expenditureStore';
 import { useProductCostStore, ProductCostStore } from '../../store/productCostStore';
 import { useProfitStore } from '../../store/profitStore';
+import { useTranslation } from 'react-i18next';
 
 interface ProfitSectionProps {
   category: string;
@@ -44,6 +45,7 @@ const ProfitSection: React.FC<ProfitSectionProps> = ({
   purchaseType,
   vatRate,
 }) => {
+  const { t } = useTranslation();
   const valueWidth = '80px';
   const taxValues = useTaxStore((state: TaxStore) => state.taxValues[category]);
   const salesHeaderValue = useSalesStore((state) => state.salesHeaderValues[category]);
@@ -84,7 +86,7 @@ const ProfitSection: React.FC<ProfitSectionProps> = ({
       <SectionHeader
         category={category}
         section="profit"
-        title="Profit"
+        title={t('calculator.sections.profit.title')}
         value={formatCurrency(formattedNetProfit, true)}
         expandedSections={expandedSections}
         onToggle={() => onToggle(category, 'profit')}
@@ -113,7 +115,7 @@ const ProfitSection: React.FC<ProfitSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Net Profit
+                  {t('calculator.sections.profit.netProfit')}
                 </Typography>
                 <Typography 
                   sx={{
@@ -142,7 +144,7 @@ const ProfitSection: React.FC<ProfitSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Margin Profit
+                  {t('calculator.sections.profit.profitMargin')}
                 </Typography>
                 <Typography 
                   sx={{
@@ -171,7 +173,7 @@ const ProfitSection: React.FC<ProfitSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  ROI
+                  {t('calculator.sections.profit.roi')}
                 </Typography>
                 <Typography 
                   sx={{

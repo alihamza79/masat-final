@@ -1,9 +1,5 @@
 import React from 'react';
-import Avatar from '@mui/material/Avatar';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
+import { Avatar, IconButton, Menu, MenuItem, Typography } from '@mui/material';
 import { useSelector, useDispatch } from '@/store/hooks';
 import { setLanguage } from '@/store/customizer/CustomizerSlice';
 import { Stack } from '@mui/system';
@@ -17,21 +13,26 @@ const Languages = [
     icon: "/images/flag/icon-flag-en.svg",
     value: 'en',
   },
-  {
-    flagname: '中国人 (Chinese)',
-    icon: "/images/flag/icon-flag-cn.svg",
-    value: 'ch',
-  },
-  {
-    flagname: 'français (French)',
-    icon: "/images/flag/icon-flag-fr.svg",
-    value: 'fr',
-  },
+  // {
+  //   flagname: '中国人 (Chinese)',
+  //   icon: "/images/flag/icon-flag-cn.svg",
+  //   value: 'ch',
+  // },
+  // {
+  //   flagname: 'français (French)',
+  //   icon: "/images/flag/icon-flag-fr.svg",
+  //   value: 'fr',
+  // },
 
+  // {
+  //   flagname: 'عربي (Arabic)',
+  //   icon: "/images/flag/icon-flag-sa.svg",
+  //   value: 'ar',
+  // },
   {
-    flagname: 'عربي (Arabic)',
-    icon: "/images/flag/icon-flag-sa.svg",
-    value: 'ar',
+    flagname: 'Română (Romanian)',
+    icon: "/images/flag/icon-flag-ro.svg",
+    value: 'ro',
   },
 ];
 
@@ -52,7 +53,7 @@ const Language = () => {
   useEffect(() => {
     i18n.changeLanguage(customizer.isLanguage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [customizer.isLanguage]);
 
   return (
     <>
@@ -81,7 +82,10 @@ const Language = () => {
           <MenuItem
             key={index}
             sx={{ py: 2, px: 3 }}
-            onClick={() => dispatch(setLanguage(option.value))}
+            onClick={() => {
+              dispatch(setLanguage(option.value));
+              localStorage.setItem('language', option.value);
+            }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
               <Avatar src={option.icon} alt={option.icon} sx={{ width: 20, height: 20 }} />

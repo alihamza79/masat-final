@@ -98,14 +98,8 @@ const Sidebar = () => {
           PaperProps={{
             sx: {
               width: customizer.SidebarWidth,
-
-              // backgroundColor:
-              //   customizer.activeMode === 'dark'
-              //     ? customizer.darkBackground900
-              //     : customizer.activeSidebarBg,
-              // color: customizer.activeSidebarBg === '#ffffff' ? '' : 'white',
               border: "0 !important",
-              boxShadow: (theme: any) => theme.shadows[8],
+              boxShadow: (theme) => theme.shadows[8],
             },
           }}
         >

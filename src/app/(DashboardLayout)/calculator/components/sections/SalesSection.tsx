@@ -4,6 +4,7 @@ import { CategoryData } from '../../context/CalculatorContext';
 import NumberInput from '../NumberInput';
 import SectionHeader from '../SectionHeader';
 import { useSalesStore } from '../../store/salesStore';
+import { useTranslation } from 'react-i18next';
 
 interface SalesSectionProps {
   category: string;
@@ -32,6 +33,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
   profileType,
   calculations
 }) => {
+  const { t } = useTranslation();
   const setSalesHeaderValue = useSalesStore((state) => state.setSalesHeaderValue);
   const totalPrice = data.salePrice + data.shippingPrice;
   const vatToBeCollected = totalPrice * vatRate / 100;
@@ -52,7 +54,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
       <SectionHeader
         category={category}
         section="sales"
-        title="Sales"
+        title={t('calculator.sections.sales.title')}
         value={formatCurrency(headerValue)}
         expandedSections={expandedSections}
         onToggle={() => onToggle(category, 'sales')}
@@ -82,13 +84,13 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Sale price
+                  {t('calculator.sections.sales.salePrice')}
                 </Typography>
                 <Box sx={{ 
                   width: valueWidth
                 }}>
                   <NumberInput
-                    label="Sale price"
+                    label={t('calculator.sections.sales.salePrice')}
                     value={data.salePrice}
                     onChange={(value) => onUpdateCategory(category, { salePrice: value })}
                     showLabel={false}
@@ -115,7 +117,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                       flex: '0 0 140px'
                     }}
                   >
-                    With VAT
+                    {t('calculator.sections.sales.withVAT')}
                   </Typography>
                   <Typography
                     sx={{
@@ -152,14 +154,14 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                       flex: '0 0 140px'
                     }}
                   >
-                    Price of shipping to customer
+                    {t('calculator.sections.sales.shippingPrice')}
                   </Typography>
                   {category === 'FBM-NonGenius' ? (
                     <Box sx={{ 
                       width: valueWidth
                     }}>
                       <NumberInput
-                        label="Shipping price"
+                        label={t('calculator.sections.sales.shippingPrice')}
                         value={data.shippingPrice}
                         onChange={(value) => onUpdateCategory(category, { shippingPrice: value })}
                         showLabel={false}
@@ -197,7 +199,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                         flex: '0 0 140px'
                       }}
                     >
-                      With VAT
+                      {t('calculator.sections.sales.withVAT')}
                     </Typography>
                     <Typography
                       sx={{
@@ -232,7 +234,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                   flex: '0 0 140px'
                 }}
               >
-                Total selling price
+                {t('calculator.sections.sales.totalSellingPrice')}
               </Typography>
               <Typography
                 sx={{
@@ -264,7 +266,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  With VAT
+                  {t('calculator.sections.sales.withVAT')}
                 </Typography>
                 <Typography
                   sx={{
