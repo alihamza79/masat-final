@@ -199,8 +199,8 @@
         "form": {
             "addTitle": "Adaugă Integrare Nouă eMAG",
             "editTitle": "Editează Integrarea eMAG",
-            "infoAdd": "Plugin-ul vă permite să preluați comenzi de la eMAG în managerul de comenzi Base.com. După rularea plugin-ului, trebuie să îl configurați introducând datele de autentificare ale contului.",
-            "infoEdit": "Actualizați setările integrării eMAG mai jos. Asigurați-vă că păstrați datele de autentificare în siguranță.",
+            "addInfo": "Pluginul va permite sa preluati comenzi de la eMAG la managerul de comenzi Base.com. Dupa rularea pluginului, trebuie sa il configurati prin introducerea login-ului si parolei contului dvs. eMAG. Comenzile noi de la eMAG vor fi preluate in sistem la fiecare 5 minute si vor fi marcate special pe lista de comenzi.",
+            "editInfo": "Actualizați setările integrării eMAG mai jos. Asigurați-vă că păstrați datele de autentificare în siguranță.",
             "ipInfo": "În panoul eMAG (Contul Meu \"Profil\" Detalii tehnice) adăugați IP-ul partenerului 51.77.52.107",
             "fields": {
                 "accountName": "Nume Cont",

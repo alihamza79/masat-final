@@ -199,8 +199,8 @@
         "form": {
             "addTitle": "Add New eMAG Integration",
             "editTitle": "Edit eMAG Integration",
-            "infoAdd": "The plugin allows you to take orders from eMAG to the Base.com order manager. After running the plugin, you must configure it by entering your account login and password.",
-            "infoEdit": "Update your eMAG integration settings below. Make sure to keep your credentials secure.",
+            "addInfo": "The plugin will allow you to receive orders from eMAG to the Base.com order manager. After running the plugin, you need to configure it by entering your eMAG account login and password. New orders from eMAG will be imported into the system every 5 minutes and will be specially marked on the orders list.",
+            "editInfo": "Update your eMAG integration settings below. Make sure to keep your credentials secure.",
             "ipInfo": "In the eMAG panel (My Account \"Profile\" Technical details) add the partner's IP 51.77.52.107",
             "fields": {
                 "accountName": "Account Name",

@@ -135,24 +135,59 @@ const IntegrationsPage = () => {
       <Box>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-              <Typography variant="h2">{t('integrations.title')}</Typography>
-              <Box display="flex" gap={2}>
+            <Box 
+              display="flex" 
+              alignItems="center" 
+              justifyContent="space-between" 
+              mb={3}
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+            >
+              <Typography 
+                variant="h2" 
+                sx={{ 
+                  fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
+                  textAlign: { xs: 'center', sm: 'left' },
+                  width: '100%'
+                }}
+              >
+                {t('integrations.title')}
+              </Typography>
+              <Box 
+                display="flex" 
+                gap={1}
+                flexDirection="row"
+                width="100%"
+                justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
+
+              >
                 <Button
                   variant="outlined"
                   color="primary"
-                  startIcon={<IconRefresh />}
+                  startIcon={<IconRefresh size={20} />}
                   onClick={handleRefetchData}
                   disabled={isRefetching || isLoading}
+                  size="small"
+                  sx={{
+                    minHeight: { xs: '36px' },
+                    fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                    width: { xs: '50%', sm: 'auto' }
+                  }}
                 >
                   {isRefetching ? t('integrations.refreshingButton') : t('integrations.refreshButton')}
                 </Button>
                 <Button
                   variant="contained"
                   color="primary"
-                  startIcon={<IconPlus />}
+                  startIcon={<IconPlus size={20} />}
                   onClick={handleOpenDialog}
                   disabled={isCreating}
+                  size="small"
+                  sx={{
+                    minHeight: { xs: '36px' },
+                    fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                    width: { xs: '50%', sm: 'auto' }
+                  }}
                 >
                   {isCreating ? t('integrations.addingButton') : t('integrations.addButton')}
                 </Button>
