@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,7 +13,11 @@ import {
   useTheme,
   Tabs,
   Tab,
-  useMediaQuery
+  useMediaQuery,
+  CircularProgress,
+  TextField,
+  InputAdornment,
+  Skeleton
 } from '@mui/material';
 import { 
   IconX, 
@@ -21,7 +25,16 @@ import {
   IconDeviceGamepad2, 
   IconShoppingCart, 
   IconBuildingStore,
-  IconDots 
+  IconDots,
+  IconAlertCircle,
+  IconSearch,
+  IconCircleX,
+  IconPackage,
+  IconDeviceLaptop,
+  IconHeadphones,
+  IconDeviceDesktop,
+  IconShirt,
+  IconDeviceMobile
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
@@ -30,11 +43,25 @@ interface ProductSelectionModalProps {
   onClose: () => void;
   selectedProduct: string;
   onSelectProduct: (value: string) => void;
+  savedCalculations: SavedCalculation[];
+  loading: boolean;
+  error: string | null;
+  integrationsData?: Record<string, any>;
 }
 
 export type { ProductSelectionModalProps };
 
-const products = {
+interface SavedCalculation {
+  _id: string;
+  title: string;
+  description: string;
+  image: string;
+  calculatorState: any;
+  createdAt: string;
+}
+
+// Fallback static products in case no integrations data is available
+const staticProducts = {
   emag: [
     {
       id: 'emag-1',
@@ -105,16 +132,168 @@ const products = {
   ]
 };
 
+const ProductSkeleton = () => {
+  const theme = useTheme();
+  
+  return (
+    <Card
+      sx={{
+        p: 2,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '12px',
+        border: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
+      <Stack spacing={1.5} height="100%">
+        <Skeleton 
+          variant="rectangular" 
+          width="100%" 
+          height={80} 
+          sx={{ 
+            borderRadius: '8px',
+            bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
+          }} 
+        />
+        <Stack spacing={1} flex={1}>
+          <Box>
+            <Skeleton 
+              variant="text" 
+              width="70%" 
+              height={20} 
+              sx={{ 
+                mb: 0.5,
+                bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
+              }} 
+            />
+            <Skeleton 
+              variant="text" 
+              width="90%" 
+              height={16} 
+              sx={{ 
+                bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
+              }} 
+            />
+          </Box>
+          <Skeleton 
+            variant="text" 
+            width="40%" 
+            height={20} 
+            sx={{ 
+              mt: 'auto',
+              bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
+            }} 
+          />
+        </Stack>
+      </Stack>
+    </Card>
+  );
+};
+
 const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   open,
   onClose,
   selectedProduct,
-  onSelectProduct
+  onSelectProduct,
+  savedCalculations,
+  loading,
+  error,
+  integrationsData = {}
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [activeTab, setActiveTab] = React.useState(0);
+  const [activeTab, setActiveTab] = useState(0);
+  const [emagProducts, setEmagProducts] = useState<any[]>([]);
+  const [filteredEmagProducts, setFilteredEmagProducts] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [savedSearchQuery, setSavedSearchQuery] = useState('');
+  const [filteredSavedCalculations, setFilteredSavedCalculations] = useState<SavedCalculation[]>([]);
+  const [loadingEmagProducts, setLoadingEmagProducts] = useState(false);
+
+  // Extract and format eMAG product offers from integrations data
+  useEffect(() => {
+    if (Object.keys(integrationsData).length > 0) {
+      setLoadingEmagProducts(true);
+      
+      try {
+        const allProducts = Object.values(integrationsData).flatMap(integration => {
+          if (!integration.productOffers || !Array.isArray(integration.productOffers)) {
+            return [];
+          }
+          
+          return integration.productOffers.map((product: any) => ({
+            id: `emag-${product.integrationId}-${product.id}`,
+            name: product.name || `Product ${product.id}`,
+            category: `Category ${product.category_id || 'Unknown'}`,
+            price: product.sale_price?.toString() || '0',
+            brand: product.brand_name || product.brand || 'Unknown',
+            image: product.images && product.images[0]?.url || '',
+            originalData: product
+          }));
+        });
+        
+        setEmagProducts(allProducts);
+        setFilteredEmagProducts(allProducts);
+      } catch (err) {
+        console.error('Error processing eMAG products:', err);
+      } finally {
+        setLoadingEmagProducts(false);
+      }
+    }
+  }, [integrationsData]);
+
+  // Initialize filtered saved calculations
+  useEffect(() => {
+    setFilteredSavedCalculations(savedCalculations);
+  }, [savedCalculations]);
+
+  // Filter products when search query changes
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredEmagProducts(emagProducts);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = emagProducts.filter(product => 
+        product.name.toLowerCase().includes(query) || 
+        product.brand.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query)
+      );
+      setFilteredEmagProducts(filtered);
+    }
+  }, [searchQuery, emagProducts]);
+
+  // Filter saved calculations when search query changes
+  useEffect(() => {
+    if (savedSearchQuery.trim() === '') {
+      setFilteredSavedCalculations(savedCalculations);
+    } else {
+      const query = savedSearchQuery.toLowerCase();
+      const filtered = savedCalculations.filter(calculation => 
+        calculation.title.toLowerCase().includes(query) || 
+        (calculation.description && calculation.description.toLowerCase().includes(query))
+      );
+      setFilteredSavedCalculations(filtered);
+    }
+  }, [savedSearchQuery, savedCalculations]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
+  const handleSavedSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSavedSearchQuery(event.target.value);
+  };
+
+  const handleClearSavedSearch = () => {
+    setSavedSearchQuery('');
+  };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -180,7 +359,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
     </Stack>
   );
 
-  const ProductCard = ({ product }: { product: typeof products.emag[0] }) => (
+  const ProductCard = ({ product }: { product: any }) => (
     <Card
       onClick={() => onSelectProduct(product.id)}
       sx={{
@@ -211,20 +390,50 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            overflow: 'hidden'
           }}
         >
-          <Typography 
-            variant="h3" 
-            color="text.secondary"
-            sx={{ opacity: 0.5 }}
-          >
-            {product.brand === 'Apple' ? (
-              <IconBrandApple size={32} />
-            ) : (
-              <IconDeviceGamepad2 size={32} />
-            )}
-          </Typography>
+          {product.image ? (
+            <img 
+              src={product.image} 
+              alt={product.name}
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '100%', 
+                objectFit: 'contain' 
+              }}
+            />
+          ) : (
+            <Typography 
+              variant="h3" 
+              color="text.secondary"
+              sx={{ opacity: 0.7 }}
+            >
+              {(() => {
+                // Select appropriate icon based on product category or brand
+                const category = product.category?.toLowerCase() || '';
+                const name = product.name?.toLowerCase() || '';
+                
+                if (product.brand === 'Apple' || name.includes('iphone') || name.includes('macbook') || name.includes('ipad')) {
+                  return <IconBrandApple size={32} />;
+                } else if (category.includes('laptop') || name.includes('laptop')) {
+                  return <IconDeviceLaptop size={32} />;
+                } else if (category.includes('audio') || name.includes('headphone') || name.includes('airpod') || name.includes('headset')) {
+                  return <IconHeadphones size={32} />;
+                } else if (category.includes('smartphone') || category.includes('phone') || name.includes('phone')) {
+                  return <IconDeviceMobile size={32} />;
+                } else if (category.includes('monitor') || category.includes('display') || name.includes('monitor')) {
+                  return <IconDeviceDesktop size={32} />;
+                } else if (category.includes('clothing') || category.includes('apparel') || name.includes('shirt') || name.includes('clothing')) {
+                  return <IconShirt size={32} />;
+                } else {
+                  // Default icon for other products
+                  return <IconPackage size={32} />;
+                }
+              })()}
+            </Typography>
+          )}
         </Box>
         <Stack spacing={1} flex={1}>
           <Box>
@@ -286,6 +495,94 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
     </Card>
   );
 
+  const SavedCalculationCard = ({ calculation }: { calculation: SavedCalculation }) => (
+    <Card
+      onClick={() => onSelectProduct(`saved-${calculation._id}`)}
+      sx={{
+        p: 2,
+        cursor: 'pointer',
+        border: '1px solid',
+        borderColor: selectedProduct === `saved-${calculation._id}` ? 'success.main' : 'divider',
+        bgcolor: selectedProduct === `saved-${calculation._id}` ? 'success.lighter' : 'background.paper',
+        transition: 'all 0.2s ease-in-out',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '12px',
+        '&:hover': {
+          borderColor: 'success.main',
+          bgcolor: 'success.lighter',
+          transform: 'translateY(-2px)',
+          boxShadow: theme.shadows[4]
+        }
+      }}
+    >
+      <Stack spacing={1.5} height="100%">
+        <Box
+          sx={{
+            width: '100%',
+            height: '80px',
+            bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Typography 
+            variant="h3" 
+            color="success.main"
+            sx={{ opacity: 0.7 }}
+          >
+            <IconBuildingStore size={32} />
+          </Typography>
+        </Box>
+        <Stack spacing={1} flex={1}>
+          <Box>
+            <Typography 
+              variant="subtitle1"
+              sx={{ 
+                fontSize: '13px',
+                fontWeight: 600,
+                mb: 0.5,
+                color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
+              }}
+            >
+              {calculation.title}
+            </Typography>
+            {calculation.description && (
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: '11px',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+              >
+                {calculation.description}
+              </Typography>
+            )}
+          </Box>
+          <Typography 
+            variant="body2"
+            color="success.main"
+            sx={{ 
+              fontSize: '12px',
+              fontWeight: 500,
+              mt: 'auto'
+            }}
+          >
+            {new Date(calculation.createdAt).toLocaleDateString()}
+          </Typography>
+        </Stack>
+      </Stack>
+    </Card>
+  );
+
   return (
     <Dialog
       open={open}
@@ -295,9 +592,13 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
       PaperProps={{
         sx: {
           borderRadius: { xs: 0, sm: 2 },
-          maxHeight: { xs: '100vh', sm: '80vh' },
+          maxHeight: { xs: '100vh', sm: '90vh' },
+          height: { xs: '100%', sm: '90vh' },
           m: { xs: 0, sm: 3 },
-          width: { xs: '100%', sm: 'auto' }
+          width: { xs: '100%', sm: 'auto' },
+          minWidth: { sm: '800px' },
+          display: 'flex',
+          flexDirection: 'column'
         }
       }}
     >
@@ -365,36 +666,174 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
         </Tabs>
       )}
 
-      <DialogContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+      <DialogContent sx={{ 
+        p: { xs: 2, sm: 2.5 },
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: { xs: 'calc(100vh - 120px)', sm: 'auto' }
+      }}>
         <Stack 
           direction={{ xs: 'column', sm: 'row' }} 
           spacing={{ xs: 3, sm: 0 }}
+          sx={{ 
+            height: '100%',
+            width: '100%',
+            position: 'relative',
+            minHeight: { sm: '500px' }
+          }}
         >
           {/* eMAG Products */}
           <Box 
-            flex={1} 
             sx={{ 
               display: { 
                 xs: activeTab === 0 ? 'block' : 'none',
                 sm: 'block'
-              }
+              },
+              width: { sm: '50%' },
+              height: '100%',
+              pr: { xs: 0, sm: 3 },
+              position: 'relative'
             }}
           >
-            <Box sx={{ pr: { xs: 0, sm: 3 } }}>
-              {!isMobile && (
+            {!isMobile && (
+              <Box sx={{ mb: 2 }}>
                 <SectionHeader 
                   title={t('calculator.productSelection.emagProducts.title')}
                   icon={<IconShoppingCart size={18} />}
                   color="primary"
                 />
+              </Box>
+            )}
+            
+            {/* Search Input */}
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder={t('calculator.productSelection.searchProducts')}
+                value={searchQuery}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={18} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton 
+                        size="small" 
+                        onClick={handleClearSearch}
+                        sx={{ p: 0.5 }}
+                      >
+                        <IconCircleX size={16} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                  }
+                }}
+              />
+              {!loadingEmagProducts && (
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ 
+                    display: 'block', 
+                    mt: 0.5, 
+                    fontSize: '11px',
+                    textAlign: 'right'
+                  }}
+                >
+                  {filteredEmagProducts.length} {t('calculator.productSelection.productsFound')}
+                  {searchQuery.trim() !== '' && emagProducts.length > 0 && (
+                    <> ({Math.round((filteredEmagProducts.length / emagProducts.length) * 100)}%)</>
+                  )}
+                </Typography>
               )}
-              <Grid container spacing={1.5}>
-                {products.emag.map((product) => (
-                  <Grid item xs={12} sm={6} key={product.id}>
-                    <ProductCard product={product} />
-                  </Grid>
-                ))}
-              </Grid>
+            </Box>
+            
+            {/* Scrollable Products Container */}
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                top: isMobile ? '90px' : '140px',
+                bottom: 0,
+                left: 0,
+                right: { xs: 0, sm: 3 },
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                pr: { sm: 1 },
+                pb: 1,
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
+                }
+              }}
+            >
+              {loadingEmagProducts ? (
+                <Grid container spacing={1.5}>
+                  {[...Array(8)].map((_, index) => (
+                    <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
+                      <ProductSkeleton />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : filteredEmagProducts.length > 0 ? (
+                <Grid 
+                  container 
+                  spacing={1.5}
+                >
+                  {filteredEmagProducts.map((product) => (
+                    <Grid item xs={12} sm={6} key={product.id}>
+                      <ProductCard product={product} />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : searchQuery.trim() !== '' ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  py: 4,
+                  color: 'text.secondary'
+                }}>
+                  <IconAlertCircle size={32} />
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {t('calculator.productSelection.noProductsFound')}
+                  </Typography>
+                </Box>
+              ) : emagProducts.length === 0 ? (
+                <Grid container spacing={1.5}>
+                  {[...Array(4)].map((_, index) => (
+                    <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
+                      <ProductSkeleton />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Grid 
+                  container 
+                  spacing={1.5}
+                >
+                  {staticProducts.emag.map((product) => (
+                    <Grid item xs={12} sm={6} key={product.id}>
+                      <ProductCard product={product} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
             </Box>
           </Box>
 
@@ -425,31 +864,165 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
             />
           )}
 
-          {/* Created Products */}
+          {/* Saved Calculations */}
           <Box 
-            flex={1}
             sx={{ 
               display: { 
                 xs: activeTab === 1 ? 'block' : 'none',
                 sm: 'block'
-              }
+              },
+              width: { sm: '50%' },
+              height: '100%',
+              pl: { xs: 0, sm: 3 },
+              position: 'relative'
             }}
           >
-            <Box sx={{ pl: { xs: 0, sm: 3 } }}>
-              {!isMobile && (
+            {!isMobile && (
+              <Box sx={{ mb: 2 }}>
                 <SectionHeader 
                   title={t('calculator.productSelection.createdProducts.title')}
                   icon={<IconBuildingStore size={18} />}
                   color="success"
                 />
+              </Box>
+            )}
+            
+            {/* Search Input for Saved Calculations */}
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder={t('calculator.productSelection.searchSavedCalculations')}
+                value={savedSearchQuery}
+                onChange={handleSavedSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={18} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: savedSearchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton 
+                        size="small" 
+                        onClick={handleClearSavedSearch}
+                        sx={{ p: 0.5 }}
+                      >
+                        <IconCircleX size={16} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                  }
+                }}
+              />
+              {!loading && savedCalculations.length > 0 && (
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ 
+                    display: 'block', 
+                    mt: 0.5, 
+                    fontSize: '11px',
+                    textAlign: 'right'
+                  }}
+                >
+                  {filteredSavedCalculations.length} {t('calculator.productSelection.calculationsFound')}
+                  {savedSearchQuery.trim() !== '' && (
+                    <> ({Math.round((filteredSavedCalculations.length / savedCalculations.length) * 100)}%)</>
+                  )}
+                </Typography>
               )}
-              <Grid container spacing={1.5}>
-                {products.created.map((product) => (
-                  <Grid item xs={12} sm={6} key={product.id}>
-                    <ProductCard product={product} />
-                  </Grid>
-                ))}
-              </Grid>
+            </Box>
+            
+            {/* Scrollable Saved Calculations Container */}
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                top: isMobile ? '90px' : '140px',
+                bottom: 0,
+                left: { xs: 0, sm: 3 },
+                right: 0,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                pl: { sm: 1 },
+                pb: 1,
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
+                }
+              }}
+            >
+              {loading ? (
+                <Grid container spacing={1.5}>
+                  {[...Array(4)].map((_, index) => (
+                    <Grid item xs={12} sm={6} key={`saved-skeleton-${index}`}>
+                      <ProductSkeleton />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : error ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  py: 4,
+                  color: 'text.secondary'
+                }}>
+                  <IconAlertCircle size={32} />
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {error}
+                  </Typography>
+                </Box>
+              ) : savedCalculations.length === 0 ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  py: 4,
+                  color: 'text.secondary'
+                }}>
+                  <IconBuildingStore size={32} />
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {t('calculator.productSelection.noSavedCalculations')}
+                  </Typography>
+                </Box>
+              ) : filteredSavedCalculations.length === 0 ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  py: 4,
+                  color: 'text.secondary'
+                }}>
+                  <IconAlertCircle size={32} />
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {t('calculator.productSelection.noSavedCalculationsFound')}
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid 
+                  container 
+                  spacing={1.5}
+                >
+                  {filteredSavedCalculations.map((calculation) => (
+                    <Grid item xs={12} sm={6} key={calculation._id}>
+                      <SavedCalculationCard calculation={calculation} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
             </Box>
           </Box>
         </Stack>

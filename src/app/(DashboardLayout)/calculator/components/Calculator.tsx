@@ -1,19 +1,29 @@
 'use client';
+import { useIntegrationsStore } from '@/app/(DashboardLayout)/integrations/store/integrations';
+import { useEmagData } from '@/lib/hooks/useEmagData';
+import categoryCommissions from '@/utils/categoryCommissions.json';
 import {
   Box,
-  Button,
-  MenuItem,
   Paper,
   Stack,
-  Switch,
-  Typography,
-  Menu
+  Typography
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { IconChevronRight, IconDeviceFloppy, IconLayoutCollage, IconLayoutGrid, IconPackage, IconSettings } from '@tabler/icons-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CategoryData, useCalculations, useCalculator } from '../context/CalculatorContext';
-import ProductSelectionModal from './ProductSelectionModal';
+import useCalculatorReset, { CardKey, VisibleCards } from '../hooks/useCalculatorReset';
+import useFormatting from '../hooks/useFormatting';
+import useSavedCalculations from '../hooks/useSavedCalculations';
+import useSectionToggle from '../hooks/useSectionToggle';
+import { useProfitStore } from '../store/profitStore';
+import CalculatorControls from './layout/CalculatorControls';
+import CalculatorHeader from './layout/CalculatorHeader';
+import MobileSaveButton from './layout/MobileSaveButton';
+import useProductMenuItems from './layout/ProductMenuItems';
+import ProductSelector from './layout/ProductSelector';
+import SalesEstimator from './SalesEstimator/index';
+import SaveCalculationModal from './SaveCalculationModal';
 import CommissionSection from './sections/CommissionSection';
 import ExpendituresSection from './sections/ExpendituresSection';
 import FulfillmentSection from './sections/FulfillmentSection';
@@ -21,39 +31,50 @@ import ProductCostSection from './sections/ProductCostSection';
 import ProfitSection from './sections/ProfitSection';
 import SalesSection from './sections/SalesSection';
 import TaxesSection from './sections/TaxesSection';
-import SalesEstimator from './SalesEstimator';
-import { useTaxStore } from '../store/taxStore';
-import { useSalesStore } from '../store/salesStore';
-import { useCommissionStore } from '../store/commissionStore';
-import { useFulfillmentStore } from '../store/fulfillmentStore';
-import { useExpenditureStore } from '../store/expenditureStore';
-import { useProductCostStore } from '../store/productCostStore';
-import { useProfitStore } from '../store/profitStore';
-import { useTranslation } from 'react-i18next';
-
-interface MenuItem {
-  value: string;
-  label: string;
-}
-
-type CardKey = 'FBM-NonGenius' | 'FBM-Genius' | 'FBE';
-type VisibleCards = Record<CardKey, boolean>;
-type SectionKey = 'sales' | 'commission' | 'fulfillment' | 'expenditures' | 'productCost' | 'taxes' | 'profit';
-type ExpandedSections = Record<CardKey, Record<SectionKey, boolean>>;
 
 const Calculator = () => {
   const { t } = useTranslation();
+  const { integrationsData } = useEmagData();
+  const { integrations } = useIntegrationsStore();
+  const { getAllMenuItems, getProductNameByValue, staticProducts } = useProductMenuItems();
+  
+  // Move selectedProduct state declaration before the hooks that use it
+  const [selectedProduct, setSelectedProduct] = useState<string>('');
+  
+  const {
+    savedCalculations,
+    loadingSavedCalculations,
+    savedCalculationsError,
+    currentSavedCalculationId,
+    currentSavedCalculationTitle,
+    currentSavedCalculationDescription,
+    openSaveModal,
+    handleSaveSuccess,
+    loadSavedCalculation,
+    resetSavedCalculation,
+    setOpenSaveModal,
+    
+  } = useSavedCalculations();
 
-  const allMenuItems: MenuItem[] = [
-    { value: 'emag-1', label: 'iPhone 14 Pro Max' },
-    { value: 'emag-2', label: 'MacBook Air M2' },
-    { value: 'emag-3', label: 'AirPods Pro 2' },
-    { value: 'created-1', label: 'Gaming Mouse RGB' },
-    { value: 'created-2', label: 'Mechanical Keyboard' },
-    { value: 'created-3', label: 'Gaming Headset' }
-  ];
+  const {
+    visibleCards,
+    resetCalculatorValues,
+    handleNewCalculation,
+    setVisibleCards
+  } = useCalculatorReset(resetSavedCalculation, setSelectedProduct);
 
-  const [selectedProduct, setSelectedProduct] = useState('emag-1');
+  const { formatCurrency, formatPercentage } = useFormatting();
+
+
+  const {
+    expandedSections,
+    isExpanded,
+    isAnySectionExpanded,
+    handleSectionToggle,
+    handleToggleAll
+  } = useSectionToggle();
+
+
   const { state, dispatch } = useCalculator();
   const { categoryCalculations, totals } = useCalculations();
 
@@ -77,76 +98,8 @@ const Calculator = () => {
     });
   };
 
-  const [isExpanded, setIsExpanded] = useState(true);
   const [openProductModal, setOpenProductModal] = useState(false);
-  const [visibleCards, setVisibleCards] = useState<VisibleCards>({
-    'FBM-NonGenius': true,
-    'FBM-Genius': true,
-    'FBE': true
-  });
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
-  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
-    'FBM-NonGenius': {
-      sales: true,
-      commission: true,
-      fulfillment: true,
-      expenditures: true,
-      productCost: true,
-      taxes: true,
-      profit: true,
-    },
-    'FBM-Genius': {
-      sales: true,
-      commission: true,
-      fulfillment: true,
-      expenditures: true,
-      productCost: true,
-      taxes: true,
-      profit: true,
-    },
-    'FBE': {
-      sales: true,
-      commission: true,
-      fulfillment: true,
-      expenditures: true,
-      productCost: true,
-      taxes: true,
-      profit: true,
-    },
-  });
-
-  const handleSectionToggle = (category: CardKey, section: SectionKey) => {
-    setExpandedSections(prev => {
-      const newValue = !prev[category][section];
-      return Object.keys(prev).reduce((acc, cat) => ({
-        ...acc,
-        [cat]: {
-          ...prev[cat as CardKey],
-          [section]: newValue,
-        },
-      }), {} as ExpandedSections);
-    });
-  };
-
-  const handleToggleAll = () => {
-    const shouldExpand = !isAnySectionExpanded;
-    setIsExpanded(shouldExpand);
-    setExpandedSections(prev => 
-      Object.keys(prev).reduce((acc, category) => ({
-        ...acc,
-        [category]: Object.keys(prev[category as keyof ExpandedSections]).reduce((secAcc, section) => ({
-          ...secAcc,
-          [section]: shouldExpand,
-        }), {} as Record<SectionKey, boolean>),
-      }), {} as ExpandedSections)
-    );
-  };
-
-  const formatCurrency = (value: number, includeCurrency: boolean = true) => 
-    `${value.toFixed(2)}${includeCurrency ? ' RON' : ''}`;
-
-  const formatPercentage = (value: number) =>
-    `${value.toFixed(2)}%`;
 
   const handleUpdateCategory = (category: string, data: Partial<CategoryData>) => {
     if (state.syncValues && (data.salePrice !== undefined || data.shippingPrice !== undefined || data.otherExpenses !== undefined)) {
@@ -180,16 +133,10 @@ const Calculator = () => {
 
   const theme = useTheme();
 
-  const handleSettingsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setSettingsAnchorEl(event.currentTarget);
-  };
 
-  const handleSettingsClose = () => {
-    setSettingsAnchorEl(null);
-  };
 
   const handleCardVisibilityToggle = (cardKey: CardKey) => {
-    setVisibleCards(prev => {
+    setVisibleCards((prev: VisibleCards) => {
       // Count how many cards are currently visible
       const visibleCount = Object.values(prev).filter(Boolean).length;
       
@@ -206,91 +153,202 @@ const Calculator = () => {
     });
   };
 
-  // Calculate VAT to be paid
-  const calculateVATToBePaid = (category: string, data: CategoryData, vatRate: number) => {
-    // Fixed VAT rate of 19% for all sections except sales
-    const FIXED_VAT_RATE = 0.19;
-    const saleVatRate = vatRate/100;
-
-    // 1. Sales Section - VAT Collection (uses variable VAT rate)
-    const vatSales = (data.salePrice * saleVatRate) + (data.shippingPrice * saleVatRate);
-
-    // 2. eMAG Commission Section - Using the commission amount directly with fixed VAT rate
-    const commissionAmount = (data.salePrice + data.shippingPrice) * (data.commission / 100);
-    const vatEmag = commissionAmount * FIXED_VAT_RATE;
-
-    // 3. Fulfillment Section with fixed VAT rate
-    const shippingCost = category === 'FBM-Genius' ? 5 : category === 'FBE' ? 0 : data.fulfillmentShippingCost;
-    const vatFulfillment = (shippingCost + data.fulfillmentCost) * FIXED_VAT_RATE;
-
-    // 4. Expenditures Section with fixed VAT rate
-    const vatExpenditures = (data.otherExpenses || 0) * FIXED_VAT_RATE;
-
-    // 5. Product Cost Section with fixed VAT rate
-    let vatProductCost = 0;
-    if (state.purchaseType === 'china') {
-      // For China, use fixed VAT rate for customs calculation
-      const customsDuties = (data.productCost * data.customsDuty) / 100;
-      vatProductCost = (data.productCost + data.shippingCost + customsDuties) * FIXED_VAT_RATE;
-    } else {
-      // For Romania/Europe, use fixed VAT rate
-      vatProductCost = (data.productCost + data.shippingCost) * FIXED_VAT_RATE;
-    }
-
-    // 6. Final VAT to be paid calculation
-    const vatToBePaid = vatSales - vatEmag - vatFulfillment - vatExpenditures - vatProductCost;
-
-    // Round to 2 decimal places
-    return Number(vatToBePaid.toFixed(2));
-  };
-
   // Calculate how many cards are visible to determine flex basis
   const visibleCardCount = Object.values(visibleCards).filter(Boolean).length;
   const cardFlexBasis = visibleCardCount === 1 ? '70%' : visibleCardCount === 2 ? '48%' : '32%';
 
-  const calculateIncomeTax = (category: string, data: CategoryData) => {
-    if (categoryCalculations[category].taxRate === 16) {
-      // For 16% tax rate, calculate based on all components
-      const totalValue = (
-        (state.profileType === 'vat' ? categoryCalculations[category].revenueWithVAT : categoryCalculations[category].revenue) + 
-        -(categoryCalculations[category].commissionWithVAT) + 
-        -((category === 'FBE' ? 0 : category === 'FBM-Genius' ? 5 * (1 + 0.19) : data.fulfillmentShippingCost * (1 + 0.19)) + data.fulfillmentCost * (1 + 0.19)) +
-        -(data.otherExpenses * (1 + 0.19)) +
-        (state.purchaseType === 'china' 
-          ? -(data.productCost + data.shippingCost + (data.productCost * data.customsDuty / 100) + ((data.productCost + data.shippingCost + (data.productCost * data.customsDuty / 100)) * 0.19))
-          : -(data.productCost + data.shippingCost))
-      );
-      return Number((Number(totalValue.toFixed(2)) * 0.16).toFixed(2));
-    } else {
-      // For 1% or 3% tax rate, calculate based on revenue
-      return (state.profileType === 'vat' ? categoryCalculations[category].revenueWithVAT : categoryCalculations[category].revenue) * categoryCalculations[category].taxRate / 100;
-    }
-  };
-
-  const salesHeaderValues = useSalesStore((state) => state.salesHeaderValues);
-  const commissionHeaderValues = useCommissionStore((state) => state.commissionHeaderValues);
-  const fulfillmentHeaderValues = useFulfillmentStore((state) => state.fulfillmentHeaderValues);
-  const expenditureHeaderValues = useExpenditureStore((state) => state.expenditureHeaderValues);
-  const productCostHeaderValues = useProductCostStore((state) => state.productCostHeaderValues);
-  const taxValues = useTaxStore((state) => state.taxValues);
+ 
   const { netProfitValues, profitMarginValues } = useProfitStore();
 
-  const isAnySectionExpanded = Object.values(expandedSections).some(section => Object.values(section).includes(true));
+  // Handle product selection
+  const handleSelectProduct = async (value: string) => {
+    setSelectedProduct(value);
+    setOpenProductModal(false);
+    
+    if (!value) {
+      // If no product is selected, reset the calculator
+      return;
+    }
+    
+    // Check if this is a saved calculation
+    if (value.startsWith('saved-')) {
+      const calculationId = value.replace('saved-', '');
+      await loadSavedCalculation(calculationId);
+    }
+    // Handle eMAG integration product format (emag-integrationId-productId)
+    else if (value.startsWith('emag-') && value.split('-').length > 2) {
+      // Reset all values first
+      resetCalculatorValues();
+      
+      // If it's a new format eMAG product (emag-integrationId-productId)
+      if (value.split('-').length > 2) {
+        const [prefix, integrationId, productId] = value.split('-');
+        
+        // Find the product in the integrations data
+        if (integrationsData && integrationsData[integrationId]) {
+          const productOffer = integrationsData[integrationId].productOffers?.find(
+            (p: any) => p.id.toString() === productId
+          );
+          
+          if (productOffer) {
+            // Update calculator state with product data - only set values that are available
+            const salePrice = productOffer.sale_price || 0;
+            
+            // Get category ID and set commission if available
+            // Using any type since category_id is not part of the official EmagProductOffer type
+            const anyProductOffer = productOffer as any;
+            const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
+            let commission = null;
+            
+            if (categoryId) {
+              if (categoryId in categoryCommissions) {
+                // Convert commission to percentage (multiply by 100)
+                commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
+              } else {
+                // If category exists but not in our mapping, set commission to 0
+                commission = 0;
+              }
+              
+              // Update the global commission setting
+              dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+            }
+            
+            // Update all categories with the sale price and commission
+            Object.keys(state.categories).forEach((category) => {
+              const updateData: Partial<CategoryData> = { salePrice };
+              
+              // Add commission to update data if available
+              if (commission !== null) {
+                updateData.commission = commission;
+              }
+              
+                  dispatch({
+                    type: 'UPDATE_CATEGORY',
+                    payload: {
+                      category: category as keyof typeof state.categories,
+                  data: updateData
+                },
+              });
+            });
+            
+            // Check if this integration is FBE type and update visible cards accordingly
+            const integration = integrations.find(integration => integration._id === integrationId);
+            if (integration && integration.accountType === 'FBE') {
+              // For FBE integrations, only show the FBE calculator
+              setVisibleCards({
+                'FBM-NonGenius': false,
+                'FBM-Genius': false,
+                'FBE': true
+              });
+            } else {
+              // For non-FBE integrations, show all calculators
+              setVisibleCards({
+                'FBM-NonGenius': true,
+                'FBM-Genius': true,
+                'FBE': true
+              });
+            }
+          }
+        }
+      }
+      // Handle legacy static product format
+      else {
+        // Find the product in the static products
+        const staticProduct = staticProducts.emag.find(p => p.id === value);
+        if (staticProduct) {
+          const salePrice = parseFloat(staticProduct.price);
+          
+          // For static products, check if we have a category in the name (for demo purposes)
+          // Example: if the product name contains "Category 3038", we can extract that
+          const categoryMatch = staticProduct.name.match(/Category (\d+)/);
+          let commission = null;
+          
+          if (categoryMatch && categoryMatch[1]) {
+            const matchedCategoryId = categoryMatch[1];
+            if (matchedCategoryId in categoryCommissions) {
+              // Convert commission to percentage (multiply by 100)
+              commission = categoryCommissions[matchedCategoryId as keyof typeof categoryCommissions] * 100;
+            } else {
+              // If category exists but not in our mapping, set commission to 0
+              commission = 0;
+            }
+            
+            // Update the global commission setting
+            dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+          }
+          
+          // Update all categories with the sale price and commission
+          Object.keys(state.categories).forEach((category) => {
+            const updateData: Partial<CategoryData> = { salePrice };
+            
+            // Add commission to update data if available
+            if (commission !== null) {
+              updateData.commission = commission;
+            }
+            
+                  dispatch({
+                    type: 'UPDATE_CATEGORY',
+                    payload: {
+                      category: category as keyof typeof state.categories,
+                data: updateData
+              },
+                  });
+                });
+          
+          // For static products, show all calculators
+          setVisibleCards({
+            'FBM-NonGenius': true,
+            'FBM-Genius': true,
+            'FBE': true
+            });
+          }
+        }
+    }
+    // Handle created products
+    else if (value.startsWith('created-')) {
+      // Reset all values first
+      resetCalculatorValues();
+      
+      // Find the product in the static products
+      const staticProduct = staticProducts.created.find(p => p.id === value);
+      if (staticProduct) {
+        const salePrice = parseFloat(staticProduct.price);
+        
+        // Update all categories with only the sale price
+        Object.keys(state.categories).forEach((category) => {
+          dispatch({
+            type: 'UPDATE_CATEGORY',
+            payload: {
+              category: category as keyof typeof state.categories,
+              data: { 
+                salePrice
+                // Don't set product cost if not available in data
+              },
+            },
+          });
+        });
+        
+        // For created products, show all calculators
+        setVisibleCards({
+          'FBM-NonGenius': true,
+          'FBM-Genius': true,
+          'FBE': true
+        });
+      }
+    } else {
+      // Show all calculators by default
+      setVisibleCards({
+        'FBM-NonGenius': true,
+        'FBM-Genius': true,
+        'FBE': true
+      });
+    }
+  };
 
   return (
     <Box>
       {/* Header */}
-      <Typography 
-        variant="h5" 
-        sx={{ 
-          fontSize: '24px',
-          fontWeight: 600,
-          mb: 4,
-          color: 'text.primary'
-        }}
-      >
-        {t('calculator.general.title')}
-      </Typography>
+      <CalculatorHeader onNewCalculation={handleNewCalculation} />
 
       {/* Controls */}
       <Stack 
@@ -301,314 +359,39 @@ const Calculator = () => {
         mb={{ xs: 2, sm: 3 }}
       >
         {/* Product Selection Button */}
-        <Stack 
-          direction={{ xs: 'column', sm: 'row' }} 
-          spacing={{ xs: 1.5, sm: 2 }} 
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          width={{ xs: '100%', sm: 'auto' }}
-        >
-          <Button
-            variant="outlined"
-            onClick={() => setOpenProductModal(true)}
-            sx={{ 
-              minWidth: { xs: '100%', sm: '280px', md: '320px' },
-              maxWidth: '100%',
-              height: { xs: '40px', sm: '35px' },
-              justifyContent: 'space-between',
-              px: { xs: 1.5, sm: 2 },
-              py: 1,
-              color: 'text.primary',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'transparent',
-                color: 'text.primary'
-              }
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconPackage size={18} />
-              <Typography sx={{ fontSize: '13px' }}>
-                {selectedProduct ? allMenuItems.find(item => item.value === selectedProduct)?.label : t('calculator.general.selectProduct')}
-              </Typography>
-            </Stack>
-            <IconChevronRight size={18} />
-          </Button>
-
-          <ProductSelectionModal 
-            open={openProductModal}
-            onClose={() => setOpenProductModal(false)}
+        <ProductSelector
             selectedProduct={selectedProduct}
-            onSelectProduct={(value: string) => {
-              setSelectedProduct(value);
-              setOpenProductModal(false);
-            }}
+            onSelectProduct={handleSelectProduct}
+          getProductNameByValue={getProductNameByValue}
+            savedCalculations={savedCalculations}
+          loadingSavedCalculations={loadingSavedCalculations}
+          savedCalculationsError={savedCalculationsError}
+          integrationsData={integrationsData}
           />
-        </Stack>
 
         {/* Controls Stack */}
-        <Stack 
-          direction={{ xs: 'column', sm: 'row' }} 
-          spacing={2}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-        >
-          {/* Desktop Controls */}
-          <Stack 
-            direction="row" 
-            spacing={2}
-            alignItems="center"
-            sx={{ 
-              display: { xs: 'none', sm: 'flex' }
-            }}
-          >
-            {/* Sync Toggle */}
-            <Box sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              <Typography 
-                variant="body2" 
-                color="textSecondary"
-                sx={{ fontSize: '12px' }}
-              >
-                {t('calculator.general.syncAllValues')}
-              </Typography>
-              <Switch
-                size="small"
-                checked={state.syncValues}
-                onChange={(e) => dispatch({ type: 'SET_SYNC_VALUES', payload: e.target.checked })}
-              />
-            </Box>
-
-            {/* Expand/Collapse Button */}
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={isExpanded ? <IconLayoutCollage size={18} /> : <IconLayoutGrid size={18} />}
-              onClick={handleToggleAll}
-              sx={{
-                height: '35px',
-                px: 2,
-                borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                bgcolor: theme.palette.background.paper,
-                textTransform: 'none',
-                fontSize: '13px',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                '&:hover': {
-                  borderColor: theme.palette.text.primary,
-                  bgcolor: 'transparent',
-                  color: theme.palette.text.primary
-                }
-              }}
-            >
-              {isAnySectionExpanded ? t('calculator.general.collapseAll') : t('calculator.general.expandAll')}
-            </Button>
-
-            {/* Settings Button */}
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconSettings size={18} />}
-              onClick={handleSettingsClick}
-              sx={{
-                height: '35px',
-                px: 2,
-                borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                bgcolor: theme.palette.background.paper,
-                textTransform: 'none',
-                fontSize: '13px',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                '&:hover': {
-                  borderColor: theme.palette.text.primary,
-                  bgcolor: 'transparent',
-                  color: theme.palette.text.primary
-                }
-              }}
-            >
-              {t('calculator.general.chooseCalculator')}
-            </Button>
-
-            {/* Save Calculation Button */}
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<IconDeviceFloppy size={18} />}
-              sx={{
-                bgcolor: '#00c292',
-                color: 'white',
-                '&:hover': {
-                  bgcolor: '#00a67d',
-                },
-                px: { sm: 2.5 },
-                height: '35px',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '13px',
-                fontWeight: 500,
-                boxShadow: 'none',
-                minWidth: 'auto',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {t('calculator.general.saveCalculation')}
-            </Button>
-          </Stack>
-
-          {/* Mobile Controls */}
-          <Box 
-            sx={{ 
-              display: { xs: 'block', sm: 'none' },
-              width: '100%'
-            }}
-          >
-            {/* Settings Button - Mobile */}
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconSettings size={18} />}
-              onClick={handleSettingsClick}
-              sx={{
-                height: '35px',
-                px: 1,
-                width: '100%',
-                borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                bgcolor: theme.palette.background.paper,
-                textTransform: 'none',
-                fontSize: '12px',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                mb: 1,
-                '&:hover': {
-                  borderColor: theme.palette.text.primary,
-                  bgcolor: 'transparent',
-                  color: theme.palette.text.primary
-                }
-              }}
-            >
-              {t('calculator.general.chooseCalculator')}
-            </Button>
-
-            {/* Sync and Expand Controls - Mobile */}
-            <Stack 
-              direction="row" 
-              spacing={0}
-              alignItems="center"
-              justifyContent="space-between"
-              width="100%"
-            >
-              <Box 
-                sx={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5
-                }}
-              >
-                <Typography 
-                  variant="body2" 
-                  color="textSecondary"
-                  sx={{ fontSize: '11px' }}
-                >
-                  {t('calculator.general.syncAllValues')}
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={state.syncValues}
-                  onChange={(e) => dispatch({ type: 'SET_SYNC_VALUES', payload: e.target.checked })}
-                />
-              </Box>
-
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={isExpanded ? <IconLayoutCollage size={18} /> : <IconLayoutGrid size={18} />}
-                onClick={handleToggleAll}
-                sx={{
-                  height: '35px',
-                  px: 1,
-                  borderColor: theme.palette.divider,
-                  color: theme.palette.text.primary,
-                  bgcolor: theme.palette.background.paper,
-                  textTransform: 'none',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                  '&:hover': {
-                    borderColor: theme.palette.text.primary,
-                    bgcolor: 'transparent',
-                    color: theme.palette.text.primary
-                  }
-                }}
-              >
-                {isAnySectionExpanded ? t('calculator.general.collapseAll') : t('calculator.general.expandAll')}
-              </Button>
-            </Stack>
-          </Box>
-
-          {/* Settings Menu */}
-          <Menu
-            anchorEl={settingsAnchorEl}
-            open={Boolean(settingsAnchorEl)}
-            onClose={handleSettingsClose}
-            PaperProps={{
-              sx: {
-                mt: 1.5,
-                boxShadow: theme.shadows[8],
-                minWidth: 200
-              }
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                px: 2,
-                py: 1,
-                display: 'block',
-                color: 'text.secondary'
-              }}
-            >
-              {t('calculator.general.showHideCards')}
-            </Typography>
-            {(Object.keys(visibleCards) as CardKey[]).map((cardKey) => (
-              <MenuItem
-                key={cardKey}
-                onClick={(e: React.MouseEvent<HTMLLIElement>) => {
-                  const target = e.target as HTMLElement;
-                  if (target.closest('.MuiSwitch-root')) {
-                    return;
-                  }
-                  handleCardVisibilityToggle(cardKey);
-                }}
-                sx={{
-                  py: 1,
-                  px: 2
-                }}
-              >
-                <Stack direction="row" alignItems="center" spacing={1} width="100%">
-                  <Switch
-                    size="small"
-                    checked={visibleCards[cardKey]}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleCardVisibilityToggle(cardKey);
-                    }}
-                    className="MuiSwitch-root"
-                  />
-                  <Typography variant="body2">
-                    {t(`calculator.cards.${cardKey}`)}
-                  </Typography>
-                </Stack>
-              </MenuItem>
-            ))}
-          </Menu>
-        </Stack>
+        <CalculatorControls
+          syncValues={state.syncValues}
+          onSyncValuesChange={(value) => dispatch({ type: 'SET_SYNC_VALUES', payload: value })}
+          isExpanded={isExpanded}
+          isAnySectionExpanded={isAnySectionExpanded}
+          onToggleAll={handleToggleAll}
+          visibleCards={visibleCards}
+          onCardVisibilityToggle={handleCardVisibilityToggle}
+          onOpenSaveModal={() => setOpenSaveModal(true)}
+        />
       </Stack>
+
+      {/* Save Calculation Modal */}
+      <SaveCalculationModal
+        open={openSaveModal}
+        onClose={() => setOpenSaveModal(false)}
+        calculatorState={state}
+        onSaveSuccess={handleSaveSuccess}
+        savedCalculationId={currentSavedCalculationId}
+        initialTitle={currentSavedCalculationTitle}
+        initialDescription={currentSavedCalculationDescription}
+      />
 
       {/* Category Cards */}
       <Box sx={{ 
@@ -821,30 +604,7 @@ const Calculator = () => {
         </Stack>
 
         {/* Save Calculation Button - Show only on mobile, after cards */}
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<IconDeviceFloppy size={18} />}
-          sx={{
-            display: { xs: 'flex', sm: 'none' },
-            bgcolor: '#00c292',
-            color: 'white',
-            '&:hover': {
-              bgcolor: '#00a67d',
-            },
-            px: 2.5,
-            height: '40px',
-            borderRadius: '8px',
-            textTransform: 'none',
-            fontSize: '13px',
-            fontWeight: 500,
-            boxShadow: 'none',
-            width: '100%',
-            mt: 3
-          }}
-        >
-          {t('calculator.general.saveCalculation')}
-        </Button>
+        <MobileSaveButton onOpenSaveModal={() => setOpenSaveModal(true)} />
       </Box>
 
       {/* Sales Estimator Section */}

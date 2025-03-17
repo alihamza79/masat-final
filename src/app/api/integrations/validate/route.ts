@@ -9,7 +9,7 @@ import Integration from '@/models/Integration';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, region, integrationId, accountName } = await request.json();
+    const { username, password, region, integrationId, accountName, accountType } = await request.json();
     
     if (!username || !region) {
       return NextResponse.json(
@@ -44,15 +44,24 @@ export async function POST(request: NextRequest) {
     if (accountName && !integrationId) {
       await connectToDatabase();
       
-      // Check for existing account name or username
-      const existingIntegration = await Integration.findOne({
-        $or: [{ accountName }, { username }]
+      // Check for existing account name (must be unique regardless of region)
+      const existingAccountName = await Integration.findOne({ accountName });
+      if (existingAccountName) {
+        return NextResponse.json(
+          { success: false, error: `An integration with this account name already exists` },
+          { status: 409 }
+        );
+      }
+      
+      // Check for existing username AND region combination
+      const existingUsernameAndRegion = await Integration.findOne({ 
+        username, 
+        region 
       });
       
-      if (existingIntegration) {
-        const field = existingIntegration.accountName === accountName ? 'account name' : 'username';
+      if (existingUsernameAndRegion) {
         return NextResponse.json(
-          { success: false, error: `An integration with this ${field} already exists` },
+          { success: false, error: `An integration with this username and region already exists` },
           { status: 409 }
         );
       }
@@ -61,16 +70,29 @@ export async function POST(request: NextRequest) {
     else if (accountName && integrationId) {
       await connectToDatabase();
       
-      // Check for duplicates excluding the current integration
-      const duplicate = await Integration.findOne({
+      // Check for duplicate account name (excluding current integration)
+      const duplicateAccountName = await Integration.findOne({
         _id: { $ne: integrationId },
-        $or: [{ accountName }, { username }]
+        accountName
       });
       
-      if (duplicate) {
-        const field = duplicate.accountName === accountName ? 'account name' : 'username';
+      if (duplicateAccountName) {
         return NextResponse.json(
-          { success: false, error: `An integration with this ${field} already exists` },
+          { success: false, error: `An integration with this account name already exists` },
+          { status: 409 }
+        );
+      }
+      
+      // Check for duplicate username AND region combination (excluding current integration)
+      const duplicateUsernameAndRegion = await Integration.findOne({
+        _id: { $ne: integrationId },
+        username,
+        region
+      });
+      
+      if (duplicateUsernameAndRegion) {
+        return NextResponse.json(
+          { success: false, error: `An integration with this username and region already exists` },
           { status: 409 }
         );
       }

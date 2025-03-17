@@ -159,6 +159,27 @@ const IntegrationsTableRow = memo(({
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Box display="flex" justifyContent="center">
+          <Chip
+            label={integration.accountType || '-'}
+            size="small"
+            sx={{
+              backgroundColor: 
+                integration.accountType === 'FBE' || integration.accountType === 'Non-FBE' 
+                  ? 'rgba(96, 125, 139, 0.1)' 
+                  : 'rgba(224, 224, 224, 0.5)',
+              color: 
+                integration.accountType === 'FBE' || integration.accountType === 'Non-FBE' 
+                  ? 'text.primary' 
+                  : 'text.secondary',
+              fontWeight: 500,
+              borderRadius: '4px',
+              px: 1
+            }}
+          />
+        </Box>
+      </TableCell>
+      <TableCell sx={{ textAlign: 'center' }}>
+        <Box display="flex" justifyContent="center">
           {renderImportStatusChip()}
         </Box>
       </TableCell>
@@ -265,7 +286,7 @@ const IntegrationsTable: React.FC<IntegrationsTableProps> = ({
         borderRadius="8px"
       >
         <Typography color="textSecondary">
-          {t('integrations.table.noData')}
+          {t('integrations.noIntegrations')}
         </Typography>
       </Box>
     );
@@ -280,6 +301,7 @@ const IntegrationsTable: React.FC<IntegrationsTableProps> = ({
               <TableCell sx={{ minWidth: 200 }}>{t('integrations.table.accountName')}</TableCell>
               <TableCell sx={{ minWidth: 200 }}>{t('integrations.table.username')}</TableCell>
               <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>{t('integrations.table.region')}</TableCell>
+              <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>{t('integrations.table.accountType')}</TableCell>
               <TableCell sx={{ minWidth: 150, textAlign: 'center' }}>{t('integrations.table.importStatus')}</TableCell>
               <TableCell sx={{ minWidth: 150, textAlign: 'center' }}>{t('integrations.table.productOffers')}</TableCell>
               <TableCell sx={{ minWidth: 120, textAlign: 'center' }}>{t('integrations.table.orderCount')}</TableCell>

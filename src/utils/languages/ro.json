@@ -72,8 +72,21 @@
             "showHideCards": "Arată/Ascunde Carduri",
             "selectProduct": "Selectează Produs",
             "saveCalculation": "Salvează Calculul",
+            "newCalculation": "Calcul Nou",
             "chooseCalculator": "Alege Calculator",
             "syncAllValues": "Sincronizează Toate Valorile"
+        },
+        "saveCalculation": {
+            "title": "Salvează Calculul",
+            "updateTitle": "Actualizează Calculul",
+            "titleField": "Titlu",
+            "descriptionField": "Descriere (opțional)",
+            "save": "Salvează",
+            "update": "Actualizează",
+            "cancel": "Anulează",
+            "saveSuccess": "Calculul a fost salvat cu succes!",
+            "updateSuccess": "Calculul a fost actualizat cu succes!",
+            "noSavedCalculations": "Nu s-au găsit calcule salvate"
         },
         "cards": {
             "FBM-NonGenius": "FBM-NonGenius",
@@ -156,7 +169,14 @@
                 "title": "Produse Create",
                 "subtitle": "Produse Create Personalizat"
             },
-            "price": "RON"
+            "price": "RON",
+            "noSavedCalculations": "Nu s-au găsit calcule salvate. Salvați un calcul pentru a-l vedea aici.",
+            "searchProducts": "Caută produse...",
+            "searchSavedCalculations": "Caută calcule salvate...",
+            "productsFound": "produse găsite",
+            "calculationsFound": "calcule găsite",
+            "noProductsFound": "Niciun produs nu corespunde criteriilor de căutare",
+            "noSavedCalculationsFound": "Niciun calcul salvat nu corespunde criteriilor de căutare"
         }
     },
     "analytics": {
@@ -181,6 +201,7 @@
             "accountName": "Nume Cont",
             "username": "Nume Utilizator",
             "region": "Regiune",
+            "accountType": "Tip Cont",
             "importStatus": "Stare Import",
             "productOffers": "Nr. Oferte Produse",
             "orderCount": "Nr. Comenzi",
@@ -199,7 +220,7 @@
         "form": {
             "addTitle": "Adaugă Integrare Nouă eMAG",
             "editTitle": "Editează Integrarea eMAG",
-            "addInfo": "Pluginul va permite sa preluati comenzi de la eMAG la managerul de comenzi Base.com. Dupa rularea pluginului, trebuie sa il configurati prin introducerea login-ului si parolei contului dvs. eMAG. Comenzile noi de la eMAG vor fi preluate in sistem la fiecare 5 minute si vor fi marcate special pe lista de comenzi.",
+            "addInfo": "Pluginul va permite sa preluati comenzi de la eMAG la managerul de comenzi Base.com. Dupa rularea pluginului, trebuie sa il configurati prin introducerea login-ului si parolei contului dvs. eMAG. Comenzile noi de la eMAG vor fi preluate in sistem la fiecare 10 minute si vor fi marcate special pe lista de comenzi.",
             "editInfo": "Actualizați setările integrării eMAG mai jos. Asigurați-vă că păstrați datele de autentificare în siguranță.",
             "ipInfo": "În panoul eMAG (Contul Meu \"Profil\" Detalii tehnice) adăugați IP-ul partenerului 3.73.11.186",
             "fields": {
@@ -208,7 +229,10 @@
                 "username": "Nume Utilizator",
                 "password": "Parolă",
                 "passwordPlaceholder": "••••••••",
-                "passwordHelp": "Lăsați gol pentru a păstra parola actuală"
+                "passwordHelp": "Lăsați gol pentru a păstra parola actuală",
+                "accountType": "Tip Cont",
+                "fbe": "FBE",
+                "nonFbe": "Non-FBE"
             },
             "buttons": {
                 "cancel": "Anulează",
@@ -235,7 +259,9 @@
             "missingId": "Nu se poate actualiza integrarea: ID lipsă",
             "fillFields": "Vă rugăm să completați toate câmpurile obligatorii",
             "invalidCredentials": "Date de autentificare invalide",
-            "processingError": "Eroare la procesarea integrării"
+            "processingError": "Eroare la procesarea integrării",
+            "duplicateAccountName": "Există deja o integrare cu acest nume de cont",
+            "duplicateUsernameAndRegion": "Există deja o integrare cu acest nume de utilizator și regiune"
         },
         "ipDialog": {
             "title": "Configurare IP Necesară",

@@ -33,19 +33,16 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
     }
   }, [integrationsError, emagDataError]);
 
-  // Refetch eMAG orders when integrations change
+  // Add a new useEffect that only runs on initial load
   useEffect(() => {
+    // Only fetch data on initial load
     if (integrations.length > 0 && !isLoadingIntegrations) {
+      console.log('Initial data load for integrations');
       refetchOrders();
-    }
-  }, [integrations, isLoadingIntegrations, refetchOrders]);
-
-  // Refetch eMAG product offers when integrations change
-  useEffect(() => {
-    if (integrations.length > 0 && !isLoadingIntegrations) {
       refetchProductOffers();
     }
-  }, [integrations, isLoadingIntegrations, refetchProductOffers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingIntegrations]); // Only depend on loading state, not integrations array
 
   // For now, we'll just render the children
   // In a more complex implementation, you might want to add a loading indicator

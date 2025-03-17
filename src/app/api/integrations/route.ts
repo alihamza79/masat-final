@@ -36,10 +36,11 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { accountName, username, password, region } = body;
+    const { accountName, username, password, region, accountType } = body;
 
     // Validate required fields
-    if (!accountName || !username || !password || !region) {
+    if (!accountName || !username || !password || !region || !accountType) {
+      console.log('Missing required fields:', { accountName, username, password, region, accountType });
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -62,15 +63,24 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    // Check for duplicate account name or username
-    const existingIntegration = await Integration.findOne({
-      $or: [{ accountName }, { username }]
-    });
-
-    if (existingIntegration) {
-      const field = existingIntegration.accountName === accountName ? 'account name' : 'username';
+    // Check for existing account name (must be unique regardless of region)
+    const existingAccountName = await Integration.findOne({ accountName });
+    if (existingAccountName) {
       return NextResponse.json(
-        { success: false, error: `An integration with this ${field} already exists` },
+        { success: false, error: `An integration with this account name already exists` },
+        { status: 409 }
+      );
+    }
+    
+    // Check for existing username AND region combination
+    const existingUsernameAndRegion = await Integration.findOne({ 
+      username, 
+      region 
+    });
+    
+    if (existingUsernameAndRegion) {
+      return NextResponse.json(
+        { success: false, error: `An integration with this username and region already exists` },
         { status: 409 }
       );
     }
@@ -80,7 +90,8 @@ export async function POST(request: NextRequest) {
       accountName,
       username,
       password: encrypt(decodedPassword),
-      region
+      region,
+      accountType
     });
 
     // Save to database
@@ -93,7 +104,8 @@ export async function POST(request: NextRequest) {
         _id: integration._id,
         accountName: integration.accountName,
         username: integration.username,
-        region: integration.region
+        region: integration.region,
+        accountType: integration.accountType
       }
     });
   } catch (error: any) {
@@ -110,10 +122,10 @@ export async function PUT(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { _id, accountName, username, password, region } = body;
+    const { _id, accountName, username, password, region, accountType } = body;
 
     // Validate required fields
-    if (!_id || !accountName || !username || !region) {
+    if (!_id || !accountName || !username || !region || !accountType) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -131,19 +143,29 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Check for duplicate account name or username (excluding current integration)
-    const duplicate = await Integration.findOne({
+    // Check for duplicate account name (excluding current integration)
+    const duplicateAccountName = await Integration.findOne({
       _id: { $ne: _id },
-      $or: [
-        { accountName },
-        { username }
-      ]
+      accountName
     });
-
-    if (duplicate) {
-      const field = duplicate.accountName === accountName ? 'account name' : 'username';
+    
+    if (duplicateAccountName) {
       return NextResponse.json(
-        { success: false, error: `An integration with this ${field} already exists` },
+        { success: false, error: `An integration with this account name already exists` },
+        { status: 409 }
+      );
+    }
+    
+    // Check for duplicate username AND region combination (excluding current integration)
+    const duplicateUsernameAndRegion = await Integration.findOne({
+      _id: { $ne: _id },
+      username,
+      region
+    });
+    
+    if (duplicateUsernameAndRegion) {
+      return NextResponse.json(
+        { success: false, error: `An integration with this username and region already exists` },
         { status: 409 }
       );
     }
@@ -174,7 +196,8 @@ export async function PUT(request: NextRequest) {
         accountName,
         username,
         password: encryptedPassword,
-        region
+        region,
+        accountType
       },
       { new: true, select: '-password' }
     );
