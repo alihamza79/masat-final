@@ -48,7 +48,7 @@ const CalculatorHeader: React.FC<CalculatorHeaderProps> = ({ onNewCalculation })
           minWidth: '28px',
           borderRadius: '5px',
           textTransform: 'none',
-          fontSize: '11px',
+          fontSize: '12px',
           fontWeight: 500,
           boxShadow: 'none'
         }}
