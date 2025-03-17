@@ -72,8 +72,21 @@
             "showHideCards": "Show/Hide Cards",
             "selectProduct": "Select Product",
             "saveCalculation": "Save Calculation",
+            "newCalculation": "New Calculation",
             "chooseCalculator": "Choose Calculator",
             "syncAllValues": "Sync All Values"
+        },
+        "saveCalculation": {
+            "title": "Save Calculation",
+            "updateTitle": "Update Calculation",
+            "titleField": "Title",
+            "descriptionField": "Description (optional)",
+            "save": "Save",
+            "update": "Update",
+            "cancel": "Cancel",
+            "saveSuccess": "Calculation saved successfully!",
+            "updateSuccess": "Calculation updated successfully!",
+            "noSavedCalculations": "No saved calculations found"
         },
         "cards": {
             "FBM-NonGenius": "FBM-NonGenius",
@@ -156,7 +169,14 @@
                 "title": "Created Products",
                 "subtitle": "Custom Created Products"
             },
-            "price": "RON"
+            "price": "RON",
+            "noSavedCalculations": "No saved calculations found. Save a calculation to see it here.",
+            "searchProducts": "Search products...",
+            "searchSavedCalculations": "Search saved calculations...",
+            "productsFound": "products found",
+            "calculationsFound": "calculations found",
+            "noProductsFound": "No products match your search criteria",
+            "noSavedCalculationsFound": "No saved calculations match your search criteria"
         }
     },
     "analytics": {
@@ -181,6 +201,7 @@
             "accountName": "Account Name",
             "username": "Username",
             "region": "Region",
+            "accountType": "Account Type",
             "importStatus": "Import Status",
             "productOffers": "No. Product Offers",
             "orderCount": "No. Orders",
@@ -199,7 +220,7 @@
         "form": {
             "addTitle": "Add New eMAG Integration",
             "editTitle": "Edit eMAG Integration",
-            "addInfo": "The plugin will allow you to receive orders from eMAG to the Base.com order manager. After running the plugin, you need to configure it by entering your eMAG account login and password. New orders from eMAG will be imported into the system every 5 minutes and will be specially marked on the orders list.",
+            "addInfo": "The plugin will allow you to receive orders from eMAG to the Base.com order manager. After running the plugin, you need to configure it by entering your eMAG account login and password. New orders from eMAG will be imported into the system every 10 minutes and will be specially marked on the orders list.",
             "editInfo": "Update your eMAG integration settings below. Make sure to keep your credentials secure.",
             "ipInfo": "In the eMAG panel (My Account \"Profile\" Technical details) add the partner's IP 51.77.52.107",
             "fields": {
@@ -208,7 +229,10 @@
                 "username": "Username",
                 "password": "Password",
                 "passwordPlaceholder": "••••••••",
-                "passwordHelp": "Leave blank to keep current password"
+                "passwordHelp": "Leave blank to keep current password",
+                "accountType": "Account Type",
+                "fbe": "FBE",
+                "nonFbe": "Non-FBE"
             },
             "buttons": {
                 "cancel": "Cancel",
@@ -235,7 +259,9 @@
             "missingId": "Cannot update integration: Missing ID",
             "fillFields": "Please fill in all required fields",
             "invalidCredentials": "Invalid credentials",
-            "processingError": "Failed to process integration"
+            "processingError": "Failed to process integration",
+            "duplicateAccountName": "An integration with this account name already exists",
+            "duplicateUsernameAndRegion": "An integration with this username and region already exists"
         },
         "ipDialog": {
             "title": "IP Configuration Required",

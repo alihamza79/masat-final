@@ -120,7 +120,10 @@ export async function GET(
         integrationId: id
       }));
       
-      allProductOffers = [...allProductOffers, ...productOffersWithIntegrationId];
+      // Filter out any EOL products (status=2) that might have slipped through
+      const filteredProductOffers = productOffersWithIntegrationId.filter(offer => offer.status !== 2);
+      
+      allProductOffers = [...allProductOffers, ...filteredProductOffers];
       
       // If there are no results or we've reached the end, break the loop
       if (!productOffersResponse.results.length) {

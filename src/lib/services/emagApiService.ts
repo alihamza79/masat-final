@@ -81,7 +81,8 @@ export class EmagApiService {
       headers: {
         'Authorization': this.authHeader,
         'Content-Type': 'application/json',
-      }
+      },
+      timeout: 0
     });
   }
 

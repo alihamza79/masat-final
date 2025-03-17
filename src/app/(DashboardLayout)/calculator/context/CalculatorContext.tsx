@@ -23,6 +23,7 @@ export interface CalculatorState {
   purchaseType: string;
   vatRateOfPurchase: string;
   syncValues: boolean;
+  emagCommission: string;
 }
 
 type Action =
@@ -34,6 +35,7 @@ type Action =
   | { type: 'SET_PURCHASE_TYPE'; payload: string }
   | { type: 'SET_VAT_RATE_OF_PURCHASE'; payload: string }
   | { type: 'SET_SYNC_VALUES'; payload: boolean }
+  | { type: 'SET_EMAG_COMMISSION'; payload: string }
   | { type: 'RESET' };
 
 const initialState: CalculatorState = {
@@ -85,6 +87,7 @@ const initialState: CalculatorState = {
   purchaseType: 'romania',
   vatRateOfPurchase: '19',
   syncValues: true,
+  emagCommission: '20',
 };
 
 function calculatorReducer(state: CalculatorState, action: Action): CalculatorState {
@@ -167,6 +170,12 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
       return {
         ...state,
         syncValues: action.payload,
+      };
+
+    case 'SET_EMAG_COMMISSION':
+      return {
+        ...state,
+        emagCommission: action.payload,
       };
 
     case 'RESET':

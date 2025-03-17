@@ -10,6 +10,8 @@ import {
   Integration
 } from '@/lib/services/integrationService';
 import { IntegrationFormData } from '@/app/(DashboardLayout)/integrations/components/IntegrationFormDialog';
+import axios from 'axios';
+import { decryptResponse } from '@/lib/utils/responseEncryption';
 
 // Query key for integrations
 export const INTEGRATIONS_QUERY_KEY = ['integrations'];
@@ -20,7 +22,7 @@ const INTEGRATIONS_FETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 export const useIntegrations = () => {
   const queryClient = useQueryClient();
   const { integrations: storeIntegrations, setIntegrations, addIntegration, updateIntegration: updateStoreIntegration, removeIntegration } = useIntegrationsStore();
-  const { setIntegrationImportStatus, removeIntegrationData } = useEmagDataStore();
+  const { setIntegrationImportStatus, setIntegrationData, removeIntegrationData } = useEmagDataStore();
 
   // Fetch integrations
   const { data, isLoading, error, refetch } = useQuery({
@@ -51,6 +53,43 @@ export const useIntegrations = () => {
     
     return () => clearInterval(intervalId);
   }, [refetch]);
+
+  // Utility function to fetch data for a single integration
+  const fetchIntegrationData = async (integrationId: string) => {
+    try {
+      // Fetch orders
+      const ordersResponse = await axios.get(`/api/integrations/${integrationId}/orders`);
+      if (ordersResponse.data.success) {
+        const responseData = ordersResponse.data.data;
+        const decryptedOrders = JSON.parse(decryptResponse(responseData.orderData));
+        setIntegrationData(integrationId, {
+          orders: decryptedOrders.orders,
+          ordersCount: decryptedOrders.ordersCount,
+          ordersFetched: true,
+          lastUpdated: responseData.lastUpdated
+        });
+      }
+
+      // Fetch product offers
+      const productOffersResponse = await axios.get(`/api/integrations/${integrationId}/product-offers`);
+      if (productOffersResponse.data.success) {
+        const responseData = productOffersResponse.data.data;
+        const decryptedProducts = JSON.parse(decryptResponse(responseData.productOffersData));
+        setIntegrationData(integrationId, {
+          productOffers: decryptedProducts.productOffers,
+          productOffersCount: decryptedProducts.productOffersCount,
+          productOffersFetched: true,
+          lastUpdated: responseData.lastUpdated
+        });
+      }
+
+      // Set success status
+      setIntegrationImportStatus(integrationId, 'success');
+    } catch (error: any) {
+      console.error(`Error fetching data for integration ${integrationId}:`, error);
+      setIntegrationImportStatus(integrationId, 'error', error.message || 'Failed to fetch data');
+    }
+  };
 
   // Create integration mutation
   const createIntegrationMutation = useMutation({
@@ -90,15 +129,22 @@ export const useIntegrations = () => {
         throw error;
       }
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       const integration = result.success && result.integration;
-      if (!integration) return;
+      if (!integration || !integration._id) return;
       
       // Update store and cache directly
       updateStoreIntegration(integration);
       queryClient.setQueryData(INTEGRATIONS_QUERY_KEY, (old: Integration[] = []) => 
         old.map(item => item._id === integration._id ? integration : item)
       );
+
+      // Refetch data for only the updated integration
+      try {
+        await fetchIntegrationData(integration._id);
+      } catch (err: any) {
+        console.error(`Error refetching data for integration ${integration.accountName}:`, err);
+      }
     }
   });
 

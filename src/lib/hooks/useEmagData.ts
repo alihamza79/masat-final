@@ -12,7 +12,7 @@ export const EMAG_ORDERS_QUERY_KEY = 'emag-orders';
 export const EMAG_PRODUCT_OFFERS_QUERY_KEY = 'emag-product-offers';
 
 // Fetch intervals
-const ORDERS_FETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const ORDERS_FETCH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const PRODUCT_OFFERS_FETCH_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
 
 export const useEmagData = () => {
@@ -112,7 +112,7 @@ export const useEmagData = () => {
     error: ordersError, 
     refetch: refetchOrders 
   } = useQuery({
-    queryKey: [EMAG_ORDERS_QUERY_KEY, integrations.map(integration => integration._id)],
+    queryKey: [EMAG_ORDERS_QUERY_KEY],
     queryFn: async () => {
       const results = await Promise.all(
         integrations.map(async (integration) => {
@@ -136,7 +136,7 @@ export const useEmagData = () => {
     error: productOffersError, 
     refetch: refetchProductOffers 
   } = useQuery({
-    queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY, integrations.map(integration => integration._id)],
+    queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY],
     queryFn: async () => {
       const results = await Promise.all(
         integrations.map(async (integration) => {

@@ -11,6 +11,7 @@ export interface Integration {
   accountName: string;
   username: string;
   region: string;
+  accountType: string;
 }
 
 /**
@@ -28,7 +29,8 @@ export async function validateIntegration(data: IntegrationFormData & { integrat
       username: data.username,
       region: data.region,
       integrationId: data.integrationId,
-      accountName: data.accountName
+      accountName: data.accountName,
+      accountType: data.accountType
     };
 
     // Only add password to payload if it's provided, and encode it

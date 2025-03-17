@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Stack,
@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import CustomSelect from '@/app/components/forms/theme-elements/CustomSelect';
 import CustomTextField from '@/app/components/forms/theme-elements/CustomTextField';
-import { IconInfoCircle } from '@tabler/icons-react';
+import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { useTranslation } from 'react-i18next';
 
@@ -23,12 +23,22 @@ const TradeProfiles = () => {
   const { state, dispatch } = useCalculator();
 
   // State for form values
-  const [profileType, setProfileType] = React.useState('profile');
-  const [vatRateFromSale, setVatRateFromSale] = React.useState('19');
-  const [emagCommission, setEmagCommission] = React.useState('20');
-  const [taxRate, setTaxRate] = React.useState('3');
-  const [purchaseType, setPurchaseType] = React.useState('romania');
-  const [vatRateOfPurchase, setVatRateOfPurchase] = React.useState('19');
+  const [profileType, setProfileType] = React.useState(state.profileType);
+  const [vatRateFromSale, setVatRateFromSale] = React.useState(state.vatRate.toString());
+  const [emagCommission, setEmagCommission] = React.useState(state.emagCommission);
+  const [taxRate, setTaxRate] = React.useState(state.taxRate.toString());
+  const [purchaseType, setPurchaseType] = React.useState(state.purchaseType);
+  const [vatRateOfPurchase, setVatRateOfPurchase] = React.useState(state.vatRateOfPurchase);
+
+  // Sync local state with context state
+  useEffect(() => {
+    setProfileType(state.profileType);
+    setVatRateFromSale(state.vatRate.toString());
+    setEmagCommission(state.emagCommission);
+    setTaxRate(state.taxRate.toString());
+    setPurchaseType(state.purchaseType);
+    setVatRateOfPurchase(state.vatRateOfPurchase);
+  }, [state.profileType, state.vatRate, state.emagCommission, state.taxRate, state.purchaseType, state.vatRateOfPurchase]);
 
   // Handle changes and update calculator
   const handleVatRateChange = (e: SelectChangeEvent<unknown>) => {
@@ -48,6 +58,8 @@ const TradeProfiles = () => {
     // Only allow numbers and validate range
     if (value === '' || (Number(value) >= 0 && Number(value) <= 100)) {
       setEmagCommission(value);
+      dispatch({ type: 'SET_EMAG_COMMISSION', payload: value });
+      
       // Update commission for all categories if value is not empty
       if (value !== '') {
         Object.keys(state.categories).forEach((category) => {
@@ -65,7 +77,7 @@ const TradeProfiles = () => {
 
   const handleProfileTypeChange = (e: React.MouseEvent<HTMLElement>, value: string | null) => {
     if (value) {
-      setProfileType(value);
+      setProfileType(value as 'profile' | 'vat');
       dispatch({ type: 'SET_PROFILE_TYPE', payload: value as 'profile' | 'vat' });
     }
   };
