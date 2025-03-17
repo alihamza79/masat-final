@@ -16,7 +16,6 @@ import {
   Paper,
   CircularProgress
 } from '@mui/material';
-import BlankCard from '@/app/components/shared/BlankCard';
 import { Box, Stack } from '@mui/system';
 import { IconDotsVertical, IconEdit, IconTrash, IconCheck, IconX } from '@tabler/icons-react';
 import IntegrationFormDialog, { IntegrationFormData } from './IntegrationFormDialog';

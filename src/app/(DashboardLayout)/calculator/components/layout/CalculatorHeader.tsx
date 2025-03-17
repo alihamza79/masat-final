@@ -14,60 +14,28 @@ const CalculatorHeader: React.FC<CalculatorHeaderProps> = ({ onNewCalculation })
 
   return (
     <Stack 
-      direction={{ xs: 'column', sm: 'row' }} 
-      justifyContent="space-between"
+      direction="row" 
+      justifyContent="flex-start"
       alignItems="center"
       mb={{ xs: 2, sm: 4 }}
     >
-      <Stack 
-        direction={{ xs: 'row', sm: 'row' }} 
-        justifyContent="space-between"
-        alignItems="center"
-        width={{ xs: '100%', sm: 'auto' }}
-        mb={{ xs: 2, sm: 0 }}
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          fontSize: '24px',
+          fontWeight: 600,
+          color: 'text.primary',
+          mr: 2
+        }}
       >
-        <Typography 
-          variant="h5" 
-          sx={{ 
-            fontSize: '24px',
-            fontWeight: 600,
-            color: 'text.primary'
-          }}
-        >
-          {t('calculator.general.title')}
-        </Typography>
-        
-        {/* New Calculation Button in Header - Mobile */}
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<IconRefresh size={18} />}
-          onClick={onNewCalculation}
-          sx={{
-            bgcolor: theme.palette.primary.main,
-            color: 'white',
-            '&:hover': {
-              bgcolor: theme.palette.primary.dark,
-            },
-            px: 1.5,
-            height: '38px',
-            borderRadius: '8px',
-            textTransform: 'none',
-            fontSize: '13px',
-            fontWeight: 500,
-            boxShadow: 'none',
-            display: { xs: 'flex', sm: 'none' }
-          }}
-        >
-          {t('calculator.general.newCalculation')}
-        </Button>
-      </Stack>
+        {t('calculator.general.title')}
+      </Typography>
       
-      {/* New Calculation Button in Header - Desktop */}
+      {/* New Calculation Button next to heading */}
       <Button
         variant="contained"
         size="small"
-        startIcon={<IconRefresh size={18} />}
+        startIcon={<IconRefresh size={14} />}
         onClick={onNewCalculation}
         sx={{
           bgcolor: theme.palette.primary.main,
@@ -75,14 +43,14 @@ const CalculatorHeader: React.FC<CalculatorHeaderProps> = ({ onNewCalculation })
           '&:hover': {
             bgcolor: theme.palette.primary.dark,
           },
-          px: { sm: 2.5 },
-          height: '38px',
-          borderRadius: '8px',
+          px: { xs: 0.8, sm: 1.2 },
+          height: '28px',
+          minWidth: '28px',
+          borderRadius: '5px',
           textTransform: 'none',
-          fontSize: '13px',
+          fontSize: '11px',
           fontWeight: 500,
-          boxShadow: 'none',
-          display: { xs: 'none', sm: 'flex' }
+          boxShadow: 'none'
         }}
       >
         {t('calculator.general.newCalculation')}
