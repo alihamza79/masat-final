@@ -201,7 +201,7 @@
             "editTitle": "Edit eMAG Integration",
             "addInfo": "The plugin will allow you to receive orders from eMAG to the Base.com order manager. After running the plugin, you need to configure it by entering your eMAG account login and password. New orders from eMAG will be imported into the system every 5 minutes and will be specially marked on the orders list.",
             "editInfo": "Update your eMAG integration settings below. Make sure to keep your credentials secure.",
-            "ipInfo": "In the eMAG panel (My Account \"Profile\" Technical details) add the partner's IP 51.77.52.107",
+            "ipInfo": "In the eMAG panel (My Account \"Profile\" Technical details) add the partner's IP 3.73.11.186",
             "fields": {
                 "accountName": "Account Name",
                 "region": "Region",
@@ -240,7 +240,7 @@
         "ipDialog": {
             "title": "IP Configuration Required",
             "message": "Before proceeding, please ensure you have added our IP address to your eMAG panel:",
-            "ipAddress": "51.77.52.107",
+            "ipAddress": "3.73.11.186",
             "stepsTitle": "Please follow these steps:",
             "step1": "Go to eMAG Seller Portal",
             "step2": "Navigate to My Account → Profile → Technical details",

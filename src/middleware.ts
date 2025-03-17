@@ -11,6 +11,11 @@ export function middleware(request: NextRequest) {
   // Check if the user is authenticated from the cookie
   const isAuthenticated = request.cookies.has('isAuthenticated');
 
+  // Health check path
+  if (path === '/health') {
+    return new NextResponse('OK', { status: 200 });
+  }
+
   // If the path is not public and the user is not authenticated, redirect to the password protection page
   if (!isPublicPath && !isAuthenticated) {
     return NextResponse.redirect(new URL('/auth/password-protection', request.url));
