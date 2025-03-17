@@ -3,7 +3,7 @@ import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import SidebarItems from "./SidebarItems";
-import Logo from "../../shared/logo/Logo";
+import Logo from "../../logo/Logo";
 import { useSelector, useDispatch } from "@/store/hooks";
 import {
   hoverSidebar,

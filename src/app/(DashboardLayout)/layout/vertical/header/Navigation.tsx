@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Box, Menu, Typography, Button, Divider, Grid } from "@mui/material";
 import Link from "next/link";
 import { IconChevronDown, IconHelp } from "@tabler/icons-react";
-import AppLinks from "./AppLinks";
 import QuickLinks from "./QuickLinks";
 
 const AppDD = () => {
@@ -64,7 +63,6 @@ const AppDD = () => {
           <Grid container>
             <Grid item sm={8} display="flex">
               <Box p={4} pr={0} pb={3}>
-                <AppLinks />
                 <Divider />
                 <Box
                   sx={{

@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import CustomSelect from '@/app/components/forms/theme-elements/CustomSelect';
 import CustomTextField from '@/app/components/forms/theme-elements/CustomTextField';
-import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { useTranslation } from 'react-i18next';
 
