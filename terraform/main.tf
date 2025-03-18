@@ -19,7 +19,7 @@ terraform {
 
 locals {
     project_name = "masat-next"
-    source_path  = dirname(path.module)
+    source_path  = dirname(path.cwd)
     path_include  = ["**"]
     path_exclude  = ["**/node_modules/**", "**/.idea/**", "**/terraform/**", "**/*.tf"]
     files_include = setunion([for f in local.path_include : fileset(local.source_path, f)]...)
