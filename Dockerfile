@@ -20,6 +20,25 @@ WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 
+ARG MONGODB_URI
+ENV MONGODB_URI=$MONGODB_URI
+
+ARG MONGODB_CLUSTER
+ENV MONGODB_CLUSTER=$MONGODB_CLUSTER
+
+ARG MONGODB_DATABASE
+ENV MONGODB_DATABASE=$MONGODB_DATABASE
+
+ARG ENCRYPTION_KEY
+ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
+
+ARG NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
+ENV NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=$NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
+
+ARG ENCRYPTION_IV
+ENV ENCRYPTION_IV=$ENCRYPTION_IV
+
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
