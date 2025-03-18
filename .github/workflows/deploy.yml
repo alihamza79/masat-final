@@ -37,7 +37,14 @@ jobs:
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg MONGODB_URI=${{ secrets.MONGODB_URI }} --build-arg MONGODB_CLUSTER=${{ secrets.MONGODB_CLUSTER }} --build-arg MONGODB_DATABASE=${{ secrets.MONGODB_DATABASE }} --build-arg ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }} --build-arg NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=${{ secrets.NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY }} --build-arg ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV }} -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker build \
+          --build-arg MONGODB_URI=${{ secrets.MONGODB_URI }} \
+          --build-arg MONGODB_CLUSTER=${{ secrets.MONGODB_CLUSTER }} \
+          --build-arg MONGODB_DATABASE=${{ secrets.MONGODB_DATABASE }} \
+          --build-arg ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }} \
+          --build-arg NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=${{ secrets.NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY }} \
+          --build-arg ENCRYPTION_IV=${{ secrets.ENCRYPTION_IV }} \
+          -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Terraform Init
