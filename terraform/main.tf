@@ -9,6 +9,12 @@ terraform {
       version = ">= 3.0"
     }
   }
+
+  backend "s3" {
+    bucket = "terraformemag"
+    key    = "terraform-masat-nextjs.tfstate"
+    region = "eu-central-1"
+  }
 }
 
 locals {
