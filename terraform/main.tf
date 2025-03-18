@@ -19,7 +19,7 @@ terraform {
 
 locals {
     project_name = "masat-next"
-    source_path  = "../"
+    source_path  = dirname(path.cwd)
     path_include  = ["**"]
     path_exclude  = ["**/node_modules/**", "**/.idea/**", "**/terraform/**", "**/*.tf"]
     files_include = setunion([for f in local.path_include : fileset(local.source_path, f)]...)
@@ -75,7 +75,7 @@ module "docker_build" {
   # use_image_tag = true
   # image_tag   = "2.0"
 
-  source_path = ${{ github.workspace }}
+  source_path = local.source_path
 platform    = "linux/amd64"
   build_args = {
     FOO = "bar"
