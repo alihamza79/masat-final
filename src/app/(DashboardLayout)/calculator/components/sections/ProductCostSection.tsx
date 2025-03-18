@@ -32,7 +32,7 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
   state,
 }) => {
   const { t } = useTranslation();
-  const valueWidth = '80px';
+  const valueWidth = '100px';
   const setProductCostHeaderValue = useProductCostStore((state: ProductCostStore) => state.setProductCostHeaderValue);
   const isFromChina = purchaseType === 'china';
   const purchaseVatRate = isFromChina ? vatRate : Number(vatRateOfPurchase);

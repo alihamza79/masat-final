@@ -6,13 +6,15 @@ import useSalesEstimatorCharts from '../../hooks/useSalesEstimatorCharts';
 import DistributionControls from './DistributionControls';
 import MetricsCards from './MetricsCards';
 import ChartSection from './ChartSection';
+import { VisibleCards } from '../../hooks/useCalculatorReset';
 
 interface SalesEstimatorProps {
   onDistributionChange: (distributions: Record<string, { pieces: number; percent: number }>) => void;
   taxRate: number;
+  visibleCards: VisibleCards;
 }
 
-const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, taxRate }) => {
+const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, taxRate, visibleCards }) => {
   const { t } = useTranslation();
   
   // Use the calculations hook
@@ -32,7 +34,7 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
     handleSliderChange,
     handlePiecesChange,
     handleTotalPiecesChange
-  } = useSalesEstimatorCalculations(onDistributionChange);
+  } = useSalesEstimatorCalculations(onDistributionChange, visibleCards);
 
   // Use the charts hook
   const {
@@ -73,6 +75,7 @@ const SalesEstimator: React.FC<SalesEstimatorProps> = ({ onDistributionChange, t
           handleSliderChange={handleSliderChange}
           handlePiecesChange={handlePiecesChange}
           handleTotalPiecesChange={handleTotalPiecesChange}
+          visibleCards={visibleCards}
         />
 
         {/* Metrics Cards */}

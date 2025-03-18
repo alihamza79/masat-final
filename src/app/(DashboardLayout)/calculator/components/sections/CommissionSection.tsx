@@ -37,7 +37,7 @@ const CommissionSection: React.FC<CommissionSectionProps> = ({
     setCommissionHeaderValue(category, headerValue);
   }, [category, headerValue, setCommissionHeaderValue]);
 
-  const valueWidth = '80px';
+  const valueWidth = '100px';
 
   return (
     <Box>

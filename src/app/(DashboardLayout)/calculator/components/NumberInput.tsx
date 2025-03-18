@@ -7,6 +7,8 @@ import {
   Typography,
   TextFieldProps,
   Box,
+  SxProps,
+  Theme
 } from '@mui/material';
 import { IconInfoCircle } from '@tabler/icons-react';
 
@@ -24,6 +26,8 @@ interface NumberInputProps extends Omit<TextFieldProps, 'onChange'> {
   helperText?: string;
   showLabel?: boolean;
   textAlign?: 'left' | 'center' | 'right';
+  sx?: SxProps<Theme>;
+  disabled?: boolean;
 }
 
 const NumberInput = React.memo(({
@@ -40,6 +44,8 @@ const NumberInput = React.memo(({
   helperText,
   showLabel = true,
   textAlign = 'center',
+  sx,
+  disabled = false,
   ...props
 }: NumberInputProps) => {
   const [isFocused, setIsFocused] = React.useState(false);
@@ -73,7 +79,12 @@ const NumberInput = React.memo(({
 
     // Update local value while typing
     setLocalValue(numericValue);
-    onChange(parsedValue);
+    // Only round values when we have more than 2 decimal places
+    if (parts[1] && parts[1].length === 2) {
+      onChange(parsedValue);
+    } else {
+      onChange(parsedValue);
+    }
   };
 
   // Handle focus
@@ -82,7 +93,12 @@ const NumberInput = React.memo(({
     if (value === 0) {
       setLocalValue('');
     } else {
-      setLocalValue(value.toString());
+      // Format value to exactly 2 decimal places if it's a VAT field
+      if (label.toLowerCase().includes('vat')) {
+        setLocalValue(typeof value === 'number' ? value.toFixed(2) : value.toString());
+      } else {
+        setLocalValue(value.toString());
+      }
     }
   };
 
@@ -94,6 +110,7 @@ const NumberInput = React.memo(({
       onChange(0);
     } else {
       const parsedValue = parseFloat(localValue);
+      // Always round to 2 decimal places on blur
       const formattedValue = parsedValue.toFixed(2);
       setLocalValue(formattedValue);
       onChange(parseFloat(formattedValue));
@@ -104,7 +121,7 @@ const NumberInput = React.memo(({
   const displayValue = isFocused 
     ? localValue 
     : typeof value === 'number'
-      ? (value === 0 ? '0' : value.toFixed(2))
+      ? (label.toLowerCase().includes('vat') || label.toLowerCase().includes('with vat') ? value.toFixed(2) : (value === 0 ? '0' : value.toFixed(2)))
       : value;
 
   return (
@@ -155,17 +172,18 @@ const NumberInput = React.memo(({
         alignItems="center" 
         spacing={0}
         sx={{
-          width: showLabel ? '80px' : '100%',
-          flex: showLabel ? '0 0 80px' : 1,
+          width: showLabel ? '100px' : '100%',
+          flex: showLabel ? '0 0 100px' : 1,
           height: '35px',
-          bgcolor: 'background.paper',
-          border: '1px solid',
+          bgcolor: disabled ? 'transparent' : 'background.paper',
+          border: disabled ? 'none' : '1px solid',
           borderColor: 'divider',
           borderRadius: 1,
           px: 1,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          ...(sx as any)
         }}
       >
         <TextField
@@ -178,7 +196,7 @@ const NumberInput = React.memo(({
             style: {
               textAlign,
               padding: 0,
-              width: suffix ? '35px' : '45px',
+              width: suffix ? '55px' : '65px',
               height: '35px'
             }
           }}
@@ -191,10 +209,16 @@ const NumberInput = React.memo(({
                 border: 'none'
               },
               '& input': {
-                textAlign: textAlign
+                textAlign: textAlign,
+                color: 'text.primary'
               }
+            },
+            '& .Mui-disabled': {
+              color: 'text.primary',
+              WebkitTextFillColor: 'currentcolor'
             }
           }}
+          disabled={disabled}
         />
         {suffix && (
           <Typography 

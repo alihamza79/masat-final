@@ -26,7 +26,7 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
   onUpdateCategory,
 }) => {
   const { t } = useTranslation();
-  const valueWidth = '80px';
+  const valueWidth = '100px';
   const setExpenditureHeaderValue = useExpenditureStore((state: ExpenditureStore) => state.setExpenditureHeaderValue);
   const otherExpensesWithVAT = (data.otherExpenses || 0) * (1 + vatRate / 100);
 

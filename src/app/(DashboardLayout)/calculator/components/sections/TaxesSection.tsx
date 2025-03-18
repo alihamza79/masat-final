@@ -49,7 +49,7 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
   vatRateOfPurchase
 }) => {
   const setTaxValues = useTaxStore((state: TaxStore) => state.setTaxValues);
-  const valueWidth = '80px';
+  const valueWidth = '100px';
   const { t } = useTranslation();
 
   // Calculate income tax based on tax rate

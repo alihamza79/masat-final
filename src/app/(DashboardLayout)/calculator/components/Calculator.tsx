@@ -612,6 +612,7 @@ const Calculator = () => {
         <SalesEstimator
           onDistributionChange={handleDistributionChange}
           taxRate={state.taxRate}
+          visibleCards={visibleCards}
         />
       </Box>
     </Box>

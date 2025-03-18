@@ -6,6 +6,7 @@ import { useExpenditureStore, ExpenditureStore } from '../store/expenditureStore
 import { useProductCostStore, ProductCostStore } from '../store/productCostStore';
 import { useTaxStore, TaxStore } from '../store/taxStore';
 import { useProfitStore, ProfitStore } from '../store/profitStore';
+import { VisibleCards } from './useCalculatorReset';
 
 export type CalculatorType = 'FBM-NonGenius' | 'FBM-Genius' | 'FBE';
 export type Distribution = {
@@ -24,7 +25,8 @@ export interface ExpenseHeaderValues {
 }
 
 export const useSalesEstimatorCalculations = (
-  onDistributionChange: (distributions: Record<string, { pieces: number; percent: number }>) => void
+  onDistributionChange: (distributions: Record<string, { pieces: number; percent: number }>) => void,
+  visibleCards: VisibleCards = { 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true }
 ) => {
   const [totalPieces, setTotalPieces] = useState<number>(1);
   const [sliderValue, setSliderValue] = useState<number[]>([33.33, 66.66]);
@@ -71,8 +73,73 @@ export const useSalesEstimatorCalculations = (
     },
   };
 
-  // Calculate distributions based on pieces and percentages
+  // Calculate distributions based on pieces, percentages, and visible cards
   const calculateDistributions = (pieces: number, percentages: number[]): Distributions => {
+    // Get array of visible calculator types
+    const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
+      .filter(([_, isVisible]) => isVisible)
+      .map(([type]) => type);
+
+    // If no calculators are visible, return zeros
+    if (visibleTypes.length === 0) {
+      return {
+        'FBM-NonGenius': { pieces: 0, percent: 0 },
+        'FBM-Genius': { pieces: 0, percent: 0 },
+        'FBE': { pieces: 0, percent: 0 }
+      };
+    }
+
+    // Handle case of only one calculator visible
+    if (visibleTypes.length === 1) {
+      const visibleType = visibleTypes[0];
+      const result = {
+        'FBM-NonGenius': { pieces: 0, percent: 0 },
+        'FBM-Genius': { pieces: 0, percent: 0 },
+        'FBE': { pieces: 0, percent: 0 }
+      };
+      result[visibleType] = { pieces, percent: 100 };
+      return result;
+    }
+
+    // Handle case of two calculators visible
+    if (visibleTypes.length === 2) {
+      // Determine which calculators are visible
+      const [first, second] = visibleTypes;
+      
+      // For two visible calculators, adjust slider to only show division between them
+      let firstPercent, secondPercent;
+      
+      if (first === 'FBM-NonGenius' && second === 'FBM-Genius') {
+        // First and second calculators visible
+        firstPercent = percentages[0];
+        secondPercent = 100 - firstPercent;
+      } else if (first === 'FBM-NonGenius' && second === 'FBE') {
+        // First and third calculators visible
+        firstPercent = percentages[0];
+        secondPercent = 100 - firstPercent;
+      } else {
+        // Second and third calculators visible
+        firstPercent = percentages[1] - percentages[0];
+        secondPercent = 100 - firstPercent;
+      }
+      
+      // Calculate pieces
+      const firstPieces = Math.floor((firstPercent / 100) * pieces);
+      const secondPieces = pieces - firstPieces;
+      
+      const result = {
+        'FBM-NonGenius': { pieces: 0, percent: 0 },
+        'FBM-Genius': { pieces: 0, percent: 0 },
+        'FBE': { pieces: 0, percent: 0 }
+      };
+      
+      result[first] = { pieces: firstPieces, percent: firstPercent };
+      result[second] = { pieces: secondPieces, percent: secondPercent };
+      
+      return result;
+    }
+
+    // All three calculators are visible - use original logic
     // Calculate exact percentages from slider positions
     const nonGeniusPercent = Number((percentages[0]).toFixed(2));
     const geniusPercent = Number((percentages[1] - percentages[0]).toFixed(2));
@@ -236,6 +303,12 @@ export const useSalesEstimatorCalculations = (
     setTotalPieces(value);
     onDistributionChange(calculateDistributions(value, sliderValue));
   };
+
+  // Watch for changes in visibleCards and update distributions
+  useEffect(() => {
+    const newDistributions = calculateDistributions(totalPieces, sliderValue);
+    onDistributionChange(newDistributions);
+  }, [visibleCards]);
 
   // Trigger initial distribution calculation
   useEffect(() => {

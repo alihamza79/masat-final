@@ -44,7 +44,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
     setSalesHeaderValue(category, headerValue);
   }, [category, headerValue, setSalesHeaderValue]);
 
-  const valueWidth = '80px';
+  const valueWidth = '100px';
 
   // Helper to determine if VAT fields should be shown
   const shouldShowVATFields = profileType === 'vat' && vatRate > 0;
@@ -69,37 +69,8 @@ const SalesSection: React.FC<SalesSectionProps> = ({
             {/* Sale Price Group */}
             <Box>
               <Stack 
-                direction="row" 
-                alignItems="center" 
-                justifyContent="space-between"
-                sx={{ position: 'relative' }}
+                spacing={0.75}
               >
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ 
-                    fontWeight: 500,
-                    fontSize: '13px',
-                    width: '140px',
-                    flex: '0 0 140px'
-                  }}
-                >
-                  {t('calculator.sections.sales.salePrice')}
-                </Typography>
-                <Box sx={{ 
-                  width: valueWidth
-                }}>
-                  <NumberInput
-                    label={t('calculator.sections.sales.salePrice')}
-                    value={data.salePrice}
-                    onChange={(value) => onUpdateCategory(category, { salePrice: value })}
-                    showLabel={false}
-                  />
-                </Box>
-              </Stack>
-
-              {/* With VAT */}
-              {shouldShowVATFields && (
                 <Stack 
                   direction="row" 
                   alignItems="center" 
@@ -110,33 +81,70 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                     variant="body2"
                     color="text.secondary"
                     sx={{ 
-                      fontWeight: 400,
-                      fontSize: '11px',
-                      opacity: 0.75,
+                      fontWeight: 500,
+                      fontSize: '13px',
                       width: '140px',
                       flex: '0 0 140px'
                     }}
                   >
-                    {t('calculator.sections.sales.withVAT')}
+                    {t('calculator.sections.sales.salePrice')}
                   </Typography>
-                  <Typography
-                    sx={{
-                      width: valueWidth,
-                      textAlign: 'center',
-                      fontSize: '11px',
-                      color: 'text.secondary',
-                      opacity: 0.75
-                    }}
-                  >
-                    {formatCurrency(data.salePrice * (1 + vatRate / 100), false)}
-                  </Typography>
+                  <Box sx={{ 
+                    width: valueWidth
+                  }}>
+                    <NumberInput
+                      label={t('calculator.sections.sales.salePrice')}
+                      value={data.salePrice}
+                      onChange={(value) => onUpdateCategory(category, { salePrice: parseFloat(value.toFixed(2)) })}
+                      showLabel={false}
+                    />
+                  </Box>
                 </Stack>
-              )}
+
+                {/* With VAT */}
+                {shouldShowVATFields && (
+                  <Stack 
+                    direction="row" 
+                    alignItems="center" 
+                    justifyContent="space-between"
+                    sx={{ position: 'relative' }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ 
+                        fontWeight: 400,
+                        fontSize: '11px',
+                        width: '140px',
+                        flex: '0 0 140px'
+                      }}
+                    >
+                      {t('calculator.sections.sales.withVAT')}
+                    </Typography>
+                    <Box sx={{ 
+                      width: valueWidth
+                    }}>
+                      <NumberInput
+                        label="With VAT"
+                        value={data.salePrice * (1 + vatRate / 100)}
+                        onChange={(value) => {
+                          // Round to 2 decimal places when converting from VAT to price
+                          const newPrice = parseFloat((value / (1 + vatRate / 100)).toFixed(2));
+                          onUpdateCategory(category, { salePrice: newPrice });
+                        }}
+                        showLabel={false}
+                        textAlign="center"
+                        sx={{ fontSize: '11px', borderStyle: 'dashed' }}
+                      />
+                    </Box>
+                  </Stack>
+                )}
+              </Stack>
             </Box>
 
             {/* Shipping Price Group */}
             <Box>
-              <Stack spacing={1}>
+              <Stack spacing={0.75}>
                 {/* Main Shipping Price Input */}
                 <Stack 
                   direction="row" 
@@ -156,28 +164,27 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                   >
                     {t('calculator.sections.sales.shippingPrice')}
                   </Typography>
-                  {category === 'FBM-NonGenius' ? (
-                    <Box sx={{ 
-                      width: valueWidth
-                    }}>
-                      <NumberInput
-                        label={t('calculator.sections.sales.shippingPrice')}
-                        value={data.shippingPrice}
-                        onChange={(value) => onUpdateCategory(category, { shippingPrice: value })}
-                        showLabel={false}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography
-                      sx={{
-                        width: valueWidth,
-                        textAlign: 'center',
-                        fontSize: '13px'
+                  <Box sx={{ 
+                    width: valueWidth
+                  }}>
+                    <NumberInput
+                      label={t('calculator.sections.sales.shippingPrice')}
+                      value={category === 'FBM-NonGenius' ? data.shippingPrice : 0}
+                      onChange={(value) => {
+                        if (category === 'FBM-NonGenius') {
+                          onUpdateCategory(category, { shippingPrice: parseFloat(value.toFixed(2)) });
+                        }
                       }}
-                    >
-                      {formatCurrency(0, false)}
-                    </Typography>
-                  )}
+                      showLabel={false}
+                      disabled={category !== 'FBM-NonGenius'}
+                      sx={category !== 'FBM-NonGenius' ? { 
+                        fontSize: '13px',
+                        border: 'none',
+                        bgcolor: 'transparent',
+                        boxShadow: 'none'
+                      } : {}}
+                    />
+                  </Box>
                 </Stack>
 
                 {/* With VAT */}
@@ -194,24 +201,34 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                       sx={{ 
                         fontWeight: 400,
                         fontSize: '11px',
-                        opacity: 0.75,
                         width: '140px',
                         flex: '0 0 140px'
                       }}
                     >
                       {t('calculator.sections.sales.withVAT')}
                     </Typography>
-                    <Typography
-                      sx={{
-                        width: valueWidth,
-                        textAlign: 'center',
-                        fontSize: '11px',
-                        color: 'text.secondary',
-                        opacity: 0.75
-                      }}
-                    >
-                      {formatCurrency(category === 'FBM-NonGenius' ? data.shippingPrice * (1 + vatRate / 100) : 0, false)}
-                    </Typography>
+                    <Box sx={{ 
+                      width: valueWidth
+                    }}>
+                      <NumberInput
+                        label="With VAT"
+                        value={category === 'FBM-NonGenius' ? data.shippingPrice * (1 + vatRate / 100) : 0}
+                        onChange={(value) => {
+                          if (category === 'FBM-NonGenius') {
+                            // Round to 2 decimal places when converting from VAT to price
+                            const newPrice = parseFloat((value / (1 + vatRate / 100)).toFixed(2));
+                            onUpdateCategory(category, { shippingPrice: newPrice });
+                          }
+                        }}
+                        showLabel={false}
+                        textAlign="center"
+                        disabled={category !== 'FBM-NonGenius'}
+                        sx={category === 'FBM-NonGenius' ? 
+                          { fontSize: '11px', borderStyle: 'dashed' } : 
+                          { fontSize: '11px', border: 'none', bgcolor: 'transparent', boxShadow: 'none' }
+                        }
+                      />
+                    </Box>
                   </Stack>
                 )}
               </Stack>
@@ -261,7 +278,6 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                   sx={{ 
                     fontWeight: 400,
                     fontSize: '11px',
-                    opacity: 0.75,
                     width: '140px',
                     flex: '0 0 140px'
                   }}
@@ -273,8 +289,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                     width: valueWidth,
                     textAlign: 'center',
                     fontSize: '11px',
-                    color: 'text.secondary',
-                    opacity: 0.75
+                    color: 'text.primary'
                   }}
                 >
                   {formatCurrency(totalPrice * (1 + vatRate / 100), false)}

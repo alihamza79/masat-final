@@ -112,9 +112,8 @@ export const useSalesEstimatorCharts = (
       position: 'bottom',
       fontSize: '14px',
       markers: {
-        width: 10,
-        height: 10,
-        radius: 5
+        size: 10,
+        shape: 'circle'
       }
     },
     tooltip: {

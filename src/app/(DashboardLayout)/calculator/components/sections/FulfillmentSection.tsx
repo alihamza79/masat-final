@@ -36,7 +36,7 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
   const { t } = useTranslation();
   const { state } = useCalculator();
   const setFulfillmentHeaderValue = useFulfillmentStore((state) => state.setFulfillmentHeaderValue);
-  const valueWidth = '80px';
+  const valueWidth = '100px';
   const [openDimensionsModal, setOpenDimensionsModal] = useState(false);
   const [dimensions, setDimensions] = useState<DimensionsData>({
     length: 30,
