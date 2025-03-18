@@ -198,7 +198,7 @@ const Calculator = () => {
             // Using any type since category_id is not part of the official EmagProductOffer type
             const anyProductOffer = productOffer as any;
             const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
-            let commission = null;
+            let commission: number | null = null;
             
             if (categoryId) {
               if (categoryId in categoryCommissions) {
@@ -261,7 +261,7 @@ const Calculator = () => {
           // For static products, check if we have a category in the name (for demo purposes)
           // Example: if the product name contains "Category 3038", we can extract that
           const categoryMatch = staticProduct.name.match(/Category (\d+)/);
-          let commission = null;
+          let commission: number | null = null;
           
           if (categoryMatch && categoryMatch[1]) {
             const matchedCategoryId = categoryMatch[1];
