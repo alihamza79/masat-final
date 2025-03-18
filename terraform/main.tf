@@ -48,40 +48,40 @@ provider "docker" {
   }
 }
 
-# module "docker_build" {
-#   source = "./modules/docker-build"
-#
-#   create_ecr_repo = true
-#   ecr_repo        = "${local.project_name}-${var.env}"
-#   ecr_repo_lifecycle_policy = jsonencode({
-#     "rules" : [
-#       {
-#         "rulePriority" : 1,
-#         "description" : "Keep only the last 2 images",
-#         "selection" : {
-#           "tagStatus" : "any",
-#           "countType" : "imageCountMoreThan",
-#           "countNumber" : 2
-#         },
-#         "action" : {
-#           "type" : "expire"
-#         }
-#       }
-#     ]
-#   })
-#
-#   use_image_tag = false # If false, sha of the image will be used
-#
-#   # use_image_tag = true
-#   # image_tag   = "2.0"
-#
-#   source_path = "/"
-#   platform    = "linux/amd64"
-#   build_args = {
-#     FOO = "bar"
-#   }
-#
-#   triggers = {
-#     dir_sha = local.dir_sha
-#   }
-# }
+module "docker_build" {
+  source = "./modules/docker-build"
+
+  create_ecr_repo = true
+  ecr_repo        = "${local.project_name}-${var.env}"
+  ecr_repo_lifecycle_policy = jsonencode({
+    "rules" : [
+      {
+        "rulePriority" : 1,
+        "description" : "Keep only the last 2 images",
+        "selection" : {
+          "tagStatus" : "any",
+          "countType" : "imageCountMoreThan",
+          "countNumber" : 2
+        },
+        "action" : {
+          "type" : "expire"
+        }
+      }
+    ]
+  })
+
+  use_image_tag = false # If false, sha of the image will be used
+
+  # use_image_tag = true
+  # image_tag   = "2.0"
+
+  source_path = "/"
+  platform    = "linux/amd64"
+  build_args = {
+    FOO = "bar"
+  }
+
+  triggers = {
+    dir_sha = local.dir_sha
+  }
+}
