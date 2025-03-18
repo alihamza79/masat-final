@@ -56,8 +56,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
-          TF_VAR_image_uri: $REGISTRY/$REPOSITORY:$IMAGE_TAG
-        run: terraform plan -input=false
+        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG"
         working-directory: terraform
 
       - name: Terraform Apply
@@ -65,6 +64,5 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
-          TF_VAR_image_uri: $REGISTRY/$REPOSITORY:$IMAGE_TAG
-        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG"
         working-directory: terraform
