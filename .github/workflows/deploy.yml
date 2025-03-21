@@ -1,0 +1,68 @@
+name: Deploy with Terraform
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: masat-dev
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            --build-arg MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+            --build-arg MONGODB_CLUSTER="${{ secrets.MONGODB_CLUSTER }}" \
+            --build-arg MONGODB_DATABASE="${{ secrets.MONGODB_DATABASE }}" \
+            --build-arg ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
+            --build-arg NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY="${{ secrets.NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY }}" \
+            --build-arg ENCRYPTION_IV="${{ secrets.ENCRYPTION_IV }}" \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform Plan
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: masat-dev
+          IMAGE_TAG: ${{ github.sha }}
+        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+        working-directory: terraform
+
+      - name: Terraform Apply
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: masat-dev
+          IMAGE_TAG: ${{ github.sha }}
+        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+        working-directory: terraform

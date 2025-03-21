@@ -23,7 +23,7 @@ resource "aws_ecs_task_definition" "this" {
     [
       {
         "name" : "${var.project_name}-${var.env}-container",
-        "image" : "${module.docker_build.image_uri}",
+        "image" : "${var.image_uri}",
         "entryPoint" : [],
         "essential" : true,
         "logConfiguration" : {

@@ -22,3 +22,8 @@ variable "cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "image_uri" {
+  type = string
+  description = "Docker image URI"
+}
