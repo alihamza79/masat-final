@@ -7,7 +7,7 @@ import { SavedCalculation } from '../../hooks/useSavedCalculations';
 interface ProductSelectorProps {
   selectedProduct: string;
   onSelectProduct: (value: string) => void;
-  getProductNameByValue: (value: string) => string | undefined;
+  getProductNameByValue: (value: string, savedCalculations: SavedCalculation[]) => string | undefined;
   savedCalculations: SavedCalculation[];
   loadingSavedCalculations: boolean;
   savedCalculationsError: string | null;
@@ -72,9 +72,9 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
             {selectedProduct ? 
               // Check if it's a saved calculation
               selectedProduct.startsWith('saved-') ? 
-                'Saved Calculation' : 
+                getProductNameByValue(selectedProduct, savedCalculations) || 'Saved Calculation' : 
                 // Get product name using the helper function
-                getProductNameByValue(selectedProduct) || 
+                getProductNameByValue(selectedProduct, savedCalculations) || 
                 'Select Product' : 
               'Select Product'}
           </Typography>

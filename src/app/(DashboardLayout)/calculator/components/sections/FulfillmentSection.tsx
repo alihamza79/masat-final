@@ -169,46 +169,64 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
           days: typeof dimensions.days === 'string' && dimensions.days === '' ? 0 : Number(dimensions.days)
         };
         
-        const response = await fetch('/api/client/withFBE/weightCalculation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submissionData),
-        });
-
-        const result = await response.json();
-
-        if (result.status) {
-          // Round to 2 decimal places
-          const fulfillmentCost = Number(result.totalFulFilmentPrice).toFixed(2);
+        // Check if the dimensions have changed from the last calculated dimensions
+        // If they're the same, we can skip the API call to prevent duplicate calculations
+        const dimensionsChanged = 
+          submissionData.length !== lastCalculatedDimensions.length ||
+          submissionData.height !== lastCalculatedDimensions.height ||
+          submissionData.width !== lastCalculatedDimensions.width ||
+          submissionData.weight !== lastCalculatedDimensions.weight ||
+          submissionData.days !== lastCalculatedDimensions.days;
           
-          // Store dimensions along with fulfillment cost
-          onUpdateCategory(category, { 
-            fulfillmentCost: Number(fulfillmentCost),
-            dimensions: {
+        // Only make API call if dimensions have changed or we don't have a previous calculation
+        if (dimensionsChanged || data.fulfillmentCost === 0) {
+          const response = await fetch('/api/client/withFBE/weightCalculation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(submissionData),
+          });
+
+          const result = await response.json();
+
+          if (result.status) {
+            // Round to 2 decimal places and directly use the result without adding to previous values
+            const fulfillmentCost = Number(result.totalFulFilmentPrice).toFixed(2);
+            
+            // Store dimensions along with fulfillment cost
+            onUpdateCategory(category, { 
+              fulfillmentCost: Number(fulfillmentCost),
+              dimensions: {
+                length: submissionData.length,
+                height: submissionData.height,
+                width: submissionData.width,
+                weight: submissionData.weight,
+                days: submissionData.days
+              }
+            });
+            
+            // Store the last successful dimensions when calculation succeeds
+            setLastCalculatedDimensions({
               length: submissionData.length,
               height: submissionData.height,
               width: submissionData.width,
               weight: submissionData.weight,
               days: submissionData.days
-            }
-          });
-          
-          // Store the last successful dimensions when calculation succeeds
-          setLastCalculatedDimensions({
-            length: submissionData.length,
-            height: submissionData.height,
-            width: submissionData.width,
-            weight: submissionData.weight,
-            days: submissionData.days
-          });
-          
-          setOpenDimensionsModal(false);
+            });
+          } else {
+            // Display the error message from the API
+            setError(result.message);
+            // Don't close modal if there's an error
+            return;
+          }
         } else {
-          // Display the error message from the API
-          setError(result.message);
+          // If dimensions haven't changed, we don't need to recalculate
+          console.log("Dimensions unchanged, skipping recalculation");
         }
+        
+        // Close the modal whether we recalculated or not
+        setOpenDimensionsModal(false);
       } catch (error) {
         console.error('Error calculating fulfillment cost:', error);
         setError('An unexpected error occurred. Please try again.');

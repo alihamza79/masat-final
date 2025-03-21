@@ -72,6 +72,7 @@
             "showHideCards": "Arată/Ascunde Carduri",
             "selectProduct": "Selectează Produs",
             "saveCalculation": "Salvează Calculul",
+            "updateCalculation": "Actualizează Calculul",
             "newCalculation": "Calcul Nou",
             "chooseCalculator": "Alege Calculator",
             "syncAllValues": "Sincronizează Toate Valorile"
@@ -176,7 +177,8 @@
             "productsFound": "produse găsite",
             "calculationsFound": "calcule găsite",
             "noProductsFound": "Niciun produs nu corespunde criteriilor de căutare",
-            "noSavedCalculationsFound": "Niciun calcul salvat nu corespunde criteriilor de căutare"
+            "noSavedCalculationsFound": "Niciun calcul salvat nu corespunde criteriilor de căutare",
+            "confirmDelete": "Sunteți sigur că doriți să ștergeți acest calcul?"
         }
     },
     "analytics": {

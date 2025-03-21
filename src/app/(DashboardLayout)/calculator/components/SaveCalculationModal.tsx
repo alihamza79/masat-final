@@ -28,6 +28,7 @@ interface SaveCalculationModalProps {
   savedCalculationId: string | null;
   initialTitle: string;
   initialDescription: string;
+  onSaveComplete?: (newCalculationId: string) => void;
 }
 
 const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
@@ -37,7 +38,8 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
   onSaveSuccess,
   savedCalculationId,
   initialTitle,
-  initialDescription
+  initialDescription,
+  onSaveComplete
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -110,6 +112,12 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       
       // Call onSaveSuccess immediately to refresh the data in the parent component
       onSaveSuccess();
+      
+      // If this is a new calculation and we have the onSaveComplete callback,
+      // call it with the new calculation ID
+      if (!isUpdate && onSaveComplete && result.data && result.data._id) {
+        onSaveComplete(result.data._id);
+      }
       
       // Close the modal after a short delay to show the success message
       setTimeout(() => {

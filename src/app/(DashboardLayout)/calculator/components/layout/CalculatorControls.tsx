@@ -27,6 +27,7 @@ interface CalculatorControlsProps {
   visibleCards: VisibleCards;
   onCardVisibilityToggle: (cardKey: CardKey) => void;
   onOpenSaveModal: () => void;
+  isSavedCalculation?: boolean;
 }
 
 const CalculatorControls: React.FC<CalculatorControlsProps> = ({
@@ -37,7 +38,8 @@ const CalculatorControls: React.FC<CalculatorControlsProps> = ({
   onToggleAll,
   visibleCards,
   onCardVisibilityToggle,
-  onOpenSaveModal
+  onOpenSaveModal,
+  isSavedCalculation = false
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -161,7 +163,9 @@ const CalculatorControls: React.FC<CalculatorControlsProps> = ({
             whiteSpace: 'nowrap'
           }}
         >
-          {t('calculator.general.saveCalculation')}
+          {isSavedCalculation 
+            ? t('calculator.general.updateCalculation') 
+            : t('calculator.general.saveCalculation')}
         </Button>
       </Stack>
 
@@ -277,7 +281,9 @@ const CalculatorControls: React.FC<CalculatorControlsProps> = ({
               width: '100%'
             }}
           >
-            {t('calculator.general.saveCalculation')}
+            {isSavedCalculation 
+              ? t('calculator.general.updateCalculation') 
+              : t('calculator.general.saveCalculation')}
           </Button>
         </Stack>
       </Box>

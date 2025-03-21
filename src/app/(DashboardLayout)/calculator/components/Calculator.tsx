@@ -102,6 +102,18 @@ const Calculator = () => {
     }
   };
 
+  // Add handler for when a new calculation is saved
+  const handleSaveComplete = async (newCalculationId: string) => {
+    // Automatically select the newly created calculation
+    setSelectedProduct(`saved-${newCalculationId}`);
+    
+    // Load the saved calculation data to populate title and description
+    await loadSavedCalculation(newCalculationId);
+    
+    // Show success message
+    toast.success('Calculation saved and selected!');
+  };
+
   const {
     visibleCards,
     resetCalculatorValues,
@@ -482,6 +494,10 @@ const Calculator = () => {
     }
   };
 
+  // Add a helper to check if we're dealing with a saved calculation
+  const isSavedCalculation: boolean = !!currentSavedCalculationId || 
+    !!(selectedProduct && selectedProduct.startsWith('saved-'));
+
   return (
     <Box>
       {/* Header */}
@@ -516,6 +532,7 @@ const Calculator = () => {
           visibleCards={visibleCards}
           onCardVisibilityToggle={handleCardVisibilityToggle}
           onOpenSaveModal={handleSaveCalculation}
+          isSavedCalculation={isSavedCalculation}
         />
       </Stack>
 
@@ -528,6 +545,7 @@ const Calculator = () => {
         savedCalculationId={currentSavedCalculationId}
         initialTitle={currentSavedCalculationTitle}
         initialDescription={currentSavedCalculationDescription}
+        onSaveComplete={handleSaveComplete}
       />
 
       {/* Category Cards */}
@@ -741,7 +759,10 @@ const Calculator = () => {
         </Stack>
 
         {/* Save Calculation Button - Show only on mobile, after cards */}
-        <MobileSaveButton onOpenSaveModal={handleSaveCalculation} />
+        <MobileSaveButton 
+          onOpenSaveModal={handleSaveCalculation} 
+          isSavedCalculation={isSavedCalculation}
+        />
       </Box>
 
       {/* Sales Estimator Section */}

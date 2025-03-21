@@ -72,6 +72,7 @@
             "showHideCards": "Show/Hide Cards",
             "selectProduct": "Select Product",
             "saveCalculation": "Save Calculation",
+            "updateCalculation": "Update Calculation",
             "newCalculation": "New Calculation",
             "chooseCalculator": "Choose Calculator",
             "syncAllValues": "Sync All Values"
@@ -166,7 +167,7 @@
                 "subtitle": "Official Store Products"
             },
             "createdProducts": {
-                "title": "Created Products",
+                "title": "Saved Calculations",
                 "subtitle": "Custom Created Products"
             },
             "price": "RON",
@@ -176,7 +177,8 @@
             "productsFound": "products found",
             "calculationsFound": "calculations found",
             "noProductsFound": "No products match your search criteria",
-            "noSavedCalculationsFound": "No saved calculations match your search criteria"
+            "noSavedCalculationsFound": "No saved calculations match your search criteria",
+            "confirmDelete": "Are you sure you want to delete this calculation?"
         }
     },
     "analytics": {

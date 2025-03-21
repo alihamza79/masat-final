@@ -1,4 +1,5 @@
 import { useEmagData } from '@/lib/hooks/useEmagData';
+import { SavedCalculation } from '../../hooks/useSavedCalculations';
 
 export interface MenuItem {
   value: string;
@@ -67,8 +68,18 @@ export const useProductMenuItems = () => {
   };
 
   // Get product name by value
-  const getProductNameByValue = (value: string): string | undefined => {
+  const getProductNameByValue = (value: string, savedCalculations: SavedCalculation[]): string | undefined => {
     if (!value) return undefined;
+    
+    // Check if it's a saved calculation
+    if (value.startsWith('saved-') && savedCalculations && savedCalculations.length > 0) {
+      const calculationId = value.replace('saved-', '');
+      const savedCalculation = savedCalculations.find(calc => calc._id === calculationId);
+      if (savedCalculation) {
+        return savedCalculation.title;
+      }
+      return 'Saved Calculation';
+    }
     
     // Check if it's an eMAG product with new format
     if (value.startsWith('emag-') && value.split('-').length > 2) {

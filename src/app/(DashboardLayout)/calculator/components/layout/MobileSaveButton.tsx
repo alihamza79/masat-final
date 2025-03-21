@@ -5,9 +5,13 @@ import { useTranslation } from 'react-i18next';
 
 interface MobileSaveButtonProps {
   onOpenSaveModal: () => void;
+  isSavedCalculation?: boolean;
 }
 
-const MobileSaveButton: React.FC<MobileSaveButtonProps> = ({ onOpenSaveModal }) => {
+const MobileSaveButton: React.FC<MobileSaveButtonProps> = ({ 
+  onOpenSaveModal,
+  isSavedCalculation = false
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -34,7 +38,9 @@ const MobileSaveButton: React.FC<MobileSaveButtonProps> = ({ onOpenSaveModal }) 
         mt: 3
       }}
     >
-      {t('calculator.general.saveCalculation')}
+      {isSavedCalculation 
+        ? t('calculator.general.updateCalculation') 
+        : t('calculator.general.saveCalculation')}
     </Button>
   );
 };

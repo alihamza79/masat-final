@@ -34,9 +34,12 @@ import {
   IconHeadphones,
   IconDeviceDesktop,
   IconShirt,
-  IconDeviceMobile
+  IconDeviceMobile,
+  IconTrash
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
+import { SavedCalculation } from '../hooks/useSavedCalculations';
 
 interface ProductSelectionModalProps {
   open: boolean;
@@ -50,16 +53,6 @@ interface ProductSelectionModalProps {
 }
 
 export type { ProductSelectionModalProps };
-
-interface SavedCalculation {
-  _id: string;
-  title: string;
-  description: string;
-  image: string;
-  calculatorState: any;
-  createdAt: string;
-  emagProduct?: boolean;
-}
 
 // Fallback static products in case no integrations data is available
 const staticProducts = {
@@ -213,6 +206,8 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   const [savedSearchQuery, setSavedSearchQuery] = useState('');
   const [filteredSavedCalculations, setFilteredSavedCalculations] = useState<SavedCalculation[]>([]);
   const [loadingEmagProducts, setLoadingEmagProducts] = useState(false);
+  const [deletingCalculationId, setDeletingCalculationId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   // Extract and format eMAG product offers from integrations data
   useEffect(() => {
@@ -502,93 +497,290 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
     </Card>
   );
 
-  const SavedCalculationCard = ({ calculation }: { calculation: SavedCalculation }) => (
-    <Card
-      onClick={() => onSelectProduct(`saved-${calculation._id}`)}
-      sx={{
-        p: 2,
-        cursor: 'pointer',
-        border: '1px solid',
-        borderColor: selectedProduct === `saved-${calculation._id}` ? 'success.main' : 'divider',
-        bgcolor: selectedProduct === `saved-${calculation._id}` ? 'success.lighter' : 'background.paper',
-        transition: 'all 0.2s ease-in-out',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '12px',
-        '&:hover': {
-          borderColor: 'success.main',
-          bgcolor: 'success.lighter',
-          transform: 'translateY(-2px)',
-          boxShadow: theme.shadows[4]
-        }
-      }}
-    >
-      <Stack spacing={1.5} height="100%">
-        <Box
-          sx={{
-            width: '100%',
-            height: '80px',
-            bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <Typography 
-            variant="h3" 
-            color="success.main"
-            sx={{ opacity: 0.7 }}
-          >
-            <IconBuildingStore size={32} />
-          </Typography>
-        </Box>
-        <Stack spacing={1} flex={1}>
-          <Box>
-            <Typography 
-              variant="subtitle1"
-              sx={{ 
-                fontSize: '13px',
-                fontWeight: 600,
-                mb: 0.5,
-                color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
-              }}
-            >
-              {calculation.title}
-            </Typography>
-            {calculation.description && (
-              <Typography 
-                variant="caption" 
-                color="text.secondary"
+  const handleDeleteCalculation = async (calculationId: string) => {
+    setDeletingCalculationId(calculationId);
+    
+    try {
+      const response = await fetch(`/api/calculations/${calculationId}`, {
+        method: 'DELETE',
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to delete calculation');
+      }
+      
+      const updatedSavedCalculations = savedCalculations.filter(calc => calc._id !== calculationId);
+      
+      if (selectedProduct === `saved-${calculationId}`) {
+        onSelectProduct('');
+      }
+      
+      toast.success(t('calculator.productSelection.calculationDeleted'));
+      
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting calculation:', error);
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setDeletingCalculationId(null);
+      setConfirmDelete(null);
+    }
+  };
+
+  const SavedCalculationCard = ({ calculation }: { calculation: SavedCalculation }) => {
+    const isDeleting = deletingCalculationId === calculation._id;
+    const isConfirmingDelete = confirmDelete === calculation._id;
+    
+    const handleCardClick = (e: React.MouseEvent) => {
+      if (isConfirmingDelete) {
+        e.stopPropagation();
+        return;
+      }
+      
+      onSelectProduct(`saved-${calculation._id}`);
+    };
+    
+    const handleDeleteClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      
+      if (isConfirmingDelete) {
+        handleDeleteCalculation(calculation._id);
+      } else {
+        setConfirmDelete(calculation._id);
+      }
+    };
+    
+    const handleCancelDelete = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setConfirmDelete(null);
+    };
+    
+    return (
+      <Card
+        onClick={handleCardClick}
+        sx={{
+          p: 2,
+          cursor: isConfirmingDelete ? 'default' : 'pointer',
+          border: '1px solid',
+          borderColor: isConfirmingDelete 
+            ? 'error.light' 
+            : selectedProduct === `saved-${calculation._id}` 
+              ? 'success.main' 
+              : 'divider',
+          bgcolor: isConfirmingDelete 
+            ? 'error.lighter' 
+            : selectedProduct === `saved-${calculation._id}` 
+              ? 'success.lighter' 
+              : 'background.paper',
+          transition: 'all 0.2s ease-in-out',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: '12px',
+          position: 'relative',
+          overflow: 'hidden',
+          '&:hover': {
+            borderColor: isConfirmingDelete 
+              ? 'error.main' 
+              : 'success.main',
+            transform: 'translateY(-2px)',
+            boxShadow: theme.shadows[4],
+            '& .delete-button': {
+              opacity: 1,
+            }
+          }
+        }}
+      >
+        {!calculation.emagProduct && (
+          <>
+            {isConfirmingDelete ? (
+              // Confirmation overlay
+              <Box 
                 sx={{ 
-                  fontSize: '11px',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  bgcolor: 'error.lighter',
+                  zIndex: 5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  p: 2,
+                  animation: 'fadeIn 0.2s ease-in-out',
+                  '@keyframes fadeIn': {
+                    '0%': {
+                      opacity: 0,
+                    },
+                    '100%': {
+                      opacity: 1,
+                    },
+                  },
                 }}
               >
-                {calculation.description}
-              </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="error.main"
+                  sx={{ 
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    mb: 2
+                  }}
+                >
+                  {t('calculator.productSelection.confirmDelete')}
+                </Typography>
+                
+                <Stack 
+                  direction="row" 
+                  spacing={1} 
+                  justifyContent="center"
+                >
+                  <IconButton 
+                    size="small" 
+                    color="error" 
+                    onClick={handleDeleteClick}
+                    disabled={isDeleting}
+                    sx={{ 
+                      p: 1,
+                      bgcolor: 'error.main',
+                      color: 'white',
+                      '&:hover': { 
+                        bgcolor: 'error.dark',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'error.main',
+                        opacity: 0.7,
+                        color: 'white',
+                      }
+                    }}
+                  >
+                    {isDeleting ? (
+                      <CircularProgress size={16} thickness={5} color="inherit" />
+                    ) : (
+                      <IconTrash size={16} />
+                    )}
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={handleCancelDelete}
+                    sx={{ 
+                      p: 1,
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      color: 'text.primary',
+                      '&:hover': { 
+                        bgcolor: 'background.default'
+                      },
+                      '&.Mui-disabled': {
+                        opacity: 0.5,
+                      }
+                    }}
+                    disabled={isDeleting}
+                  >
+                    <IconX size={16} />
+                  </IconButton>
+                </Stack>
+              </Box>
+            ) : (
+              // Delete button (visible on hover)
+              <IconButton 
+                className="delete-button"
+                size="small" 
+                color="default" 
+                onClick={handleDeleteClick}
+                sx={{ 
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  zIndex: 1,
+                  p: 0.5,
+                  opacity: 0,
+                  transition: 'all 0.2s ease-in-out',
+                  bgcolor: 'background.paper',
+                  '&:hover': { 
+                    color: 'error.main',
+                    bgcolor: 'error.lighter'
+                  },
+                  boxShadow: theme.shadows[1],
+                }}
+              >
+                <IconTrash size={16} />
+              </IconButton>
             )}
-          </Box>
-          <Typography 
-            variant="body2"
-            color="success.main"
-            sx={{ 
-              fontSize: '12px',
-              fontWeight: 500,
-              mt: 'auto'
+          </>
+        )}
+        
+        <Stack spacing={1.5} height="100%" sx={{ opacity: isConfirmingDelete ? 0.2 : 1 }}>
+          <Box
+            sx={{
+              width: '100%',
+              height: '80px',
+              bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            {new Date(calculation.createdAt).toLocaleDateString()}
-          </Typography>
+            <Typography 
+              variant="h3" 
+              color="success.main"
+              sx={{ opacity: 0.7 }}
+            >
+              <IconBuildingStore size={32} />
+            </Typography>
+          </Box>
+          <Stack spacing={1} flex={1}>
+            <Box>
+              <Typography 
+                variant="subtitle1"
+                sx={{ 
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  mb: 0.5,
+                  color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
+                }}
+              >
+                {calculation.title}
+              </Typography>
+              {calculation.description && (
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: '11px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                >
+                  {calculation.description}
+                </Typography>
+              )}
+            </Box>
+            <Typography 
+              variant="body2"
+              color="success.main"
+              sx={{ 
+                fontSize: '12px',
+                fontWeight: 500,
+                mt: 'auto'
+              }}
+            >
+              {new Date(calculation.createdAt).toLocaleDateString()}
+            </Typography>
+          </Stack>
         </Stack>
-      </Stack>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   return (
     <Dialog
