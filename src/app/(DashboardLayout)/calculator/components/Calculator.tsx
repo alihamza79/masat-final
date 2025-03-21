@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { CategoryData, useCalculations, useCalculator } from '../context/CalculatorContext';
 import useCalculatorReset, { CardKey, VisibleCards } from '../hooks/useCalculatorReset';
 import useFormatting from '../hooks/useFormatting';
-import useSavedCalculations from '../hooks/useSavedCalculations';
+import useSavedCalculations, { SavedCalculation } from '../hooks/useSavedCalculations';
 import useSectionToggle from '../hooks/useSectionToggle';
 import { useProfitStore } from '../store/profitStore';
 import CalculatorControls from './layout/CalculatorControls';
@@ -31,6 +31,7 @@ import ProductCostSection from './sections/ProductCostSection';
 import ProfitSection from './sections/ProfitSection';
 import SalesSection from './sections/SalesSection';
 import TaxesSection from './sections/TaxesSection';
+import { toast } from 'react-hot-toast';
 
 const Calculator = () => {
   const { t } = useTranslation();
@@ -55,6 +56,51 @@ const Calculator = () => {
     setOpenSaveModal,
     
   } = useSavedCalculations();
+
+  // Add a new function to handle the save calculation button click
+  const handleSaveCalculation = async () => {
+    // Check if an eMAG product is selected
+    if (selectedProduct && selectedProduct.startsWith('emag-') && selectedProduct.split('-').length > 2) {
+      try {
+        const [prefix, integrationId, productId] = selectedProduct.split('-');
+        
+        // Create a direct API request to save the calculation
+        const response = await fetch('/api/calculations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            emagProduct: {
+              integrationId,
+              productId,
+              selectedProduct // Store the full product identifier
+            },
+            calculatorState: state
+          }),
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to save calculation');
+        }
+        
+        // Show a success toast
+        toast.success('Calculation saved successfully!');
+        
+        // Refresh saved calculations list
+        handleSaveSuccess();
+      } catch (err) {
+        console.error('Error saving calculation:', err);
+        // Show an error toast
+        toast.error(err instanceof Error ? err.message : 'Failed to save calculation');
+      }
+    } else {
+      // For non-eMAG products, open the save modal
+      setOpenSaveModal(true);
+    }
+  };
 
   const {
     visibleCards,
@@ -144,12 +190,13 @@ const Calculator = () => {
 
   // Handle product selection
   const handleSelectProduct = async (value: string) => {
+    // Update selected product value
     setSelectedProduct(value);
-    setOpenProductModal(false);
     
+    // If no product is selected, reset the calculator
     if (!value) {
-      // If no product is selected, reset the calculator
-      resetCalculatorValues(); // Ensure SalesEstimator is reset
+      // For clean state, reset the SalesEstimator
+      resetCalculatorValues();
       return;
     }
     
@@ -161,6 +208,27 @@ const Calculator = () => {
       const calculationId = value.replace('saved-', '');
       await loadSavedCalculation(calculationId);
       return; // Return early to avoid other processing
+    }
+    
+    // Handle eMAG product selection
+    if (value.startsWith('emag-') && value.split('-').length > 2) {
+      const [prefix, integrationId, productId] = value.split('-');
+      
+      // Check if we have a saved calculation for this eMAG product
+      const emagSavedCalculation = savedCalculations.find(
+        calc => calc.emagProduct && 
+        calc.emagProduct.integrationId === integrationId && 
+        calc.emagProduct.productId === productId
+      );
+      
+      if (emagSavedCalculation) {
+        // If we found a saved calculation for this eMAG product, load it
+        resetCalculatorValues();
+        await loadSavedCalculation(emagSavedCalculation._id);
+        return; // Return early to avoid other processing
+      }
+      
+      // If no saved calculation exists, continue with default handling
     }
     
     // For all other product types, ensure we start with a clean state
@@ -447,7 +515,7 @@ const Calculator = () => {
           onToggleAll={handleToggleAll}
           visibleCards={visibleCards}
           onCardVisibilityToggle={handleCardVisibilityToggle}
-          onOpenSaveModal={() => setOpenSaveModal(true)}
+          onOpenSaveModal={handleSaveCalculation}
         />
       </Stack>
 
@@ -673,7 +741,7 @@ const Calculator = () => {
         </Stack>
 
         {/* Save Calculation Button - Show only on mobile, after cards */}
-        <MobileSaveButton onOpenSaveModal={() => setOpenSaveModal(true)} />
+        <MobileSaveButton onOpenSaveModal={handleSaveCalculation} />
       </Box>
 
       {/* Sales Estimator Section */}

@@ -4,7 +4,9 @@ import mongoose, { Schema } from 'mongoose';
 const SavedCalculationSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: function() {
+      return !this.emagProduct; // Title is required only if not an eMAG product
+    },
     trim: true
   },
   description: {
@@ -14,6 +16,10 @@ const SavedCalculationSchema = new Schema({
   image: {
     type: String,
     default: '/products/default.jpg'
+  },
+  emagProduct: {
+    type: Object,
+    default: null
   },
   calculatorState: {
     type: Object,

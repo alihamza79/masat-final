@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
 import { useTranslation } from 'react-i18next';
 
+// Define the EmagProduct interface
+export interface EmagProduct {
+  integrationId: string;
+  productId: string;
+  selectedProduct: string;
+}
+
 // Define the SavedCalculation interface
 export interface SavedCalculation {
   _id: string;
@@ -10,6 +17,7 @@ export interface SavedCalculation {
   image: string;
   calculatorState: any;
   createdAt: string;
+  emagProduct?: EmagProduct;
 }
 
 export const useSavedCalculations = () => {

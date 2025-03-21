@@ -58,6 +58,7 @@ interface SavedCalculation {
   image: string;
   calculatorState: any;
   createdAt: string;
+  emagProduct?: boolean;
 }
 
 // Fallback static products in case no integrations data is available
@@ -247,7 +248,9 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
 
   // Initialize filtered saved calculations
   useEffect(() => {
-    setFilteredSavedCalculations(savedCalculations);
+    // Filter out calculations that have emagProduct to ensure they don't show in the created products section
+    const createdProductCalculations = savedCalculations.filter(calc => !calc.emagProduct);
+    setFilteredSavedCalculations(createdProductCalculations);
   }, [savedCalculations]);
 
   // Filter products when search query changes
@@ -268,13 +271,17 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   // Filter saved calculations when search query changes
   useEffect(() => {
     if (savedSearchQuery.trim() === '') {
-      setFilteredSavedCalculations(savedCalculations);
+      // Apply the same filter to ensure only created products show
+      const createdProductCalculations = savedCalculations.filter(calc => !calc.emagProduct);
+      setFilteredSavedCalculations(createdProductCalculations);
     } else {
       const query = savedSearchQuery.toLowerCase();
-      const filtered = savedCalculations.filter(calculation => 
-        calculation.title.toLowerCase().includes(query) || 
-        (calculation.description && calculation.description.toLowerCase().includes(query))
-      );
+      const filtered = savedCalculations
+        .filter(calc => !calc.emagProduct) // Filter out eMAG product calculations
+        .filter(calculation => 
+          calculation.title.toLowerCase().includes(query) || 
+          (calculation.description && calculation.description.toLowerCase().includes(query))
+        );
       setFilteredSavedCalculations(filtered);
     }
   }, [savedSearchQuery, savedCalculations]);

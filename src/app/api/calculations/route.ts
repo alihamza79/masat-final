@@ -21,19 +21,54 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, calculatorState } = body;
+    const { title, description, calculatorState, emagProduct } = body;
 
-    if (!title || !calculatorState) {
-      return NextResponse.json(
-        { success: false, message: 'Title and calculator state are required' },
-        { status: 400 }
-      );
+    // Validate based on calculation type
+    if (emagProduct) {
+      // For eMAG products, we need the emagProduct data and calculatorState
+      if (!emagProduct.productId || !emagProduct.integrationId || !calculatorState) {
+        return NextResponse.json(
+          { success: false, message: 'eMAG product ID, integration ID, and calculator state are required' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // For created products, we need title and calculatorState
+      if (!title || !calculatorState) {
+        return NextResponse.json(
+          { success: false, message: 'Title and calculator state are required' },
+          { status: 400 }
+        );
+      }
     }
 
     await connectDB();
+    
+    // Check if there's already a saved calculation for this eMAG product
+    if (emagProduct) {
+      const existingCalculation = await SavedCalculation.findOne({
+        'emagProduct.integrationId': emagProduct.integrationId,
+        'emagProduct.productId': emagProduct.productId
+      });
+      
+      if (existingCalculation) {
+        // Update the existing calculation
+        existingCalculation.calculatorState = calculatorState;
+        await existingCalculation.save();
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Calculation updated successfully', 
+          data: existingCalculation 
+        });
+      }
+    }
+    
+    // Create a new calculation
     const newCalculation = await SavedCalculation.create({
       title,
       description,
+      emagProduct,
       calculatorState
     });
 
