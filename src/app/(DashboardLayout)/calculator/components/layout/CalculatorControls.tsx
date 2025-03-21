@@ -143,7 +143,7 @@ const CalculatorControls: React.FC<CalculatorControlsProps> = ({
           variant="contained"
           size="small"
           startIcon={<IconDeviceFloppy size={18} />}
-          // onClick={onOpenSaveModal}
+          onClick={onOpenSaveModal}
           sx={{
             bgcolor: '#00c292',
             color: 'white',
@@ -260,7 +260,7 @@ const CalculatorControls: React.FC<CalculatorControlsProps> = ({
             variant="contained"
             size="small"
             startIcon={<IconDeviceFloppy size={18} />}
-            // onClick={onOpenSaveModal}
+            onClick={onOpenSaveModal}
             sx={{
               bgcolor: '#00c292',
               color: 'white',

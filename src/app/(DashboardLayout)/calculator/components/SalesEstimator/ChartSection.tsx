@@ -23,6 +23,15 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
 
+  // Define custom legend colors that match the chart
+  const legendItems = [
+    { name: 'Total Revenue', color: '#2CD9C5' },
+    { name: 'Total Expense', color: '#FA896B' },
+    { name: 'Total Taxes', color: '#FFAE1F' },
+    { name: 'Total VAT', color: '#5D87FF' },
+    { name: 'Total Net Profit', color: '#49BEFF' }
+  ];
+
   return (
     <Grid container spacing={3}>
       {/* Distribution Chart */}
@@ -48,10 +57,15 @@ const ChartSection: React.FC<ChartSectionProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            position: 'relative',
             '& .apexcharts-canvas': {
               margin: '0 auto !important',
               width: '100% !important',
               height: '100% !important'
+            },
+            // Hide the built-in legend
+            '& .apexcharts-legend': {
+              display: 'none !important'
             }
           }}>
             <Chart
@@ -60,6 +74,9 @@ const ChartSection: React.FC<ChartSectionProps> = ({
                 chart: {
                   ...donutOptions.chart,
                   height: '100%'
+                },
+                legend: {
+                  show: false // Hide the built-in legend
                 }
               }}
               series={donutSeries}
@@ -68,6 +85,54 @@ const ChartSection: React.FC<ChartSectionProps> = ({
               width="100%"
             />
           </Box>
+          
+          {/* Custom Legend */}
+          <Stack 
+            direction="row" 
+            spacing={0.5}
+            flexWrap="wrap"
+            justifyContent="center"
+            sx={{ 
+              mt: 1,
+              mx: 'auto',
+              maxWidth: '100%'
+            }}
+          >
+            {legendItems.map((item) => (
+              <Box 
+                key={item.name}
+                sx={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  mx: 1,
+                  my: 0.5
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: item.color,
+                    mr: 0.75,
+                    flexShrink: 0
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '12px',
+                    lineHeight: 1.2,
+                    color: theme.palette.text.primary,
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {item.name}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
         </Card>
       </Grid>
 

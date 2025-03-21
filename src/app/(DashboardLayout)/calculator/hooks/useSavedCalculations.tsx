@@ -85,7 +85,10 @@ export const useSavedCalculations = () => {
                   type: 'UPDATE_CATEGORY',
                   payload: {
                     category: category as any,
-                    data: categoryData as any
+                    data: {
+                      ...categoryData as any,
+                      _isLoadingFromSaved: true
+                    }
                   }
                 });
               });
@@ -105,6 +108,8 @@ export const useSavedCalculations = () => {
               dispatch({ type: 'SET_SYNC_VALUES', payload: value as boolean });
             } else if (key === 'emagCommission') {
               dispatch({ type: 'SET_EMAG_COMMISSION', payload: value as string });
+            } else if (key === 'salesEstimator') {
+              dispatch({ type: 'UPDATE_SALES_ESTIMATOR', payload: value as any });
             }
           });
         }
@@ -133,16 +138,19 @@ export const useSavedCalculations = () => {
                   type: 'UPDATE_CATEGORY',
                   payload: {
                     category: category as any,
-                    data: categoryData as any
+                    data: {
+                      ...categoryData as any,
+                      _isLoadingFromSaved: true
+                    }
                   }
                 });
               });
             } else if (key === 'totalPieces') {
               dispatch({ type: 'SET_TOTAL_PIECES', payload: value as number });
-            } else if (key === 'vatRate') {
-              dispatch({ type: 'SET_VAT_RATE', payload: value as number });
             } else if (key === 'taxRate') {
               dispatch({ type: 'SET_TAX_RATE', payload: value as number });
+            } else if (key === 'vatRate') {
+              dispatch({ type: 'SET_VAT_RATE', payload: value as number });
             } else if (key === 'profileType') {
               dispatch({ type: 'SET_PROFILE_TYPE', payload: value as 'profile' | 'vat' });
             } else if (key === 'purchaseType') {
@@ -153,6 +161,8 @@ export const useSavedCalculations = () => {
               dispatch({ type: 'SET_SYNC_VALUES', payload: value as boolean });
             } else if (key === 'emagCommission') {
               dispatch({ type: 'SET_EMAG_COMMISSION', payload: value as string });
+            } else if (key === 'salesEstimator') {
+              dispatch({ type: 'UPDATE_SALES_ESTIMATOR', payload: value as any });
             }
           });
         }

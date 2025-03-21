@@ -59,36 +59,21 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
   }, [category, headerValue, setProductCostHeaderValue]);
 
   const handleProductCostChange = (value: number) => {
-    if (state.syncValues) {
-      // Update product cost for all categories
-      Object.keys(state.categories).forEach((cat) => {
-        onUpdateCategory(cat, { productCost: value });
-      });
-    } else {
-      onUpdateCategory(category, { productCost: value });
-    }
+    // Always update using onUpdateCategory directly
+    // Our modified Calculator component will handle the sync logic
+    onUpdateCategory(category, { productCost: value });
   };
 
   const handleShippingCostChange = (value: number) => {
-    if (state.syncValues) {
-      // Update shipping cost for all categories
-      Object.keys(state.categories).forEach((cat) => {
-        onUpdateCategory(cat, { shippingCost: value });
-      });
-    } else {
-      onUpdateCategory(category, { shippingCost: value });
-    }
+    // Always update using onUpdateCategory directly
+    // Our modified Calculator component will handle the sync logic
+    onUpdateCategory(category, { shippingCost: value });
   };
 
   const handleCustomsDutyChange = (value: number) => {
-    if (state.syncValues) {
-      // Update customs duty for all categories
-      Object.keys(state.categories).forEach((cat) => {
-        onUpdateCategory(cat, { customsDuty: value });
-      });
-    } else {
-      onUpdateCategory(category, { customsDuty: value });
-    }
+    // Always update using onUpdateCategory directly
+    // Our modified Calculator component will handle the sync logic
+    onUpdateCategory(category, { customsDuty: value });
   };
 
   // Determine if this is the first calculator
@@ -300,32 +285,13 @@ const ProductCostSection: React.FC<ProductCostSectionProps> = ({
                     <Box sx={{ 
                       width: valueWidth
                     }}>
-                      {isFirstCalculator ? (
-                        <NumberInput
-                          label={t('calculator.sections.productCost.customsDuty')}
-                          value={data.customsDuty}
-                          onChange={handleCustomsDutyChange}
-                          suffix="%"
-                          showLabel={false}
-                        />
-                      ) : (
-                        <Typography
-                          sx={{
-                            width: '100%',
-                            textAlign: 'center',
-                            fontSize: '13px',
-                            height: '36px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1
-                          }}
-                        >
-                          {data.customsDuty}%
-                        </Typography>
-                      )}
+                      <NumberInput
+                        label={t('calculator.sections.productCost.customsDuty')}
+                        value={data.customsDuty}
+                        onChange={handleCustomsDutyChange}
+                        suffix="%"
+                        showLabel={false}
+                      />
                     </Box>
                   </Stack>
 

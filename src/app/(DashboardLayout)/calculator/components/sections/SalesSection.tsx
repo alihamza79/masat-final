@@ -49,6 +49,35 @@ const SalesSection: React.FC<SalesSectionProps> = ({
   // Helper to determine if VAT fields should be shown
   const shouldShowVATFields = profileType === 'vat' && vatRate > 0;
 
+  // Helper function to handle sale price changes
+  const handleSalePriceChange = (value: number) => {
+    // Always update each calculator independently to ensure values are saved separately
+    onUpdateCategory(category, { salePrice: parseFloat(value.toFixed(2)) });
+  };
+
+  // Helper function to handle sale price with VAT changes
+  const handleSalePriceWithVATChange = (value: number) => {
+    // Round to 2 decimal places when converting from VAT to price
+    const newPrice = parseFloat((value / (1 + vatRate / 100)).toFixed(2));
+    onUpdateCategory(category, { salePrice: newPrice });
+  };
+
+  // Helper function to handle shipping price changes
+  const handleShippingPriceChange = (value: number) => {
+    if (category === 'FBM-NonGenius') {
+      onUpdateCategory(category, { shippingPrice: parseFloat(value.toFixed(2)) });
+    }
+  };
+
+  // Helper function to handle shipping price with VAT changes
+  const handleShippingPriceWithVATChange = (value: number) => {
+    if (category === 'FBM-NonGenius') {
+      // Round to 2 decimal places when converting from VAT to price
+      const newPrice = parseFloat((value / (1 + vatRate / 100)).toFixed(2));
+      onUpdateCategory(category, { shippingPrice: newPrice });
+    }
+  };
+
   return (
     <Box>
       <SectionHeader
@@ -95,7 +124,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                     <NumberInput
                       label={t('calculator.sections.sales.salePrice')}
                       value={data.salePrice}
-                      onChange={(value) => onUpdateCategory(category, { salePrice: parseFloat(value.toFixed(2)) })}
+                      onChange={handleSalePriceChange}
                       showLabel={false}
                     />
                   </Box>
@@ -127,11 +156,7 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                       <NumberInput
                         label="With VAT"
                         value={data.salePrice * (1 + vatRate / 100)}
-                        onChange={(value) => {
-                          // Round to 2 decimal places when converting from VAT to price
-                          const newPrice = parseFloat((value / (1 + vatRate / 100)).toFixed(2));
-                          onUpdateCategory(category, { salePrice: newPrice });
-                        }}
+                        onChange={handleSalePriceWithVATChange}
                         showLabel={false}
                         textAlign="center"
                         sx={{ fontSize: '11px', borderStyle: 'dashed' }}
@@ -170,18 +195,28 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                     <NumberInput
                       label={t('calculator.sections.sales.shippingPrice')}
                       value={category === 'FBM-NonGenius' ? data.shippingPrice : 0}
-                      onChange={(value) => {
-                        if (category === 'FBM-NonGenius') {
-                          onUpdateCategory(category, { shippingPrice: parseFloat(value.toFixed(2)) });
-                        }
-                      }}
+                      onChange={handleShippingPriceChange}
                       showLabel={false}
                       disabled={category !== 'FBM-NonGenius'}
                       sx={category !== 'FBM-NonGenius' ? { 
                         fontSize: '13px',
                         border: 'none',
                         bgcolor: 'transparent',
-                        boxShadow: 'none'
+                        boxShadow: 'none',
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            border: 'none',
+                          },
+                          '& input': {
+                            color: '#000 !important',
+                          },
+                        },
+                        '& .MuiInputBase-input.Mui-disabled': {
+                          color: '#000 !important',
+                          WebkitTextFillColor: '#000 !important',
+                          opacity: '1 !important',
+                          '-webkit-text-fill-color': '#000 !important',
+                        }
                       } : {}}
                     />
                   </Box>
@@ -213,19 +248,32 @@ const SalesSection: React.FC<SalesSectionProps> = ({
                       <NumberInput
                         label="With VAT"
                         value={category === 'FBM-NonGenius' ? data.shippingPrice * (1 + vatRate / 100) : 0}
-                        onChange={(value) => {
-                          if (category === 'FBM-NonGenius') {
-                            // Round to 2 decimal places when converting from VAT to price
-                            const newPrice = parseFloat((value / (1 + vatRate / 100)).toFixed(2));
-                            onUpdateCategory(category, { shippingPrice: newPrice });
-                          }
-                        }}
+                        onChange={handleShippingPriceWithVATChange}
                         showLabel={false}
                         textAlign="center"
                         disabled={category !== 'FBM-NonGenius'}
                         sx={category === 'FBM-NonGenius' ? 
                           { fontSize: '11px', borderStyle: 'dashed' } : 
-                          { fontSize: '11px', border: 'none', bgcolor: 'transparent', boxShadow: 'none' }
+                          { 
+                            fontSize: '11px', 
+                            border: 'none', 
+                            bgcolor: 'transparent', 
+                            boxShadow: 'none',
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                border: 'none',
+                              },
+                              '& input': {
+                                color: '#000 !important',
+                              },
+                            },
+                            '& .MuiInputBase-input.Mui-disabled': {
+                              color: '#000 !important',
+                              WebkitTextFillColor: '#000 !important',
+                              opacity: '1 !important',
+                              '-webkit-text-fill-color': '#000 !important',
+                            }
+                          }
                         }
                       />
                     </Box>

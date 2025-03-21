@@ -39,6 +39,13 @@ const CommissionSection: React.FC<CommissionSectionProps> = ({
 
   const valueWidth = '100px';
 
+  // Handle commission percentage change
+  const handleCommissionChange = (value: number) => {
+    // Always update each calculator independently 
+    // to ensure values are saved separately
+    onUpdateCategory(category, { commission: value });
+  };
+
   return (
     <Box>
       <SectionHeader

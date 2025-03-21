@@ -102,33 +102,15 @@ const Calculator = () => {
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleUpdateCategory = (category: string, data: Partial<CategoryData>) => {
-    if (state.syncValues && (data.salePrice !== undefined || data.shippingPrice !== undefined || data.otherExpenses !== undefined)) {
-      Object.keys(state.categories).forEach((cat) => {
-        dispatch({
-          type: 'UPDATE_CATEGORY',
-          payload: {
-            category: cat as keyof typeof state.categories,
-            data: {
-              ...data,
-              // Force shipping price to 0 for non-FBM-NonGenius categories
-              ...(data.shippingPrice !== undefined && cat !== 'FBM-NonGenius' ? { shippingPrice: 0 } : {})
-            },
-          },
-        });
-      });
-    } else {
-      dispatch({
-        type: 'UPDATE_CATEGORY',
-        payload: {
-          category: category as keyof typeof state.categories,
-          data: {
-            ...data,
-            // Force shipping price to 0 for non-FBM-NonGenius categories
-            ...(data.shippingPrice !== undefined && category !== 'FBM-NonGenius' ? { shippingPrice: 0 } : data)
-          },
-        },
-      });
-    }
+    // Just pass the update directly to the reducer
+    // The reducer will handle syncing based on the syncValues state
+    dispatch({
+      type: 'UPDATE_CATEGORY',
+      payload: {
+        category: category as keyof typeof state.categories,
+        data: data,
+      },
+    });
   };
 
   const theme = useTheme();
@@ -167,15 +149,102 @@ const Calculator = () => {
     
     if (!value) {
       // If no product is selected, reset the calculator
+      resetCalculatorValues(); // Ensure SalesEstimator is reset
       return;
     }
     
     // Check if this is a saved calculation
     if (value.startsWith('saved-')) {
+      // First reset to ensure clean state before loading saved calculation
+      resetCalculatorValues();
+      
       const calculationId = value.replace('saved-', '');
       await loadSavedCalculation(calculationId);
+      return; // Return early to avoid other processing
     }
-    // Handle eMAG integration product format (emag-integrationId-productId)
+    
+    // For all other product types, ensure we start with a clean state
+    resetCalculatorValues(); // This also resets the SalesEstimator
+    
+    // If this is an integration product (contains : separator)
+    if (value.includes(':')) {
+      const [integrationId, productId] = value.split(':');
+      
+      // Load category commissions from the static mapping
+      const categoryCommissions = {
+        '3038': 0.05, // Example: 5% commission
+        '2': 0.07, // Example: 7% commission
+        // Add more mappings here as needed
+      };
+      
+      // Find the product in the integrations data
+      if (integrationsData && integrationsData[integrationId]) {
+        const productOffer = integrationsData[integrationId].productOffers?.find(
+          (p: any) => p.id.toString() === productId
+        );
+        
+        if (productOffer) {
+          // Update calculator state with product data - only set values that are available
+          const salePrice = productOffer.sale_price || 0;
+          
+          // Get category ID and set commission if available
+          // Using any type since category_id is not part of the official EmagProductOffer type
+          const anyProductOffer = productOffer as any;
+          const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
+          let commission: number | null = null;
+          
+          if (categoryId) {
+            if (categoryId in categoryCommissions) {
+              // Convert commission to percentage (multiply by 100)
+              commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
+            } else {
+              // If category exists but not in our mapping, set commission to 0
+              commission = 0;
+            }
+            
+            // Update the global commission setting
+            dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+          }
+          
+          // Update all categories with the sale price and commission
+          Object.keys(state.categories).forEach((category) => {
+            const updateData: Partial<CategoryData> = { salePrice };
+            
+            // Add commission to update data if available
+            if (commission !== null) {
+              updateData.commission = commission;
+            }
+            
+            dispatch({
+              type: 'UPDATE_CATEGORY',
+              payload: {
+                category: category as keyof typeof state.categories,
+                data: updateData
+              },
+            });
+          });
+          
+          // Check if this integration is FBE type and update visible cards accordingly
+          const integration = integrations.find(integration => integration._id === integrationId);
+          if (integration && integration.accountType === 'FBE') {
+            // For FBE integrations, only show the FBE calculator
+            setVisibleCards({
+              'FBM-NonGenius': false,
+              'FBM-Genius': false,
+              'FBE': true
+            });
+          } else {
+            // For non-FBE integrations, show all calculators
+            setVisibleCards({
+              'FBM-NonGenius': true,
+              'FBM-Genius': true,
+              'FBE': true
+            });
+          }
+        }
+      }
+    }
+    // Handle legacy static product format
     else if (value.startsWith('emag-') && value.split('-').length > 2) {
       // Reset all values first
       resetCalculatorValues();
@@ -613,6 +682,7 @@ const Calculator = () => {
           onDistributionChange={handleDistributionChange}
           taxRate={state.taxRate}
           visibleCards={visibleCards}
+          selectedProduct={selectedProduct}
         />
       </Box>
     </Box>

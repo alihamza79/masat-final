@@ -110,10 +110,41 @@ export const useSalesEstimatorCharts = (
     legend: {
       show: true,
       position: 'bottom',
-      fontSize: '14px',
+      fontSize: '13px',
+      fontWeight: 500,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      labels: {
+        colors: theme.palette.text.primary
+      },
       markers: {
-        size: 10,
-        shape: 'circle'
+        size: 12,
+        strokeWidth: 0,
+        customHTML: undefined,
+        onClick: undefined,
+        offsetX: -2,
+        offsetY: 0
+      },
+      itemMargin: {
+        horizontal: 8,
+        vertical: 5
+      },
+      onItemClick: {
+        toggleDataSeries: true
+      },
+      onItemHover: {
+        highlightDataSeries: true
+      },
+      formatter: function(legendName, opts) {
+        // Format labels to be more consistent
+        const simpleNames: Record<string, string> = {
+          'Total Revenue': 'Total Revenue',
+          'Total Expense': 'Total Expense',
+          'Total Taxes': 'Total Taxes',
+          'Total VAT': 'Total VAT',
+          'Total Net Profit': 'Total Net Profit'
+        };
+        
+        return `<span style="font-weight: 500;">${simpleNames[legendName] || legendName}</span>`;
       }
     },
     tooltip: {

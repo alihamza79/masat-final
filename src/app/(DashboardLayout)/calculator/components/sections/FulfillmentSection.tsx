@@ -17,11 +17,11 @@ interface FulfillmentSectionProps {
 }
 
 interface DimensionsData {
-  length: number;
-  height: number;
-  width: number;
-  weight: number;
-  days: number;
+  length: number | string;
+  height: number | string;
+  width: number | string;
+  weight: number | string;
+  days: number | string;
 }
 
 const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
@@ -39,14 +39,33 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
   const valueWidth = '100px';
   const [openDimensionsModal, setOpenDimensionsModal] = useState(false);
   const [dimensions, setDimensions] = useState<DimensionsData>({
-    length: 30,
-    height: 20,
-    width: 10,
-    weight: 1,
-    days: 30
+    length: 0,
+    height: 0,
+    width: 0,
+    weight: 0,
+    days: 0
   });
+  
+  // Store the last successful dimensions used to calculate fulfillment cost
+  const [lastCalculatedDimensions, setLastCalculatedDimensions] = useState<DimensionsData>({
+    length: 0,
+    height: 0,
+    width: 0,
+    weight: 0,
+    days: 0
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track focused fields to clear zeros on focus
+  const [focusedFields, setFocusedFields] = useState({
+    length: false,
+    height: false,
+    width: false,
+    weight: false,
+    days: false
+  });
 
   // For FBM-Genius, show 5 only if FBM-NonGenius fulfillmentShippingCost is greater than 0, otherwise 0
   const geniusShippingCost = state.categories['FBM-NonGenius'].fulfillmentShippingCost > 0 ? 5 : 0;
@@ -64,13 +83,58 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
     setFulfillmentHeaderValue(category, headerValue);
   }, [category, headerValue, setFulfillmentHeaderValue]);
 
+  // Initialize dimensions from context if available
+  useEffect(() => {
+    if (category === 'FBE' && data.dimensions) {
+      setLastCalculatedDimensions({
+        length: data.dimensions.length,
+        height: data.dimensions.height,
+        width: data.dimensions.width,
+        weight: data.dimensions.weight,
+        days: data.dimensions.days
+      });
+    }
+  }, [category, data.dimensions]);
+
   const handleDimensionChange = (field: keyof DimensionsData, value: string) => {
     setDimensions(prev => ({
       ...prev,
-      [field]: Number(value)
+      [field]: value === '' ? '' : Number(value)
     }));
     // Clear error when user changes values
     if (error) setError(null);
+  };
+  
+  const handleDimensionFocus = (field: keyof DimensionsData) => {
+    // If the value is 0, clear it
+    if (dimensions[field] === 0) {
+      setDimensions(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+    
+    // Mark this field as focused
+    setFocusedFields(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+  
+  const handleDimensionBlur = (field: keyof DimensionsData) => {
+    // If the field is empty, set it back to 0
+    if (dimensions[field] === '') {
+      setDimensions(prev => ({
+        ...prev,
+        [field]: 0
+      }));
+    }
+    
+    // Mark field as unfocused
+    setFocusedFields(prev => ({
+      ...prev,
+      [field]: false
+    }));
   };
 
   const handleShippingCostChange = (value: number) => {
@@ -79,11 +143,14 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
   };
 
   const handleFulfillmentCostChange = (value: number) => {
-    // Only sync between FBM-NonGenius and FBM-Genius
+    // Each calculator type should maintain its own fulfillment cost
+    // but for FBM variants, we sync between them
     if (category === 'FBM-NonGenius' || category === 'FBM-Genius') {
+      // Sync between FBM variants only
       onUpdateCategory('FBM-NonGenius', { fulfillmentCost: value });
       onUpdateCategory('FBM-Genius', { fulfillmentCost: value });
     } else {
+      // FBE gets its own value
       onUpdateCategory(category, { fulfillmentCost: value });
     }
   };
@@ -93,12 +160,21 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
       setIsLoading(true);
       setError(null);
       try {
+        // Convert any empty string values to zero before submitting
+        const submissionData = {
+          length: typeof dimensions.length === 'string' && dimensions.length === '' ? 0 : Number(dimensions.length),
+          height: typeof dimensions.height === 'string' && dimensions.height === '' ? 0 : Number(dimensions.height),
+          width: typeof dimensions.width === 'string' && dimensions.width === '' ? 0 : Number(dimensions.width),
+          weight: typeof dimensions.weight === 'string' && dimensions.weight === '' ? 0 : Number(dimensions.weight),
+          days: typeof dimensions.days === 'string' && dimensions.days === '' ? 0 : Number(dimensions.days)
+        };
+        
         const response = await fetch('/api/client/withFBE/weightCalculation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(dimensions),
+          body: JSON.stringify(submissionData),
         });
 
         const result = await response.json();
@@ -106,7 +182,28 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
         if (result.status) {
           // Round to 2 decimal places
           const fulfillmentCost = Number(result.totalFulFilmentPrice).toFixed(2);
-          onUpdateCategory(category, { fulfillmentCost: Number(fulfillmentCost) });
+          
+          // Store dimensions along with fulfillment cost
+          onUpdateCategory(category, { 
+            fulfillmentCost: Number(fulfillmentCost),
+            dimensions: {
+              length: submissionData.length,
+              height: submissionData.height,
+              width: submissionData.width,
+              weight: submissionData.weight,
+              days: submissionData.days
+            }
+          });
+          
+          // Store the last successful dimensions when calculation succeeds
+          setLastCalculatedDimensions({
+            length: submissionData.length,
+            height: submissionData.height,
+            width: submissionData.width,
+            weight: submissionData.weight,
+            days: submissionData.days
+          });
+          
           setOpenDimensionsModal(false);
         } else {
           // Display the error message from the API
@@ -123,6 +220,39 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
 
   const handleFulfillmentClick = () => {
     if (category === 'FBE') {
+      // Use dimensions from context if available, otherwise use last calculated dimensions
+      if (data.fulfillmentCost > 0) {
+        if (data.dimensions) {
+          setDimensions({
+            length: data.dimensions.length,
+            height: data.dimensions.height,
+            width: data.dimensions.width,
+            weight: data.dimensions.weight,
+            days: data.dimensions.days
+          });
+        } else {
+          setDimensions({...lastCalculatedDimensions});
+        }
+      } else {
+        // If no fulfillment cost yet, use default zeros
+        setDimensions({
+          length: 0,
+          height: 0,
+          width: 0,
+          weight: 0,
+          days: 0
+        });
+      }
+      
+      // Reset focused fields
+      setFocusedFields({
+        length: false,
+        height: false,
+        width: false,
+        weight: false,
+        days: false
+      });
+      
       setOpenDimensionsModal(true);
       setError(null);
     }
@@ -353,6 +483,8 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                   fullWidth
                   value={dimensions.length}
                   onChange={(e) => handleDimensionChange('length', e.target.value)}
+                  onFocus={() => handleDimensionFocus('length')}
+                  onBlur={() => handleDimensionBlur('length')}
                   InputProps={{
                     endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.cm')}</Typography>
                   }}
@@ -366,6 +498,8 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                   fullWidth
                   value={dimensions.height}
                   onChange={(e) => handleDimensionChange('height', e.target.value)}
+                  onFocus={() => handleDimensionFocus('height')}
+                  onBlur={() => handleDimensionBlur('height')}
                   InputProps={{
                     endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.cm')}</Typography>
                   }}
@@ -381,6 +515,8 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                   fullWidth
                   value={dimensions.width}
                   onChange={(e) => handleDimensionChange('width', e.target.value)}
+                  onFocus={() => handleDimensionFocus('width')}
+                  onBlur={() => handleDimensionBlur('width')}
                   InputProps={{
                     endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.cm')}</Typography>
                   }}
@@ -394,6 +530,8 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                   fullWidth
                   value={dimensions.weight}
                   onChange={(e) => handleDimensionChange('weight', e.target.value)}
+                  onFocus={() => handleDimensionFocus('weight')}
+                  onBlur={() => handleDimensionBlur('weight')}
                   InputProps={{
                     endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.kg')}</Typography>
                   }}
@@ -409,6 +547,8 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                 fullWidth
                 value={dimensions.days}
                 onChange={(e) => handleDimensionChange('days', e.target.value)}
+                onFocus={() => handleDimensionFocus('days')}
+                onBlur={() => handleDimensionBlur('days')}
                 InputProps={{
                   endAdornment: <Typography variant="caption">{t('calculator.sections.fulfillment.dimensions.days_unit')}</Typography>
                 }}

@@ -12,6 +12,17 @@ export interface CategoryData {
   fulfillmentShippingCost: number;
   customsDuty: number;
   otherExpenses: number;
+  dimensions?: {
+    length: number;
+    height: number;
+    width: number;
+    weight: number;
+    days: number;
+  };
+  // Metadata fields to track original values when sync is enabled
+  _originalShippingPrice?: number;
+  _updatedFrom?: string;
+  _isLoadingFromSaved?: boolean; // Flag to indicate when loading from saved calculation
 }
 
 export interface CalculatorState {
@@ -24,6 +35,11 @@ export interface CalculatorState {
   vatRateOfPurchase: string;
   syncValues: boolean;
   emagCommission: string;
+  salesEstimator: {
+    totalPieces: number;
+    distribution: Record<string, { pieces: number; percent: number }>;
+    sliderValue: number[];
+  };
 }
 
 type Action =
@@ -36,6 +52,7 @@ type Action =
   | { type: 'SET_VAT_RATE_OF_PURCHASE'; payload: string }
   | { type: 'SET_SYNC_VALUES'; payload: boolean }
   | { type: 'SET_EMAG_COMMISSION'; payload: string }
+  | { type: 'UPDATE_SALES_ESTIMATOR'; payload: Partial<CalculatorState['salesEstimator']> }
   | { type: 'RESET' };
 
 const initialState: CalculatorState = {
@@ -88,6 +105,15 @@ const initialState: CalculatorState = {
   vatRateOfPurchase: '19',
   syncValues: true,
   emagCommission: '20',
+  salesEstimator: {
+    totalPieces: 1,
+    distribution: {
+      'FBM-NonGenius': { pieces: 0, percent: 33.33 },
+      'FBM-Genius': { pieces: 0, percent: 33.33 },
+      'FBE': { pieces: 1, percent: 33.34 },
+    },
+    sliderValue: [33.33, 66.66],
+  },
 };
 
 function calculatorReducer(state: CalculatorState, action: Action): CalculatorState {
@@ -106,24 +132,86 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
       };
 
     case 'UPDATE_CATEGORY':
-      if (state.syncValues && (
-        action.payload.data.productCost !== undefined ||
-        action.payload.data.shippingCost !== undefined ||
-        action.payload.data.customsDuty !== undefined
-      )) {
-        // When sync is enabled, update all categories
+      // Handle special case for loading saved calculations (where multiple fields are set at once)
+      if (action.payload.data._isLoadingFromSaved) {
+        // When loading from saved calculation, don't sync - just apply directly to the target category
+        const { _isLoadingFromSaved, ...dataWithoutFlag } = action.payload.data;
         return {
           ...state,
-          categories: Object.keys(state.categories).reduce((acc, category) => ({
-            ...acc,
-            [category]: {
-              ...state.categories[category],
-              ...action.payload.data,
+          categories: {
+            ...state.categories,
+            [action.payload.category]: {
+              ...state.categories[action.payload.category],
+              ...dataWithoutFlag,
             },
-          }), {} as CalculatorState['categories']),
+          },
+        };
+      }
+
+      // When sync is enabled, we sync everything except shipping price which only applies to FBM-NonGenius
+      if (state.syncValues) {
+        // Extract shipping price for special handling
+        const { shippingPrice, ...syncableData } = action.payload.data;
+        
+        // Check if this is a FBM update that should be synced between FBM types only
+        const isFBMUpdate = 
+          (action.payload.category === 'FBM-NonGenius' || action.payload.category === 'FBM-Genius') && 
+          (syncableData.fulfillmentCost !== undefined);
+          
+        // Check if this is an FBE fulfillment update that should NOT sync to FBM calculators
+        const isFBEFulfillmentUpdate = 
+          action.payload.category === 'FBE' && 
+          syncableData.fulfillmentCost !== undefined;
+        
+        // Create updated state with synced fields
+        const updatedCategories = { ...state.categories };
+        
+        // If we have fields to sync, do that first
+        if (Object.keys(syncableData).length > 0) {
+          Object.keys(state.categories).forEach(category => {
+            // Skip FBE if this is a FBM-specific fulfillment update
+            if (isFBMUpdate && category === 'FBE') {
+              return;
+            }
+            
+            // Skip FBM calculators if this is an FBE fulfillment update
+            if (isFBEFulfillmentUpdate && 
+               (category === 'FBM-NonGenius' || category === 'FBM-Genius')) {
+              return;
+            }
+            
+            // For an FBE fulfillment update, we need to create modified syncable data without fulfillment cost
+            let dataToSync = syncableData;
+            if (isFBEFulfillmentUpdate && category !== 'FBE') {
+              // Create a new object without the fulfillmentCost property
+              const { fulfillmentCost, ...restData } = syncableData;
+              dataToSync = restData;
+            }
+            
+            // Update this category with the synced fields
+            updatedCategories[category] = {
+              ...updatedCategories[category],
+              ...dataToSync,
+            };
+          });
+        }
+        
+        // Handle shipping price separately (only applies to FBM-NonGenius)
+        if (shippingPrice !== undefined) {
+          if (action.payload.category === 'FBM-NonGenius') {
+            updatedCategories['FBM-NonGenius'] = {
+              ...updatedCategories['FBM-NonGenius'],
+              shippingPrice,
+            };
+          }
+        }
+        
+        return {
+          ...state,
+          categories: updatedCategories,
         };
       } else {
-        // When sync is disabled or for other fields, update only the specified category
+        // When sync is disabled, update only the specified category
         return {
           ...state,
           categories: {
@@ -176,6 +264,45 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
       return {
         ...state,
         emagCommission: action.payload,
+      };
+
+    case 'UPDATE_SALES_ESTIMATOR':
+      // Perform a deep equality check to see if the state actually needs to update
+      const currentSalesEstimator = state.salesEstimator;
+      const newSalesEstimator = {
+        ...currentSalesEstimator,
+        ...action.payload
+      };
+      
+      // Check if totalPieces actually changed
+      const piecesUnchanged = 
+        newSalesEstimator.totalPieces === currentSalesEstimator.totalPieces;
+      
+      // Check if sliderValue is unchanged (both arrays with same values)
+      const sliderUnchanged = 
+        (!newSalesEstimator.sliderValue && !currentSalesEstimator.sliderValue) ||
+        (Array.isArray(newSalesEstimator.sliderValue) && 
+         Array.isArray(currentSalesEstimator.sliderValue) &&
+         newSalesEstimator.sliderValue.length === currentSalesEstimator.sliderValue.length &&
+         newSalesEstimator.sliderValue.every((val, idx) => 
+           Math.abs(val - currentSalesEstimator.sliderValue[idx]) < 0.001
+         ));
+      
+      // Check if distribution is unchanged
+      const distributionUnchanged = 
+        (!newSalesEstimator.distribution && !currentSalesEstimator.distribution) ||
+        (JSON.stringify(newSalesEstimator.distribution) === 
+         JSON.stringify(currentSalesEstimator.distribution));
+      
+      // If nothing changed, return the same state to prevent unnecessary renders
+      if (piecesUnchanged && sliderUnchanged && distributionUnchanged) {
+        return state;
+      }
+      
+      // Otherwise update with the new values
+      return {
+        ...state,
+        salesEstimator: newSalesEstimator
       };
 
     case 'RESET':

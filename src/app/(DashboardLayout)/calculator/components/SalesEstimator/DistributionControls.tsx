@@ -32,15 +32,48 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
   const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
     .filter(([_, isVisible]) => isVisible)
     .map(([type]) => type as CalculatorType);
+    
+  // Helper function to get the correct percentage for display based on calculator type
+  const getDisplayPercentage = (type: CalculatorType): number => {
+    // For a single calculator, it's always 100%
+    if (visibleTypes.length === 1) {
+      return 100;
+    }
+    
+    // For exactly two calculators
+    if (visibleTypes.length === 2) {
+      // Sort visible types to maintain consistent order
+      const sortedTypes = [...visibleTypes].sort();
+      
+      if (sortedTypes[0] === 'FBM-NonGenius') {
+        // FBM-NonGenius is visible
+        if (type === 'FBM-NonGenius') {
+          return sliderValue[0]; // First slider point
+        } else {
+          return 100 - sliderValue[0]; // Remaining percentage
+        }
+      } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
+        // FBM-Genius and FBE are visible
+        if (type === 'FBM-Genius') {
+          return sliderValue[1]; // Second slider point
+        } else {
+          return 100 - sliderValue[1]; // Remaining percentage
+        }
+      }
+    }
+    
+    // Default to distribution percentage
+    return distributions[type].percent;
+  };
 
   return (
     <Box mb={{ xs: 3, sm: 4 }}>
       <Stack 
         direction={{ xs: 'column', sm: 'row' }}
         spacing={{ xs: 3, sm: 3, md: 4 }}
-        alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
       >
-        {/* Sales Input */}
+        {/* Sales Input - Always visible */}
         <Box
           sx={{ 
             width: { xs: '100%', sm: '200px', md: '240px' },
@@ -91,17 +124,48 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
           </Stack>
         </Box>
 
+        {/* For single calculator - Display a minimalistic indicator */}
+        {visibleTypes.length === 1 && (
+          <Typography 
+            sx={{ 
+              fontSize: { xs: '13px', sm: '14px' },
+              fontWeight: 500,
+              color: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              mt: { xs: 0, sm: -1 }
+            }}
+          >
+            <Box 
+              component="span" 
+              sx={{ 
+                display: 'inline-block',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                mr: 1.5,
+                backgroundColor: visibleTypes[0] === 'FBM-NonGenius' 
+                  ? '#FF9800' 
+                  : visibleTypes[0] === 'FBM-Genius' 
+                    ? '#5D87FF' 
+                    : '#2CD9C5'
+              }}
+            />
+            {t(`calculator.cards.${visibleTypes[0]}`)} (100%)
+          </Typography>
+        )}
+
         {/* Distribution Slider - Only show if more than one calculator is visible */}
         {visibleTypes.length > 1 && (
           <Box sx={{ flex: 1 }}>
             <Stack spacing={1}>
               <Stack 
                 direction="row" 
-                justifyContent="space-between"
+                justifyContent={visibleTypes.length === 2 ? "space-between" : "space-between"}
                 sx={{ 
                   height: '20px',
                   '& > *': {
-                    width: { xs: '80px', sm: '100px', md: '120px' },
+                    width: visibleTypes.length === 2 ? "auto" : { xs: '80px', sm: '100px', md: '120px' },
                     textAlign: 'center',
                     fontSize: { xs: '11px', sm: '12px', md: '13px' },
                     color: 'text.secondary',
@@ -114,9 +178,20 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                 }}
               >
                 {/* Only show headers for visible calculators */}
-                {visibleCards['FBM-NonGenius'] && <Typography>{t('calculator.cards.FBM-NonGenius')}</Typography>}
-                {visibleCards['FBM-Genius'] && <Typography>{t('calculator.cards.FBM-Genius')}</Typography>}
-                {visibleCards['FBE'] && <Typography>{t('calculator.cards.FBE')}</Typography>}
+                {visibleTypes.length === 2 ? (
+                  // When exactly two calculators are visible, show them at the left and right of the slider
+                  <>
+                    <Typography>{t(`calculator.cards.${visibleTypes[0]}`)}</Typography>
+                    <Typography>{t(`calculator.cards.${visibleTypes[1]}`)}</Typography>
+                  </>
+                ) : (
+                  // When all three are visible, show them with default spacing
+                  <>
+                    {visibleCards['FBM-NonGenius'] && <Typography>{t('calculator.cards.FBM-NonGenius')}</Typography>}
+                    {visibleCards['FBM-Genius'] && <Typography>{t('calculator.cards.FBM-Genius')}</Typography>}
+                    {visibleCards['FBE'] && <Typography>{t('calculator.cards.FBE')}</Typography>}
+                  </>
+                )}
               </Stack>
               <Box sx={{ height: '35px', display: 'flex', alignItems: 'center' }}>
                 <CustomSlider
@@ -125,10 +200,22 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                   onChange={(event, newValue) => {
                     if (Array.isArray(newValue)) {
                       handleSliderChange(newValue);
+                    } else if (visibleTypes.length === 2) {
+                      // When there are only two visible calculators, we get a single number
+                      // We need to convert it to the right format based on which calculators are visible
+                      const sortedTypes = [...visibleTypes].sort();
+                      if (sortedTypes[0] === 'FBM-NonGenius') {
+                        // First calculator is NonGenius
+                        handleSliderChange([newValue, 100]);
+                      } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
+                        // Genius and FBE are visible
+                        handleSliderChange([0, newValue]);
+                      }
                     }
                   }}
                   valueLabelDisplay="on"
                   valueLabelFormat={(value) => `${value}%`}
+                  visibleCards={visibleCards}
                 />
               </Box>
               <Stack 
@@ -153,7 +240,7 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                       borderRadius: 1,
                       height: '35px',
                       position: 'relative',
-                      width: visibleTypes.length === 1 ? '100%' : visibleTypes.length === 2 ? '48%' : { xs: '32%', sm: '100px', md: '120px' },
+                      width: { xs: '32%', sm: '100px', md: '120px' },
                       minWidth: '90px'
                     }}
                   >
@@ -173,55 +260,11 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      ({distributions[type].percent.toFixed(2)}%)
+                      ({getDisplayPercentage(type).toFixed(2)}%)
                     </Typography>
                   </Box>
                 ))}
               </Stack>
-            </Stack>
-          </Box>
-        )}
-        
-        {/* If only one calculator is visible, show a simplified layout */}
-        {visibleTypes.length === 1 && (
-          <Box sx={{ flex: 1 }}>
-            <Stack spacing={1}>
-              <Typography 
-                sx={{ 
-                  fontSize: { xs: '12px', sm: '13px' }, 
-                  color: 'text.secondary',
-                  fontWeight: 500,
-                  height: '20px',
-                  lineHeight: '20px',
-                  textAlign: 'center'
-                }}
-              >
-                {t(`calculator.cards.${visibleTypes[0]}`)} (100%)
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  height: '35px',
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '200px',
-                  mx: 'auto'
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: '13px',
-                    textAlign: 'center'
-                  }}
-                >
-                  {totalPieces} pieces
-                </Typography>
-              </Box>
             </Stack>
           </Box>
         )}

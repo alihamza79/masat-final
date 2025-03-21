@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSalesStore, SalesStore } from '../store/salesStore';
 import { useCommissionStore, CommissionStore } from '../store/commissionStore';
 import { useFulfillmentStore, FulfillmentStore } from '../store/fulfillmentStore';
@@ -7,6 +7,7 @@ import { useProductCostStore, ProductCostStore } from '../store/productCostStore
 import { useTaxStore, TaxStore } from '../store/taxStore';
 import { useProfitStore, ProfitStore } from '../store/profitStore';
 import { VisibleCards } from './useCalculatorReset';
+import { useCalculator } from '../context/CalculatorContext';
 
 export type CalculatorType = 'FBM-NonGenius' | 'FBM-Genius' | 'FBE';
 export type Distribution = {
@@ -28,13 +29,234 @@ export const useSalesEstimatorCalculations = (
   onDistributionChange: (distributions: Record<string, { pieces: number; percent: number }>) => void,
   visibleCards: VisibleCards = { 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true }
 ) => {
-  const [totalPieces, setTotalPieces] = useState<number>(1);
-  const [sliderValue, setSliderValue] = useState<number[]>([33.33, 66.66]);
+  const { state } = useCalculator();
+  
+  // Create refs to track initialization and the last values to avoid unnecessary updates
+  const initializedFromSaved = useRef(false);
+  const visibleCardsRef = useRef(visibleCards);
+  const firstRender = useRef(true);
+  const lastStateRef = useRef<{
+    salesEstimator?: any;
+    timestamp: number;
+  }>({ timestamp: 0 });
+  const loadingFromContextRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize state from context, defaulting if not available
+  const [totalPieces, setTotalPieces] = useState<number>(() => {
+    return state.salesEstimator?.totalPieces || 1;
+  });
+  
+  const [sliderValue, setSliderValue] = useState<number[]>(() => {
+    return state.salesEstimator?.sliderValue || [33.33, 66.66];
+  });
+  
   const [manualPieces, setManualPieces] = useState<Record<CalculatorType, number>>({
     'FBM-NonGenius': 0,
     'FBM-Genius': 0,
     'FBE': 1
   });
+
+  // Helper function to safely update state with debounce
+  const updateStateFromContext = (contextData: any) => {
+    // Cancel any pending update
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    
+    // Set flag to indicate we're loading from context
+    loadingFromContextRef.current = true;
+    
+    // Debounce the update to prevent immediate re-renders
+    timerRef.current = setTimeout(() => {
+      setTotalPieces(contextData.totalPieces || 1);
+      setSliderValue(contextData.sliderValue || [33.33, 66.66]);
+      
+      // Clear the loading flag after a short delay
+      setTimeout(() => {
+        loadingFromContextRef.current = false;
+      }, 50);
+    }, 50);
+  };
+
+  // Add effect to initialize/update from context when it changes (for loading saved calculations)
+  useEffect(() => {
+    // Skip if we're currently updating from context to avoid loops
+    if (loadingFromContextRef.current) return;
+    
+    // Skip if no salesEstimator data in state
+    if (!state.salesEstimator) return;
+    
+    // Check if state has changed meaningfully
+    const currentTimestamp = Date.now();
+    const lastState = lastStateRef.current;
+    const timeSinceLastUpdate = currentTimestamp - lastState.timestamp;
+    
+    // Check if the state has actually changed
+    const stateHasChanged = 
+      lastState.timestamp === 0 || // First time
+      JSON.stringify(lastState.salesEstimator) !== JSON.stringify(state.salesEstimator); // Actual change
+    
+    // Only update if state has changed and enough time has passed
+    if (stateHasChanged && timeSinceLastUpdate > 100) {
+      // Update our reference to the current state
+      lastStateRef.current = {
+        salesEstimator: JSON.parse(JSON.stringify(state.salesEstimator)),
+        timestamp: currentTimestamp
+      };
+      
+      // Update the state with the new values from context
+      updateStateFromContext(state.salesEstimator);
+      
+      // Mark as initialized
+      initializedFromSaved.current = true;
+    }
+  }, [state.salesEstimator]);
+
+  // Cleanup effect for the timer ref
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Calculate distributions based on pieces, percentages, and visible cards
+  const calculateDistributions = (pieces: number, percentages: number[]): Distributions => {
+    // Get array of visible calculator types
+    const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
+      .filter(([_, isVisible]) => isVisible)
+      .map(([type]) => type)
+      .sort(); // Sort to maintain consistent order
+    
+    const newDistributions: Distributions = {
+      'FBM-NonGenius': { pieces: 0, percent: 0 },
+      'FBM-Genius': { pieces: 0, percent: 0 },
+      'FBE': { pieces: 0, percent: 0 }
+    };
+
+    // Only one visible calculator - all pieces go to that calculator
+    if (visibleTypes.length === 1) {
+      newDistributions[visibleTypes[0]] = { pieces, percent: 100 };
+      return newDistributions;
+    }
+    
+    // Two visible calculators
+    if (visibleTypes.length === 2) {
+      const firstPercentage = percentages[0];
+      const secondPercentage = 100 - firstPercentage;
+      
+      const firstPieces = Math.floor((firstPercentage / 100) * pieces);
+      const secondPieces = pieces - firstPieces;
+      
+      newDistributions[visibleTypes[0]] = { pieces: firstPieces, percent: firstPercentage };
+      newDistributions[visibleTypes[1]] = { pieces: secondPieces, percent: secondPercentage };
+      
+      return newDistributions;
+    }
+    
+    // Three visible calculators
+    if (percentages.length >= 2) {
+      const firstPercentage = percentages[0];
+      const secondPercentage = percentages[1] - percentages[0];
+      const thirdPercentage = 100 - percentages[1];
+      
+      const firstPieces = Math.floor((firstPercentage / 100) * pieces);
+      const secondPieces = Math.floor((secondPercentage / 100) * pieces);
+      const thirdPieces = pieces - firstPieces - secondPieces;
+      
+      newDistributions['FBM-NonGenius'] = { pieces: firstPieces, percent: firstPercentage };
+      newDistributions['FBM-Genius'] = { pieces: secondPieces, percent: secondPercentage };
+      newDistributions['FBE'] = { pieces: thirdPieces, percent: thirdPercentage };
+    }
+    
+    return newDistributions;
+  };
+
+  // Get current distributions
+  const distributions = calculateDistributions(totalPieces, sliderValue);
+
+  // Add effect to update slider values when visibleCards change
+  useEffect(() => {
+    // Skip if we're currently loading from context
+    if (loadingFromContextRef.current) return;
+    
+    // Skip the first render since we already initialize with proper values
+    if (firstRender.current) {
+      firstRender.current = false;
+      
+      // Initial call to ensure distribution is set properly
+      // This ensures we have proper values even for saved calculations
+      if (state.salesEstimator?.distribution) {
+        // If saved data exists, notify parent of the loaded distribution
+        onDistributionChange(state.salesEstimator.distribution);
+      } else {
+        // Otherwise calculate a new distribution
+        onDistributionChange(calculateDistributions(totalPieces, sliderValue));
+      }
+      return;
+    }
+
+    // Check if visibleCards has actually changed to avoid unnecessary updates
+    if (JSON.stringify(visibleCards) === JSON.stringify(visibleCardsRef.current)) {
+      return;
+    }
+    
+    // Update the ref with the new value
+    visibleCardsRef.current = visibleCards;
+
+    // Get array of visible calculator types
+    const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
+      .filter(([_, isVisible]) => isVisible)
+      .map(([type]) => type);
+
+    // Only one visible calculator - no slider needed
+    if (visibleTypes.length <= 1) {
+      // When only one calculator is visible, all pieces go to that calculator
+      if (visibleTypes.length === 1) {
+        const newDistributions = calculateDistributions(totalPieces, [100]); 
+        onDistributionChange(newDistributions);
+      }
+      return;
+    }
+
+    // Two visible calculators - adjust slider to show only one point
+    if (visibleTypes.length === 2) {
+      // Sort visible types to maintain consistent order
+      visibleTypes.sort();
+      
+      // Reset the distribution to an equal split between the two visible calculators
+      const firstPercentage = 50;
+      
+      // Use the percentages array we created above to calculate new slider value
+      let newSliderValue: number[];
+      
+      if (visibleTypes[0] === 'FBM-NonGenius' && visibleTypes[1] === 'FBM-Genius') {
+        newSliderValue = [firstPercentage, 100]; // FBM-NonGenius and FBM-Genius
+      } else if (visibleTypes[0] === 'FBM-NonGenius' && visibleTypes[1] === 'FBE') {
+        newSliderValue = [firstPercentage, firstPercentage]; // FBM-NonGenius and FBE
+      } else {
+        newSliderValue = [0, firstPercentage]; // FBM-Genius and FBE
+      }
+      
+      setSliderValue(newSliderValue);
+      
+      // Calculate new distributions based on the percentages
+      const newDistributions = calculateDistributions(totalPieces, newSliderValue);
+      onDistributionChange(newDistributions);
+    }
+    
+    // Three visible calculators - reset to default three-way split
+    if (visibleTypes.length === 3) {
+      const newSliderValue = [33.33, 66.66];
+      setSliderValue(newSliderValue);
+      
+      // Calculate new distributions based on the percentages
+      const newDistributions = calculateDistributions(totalPieces, newSliderValue);
+      onDistributionChange(newDistributions);
+    }
+  }, [visibleCards, totalPieces, onDistributionChange, state.salesEstimator]);
 
   // Get values from stores
   const salesHeaderValues = useSalesStore((state: SalesStore) => state.salesHeaderValues);
@@ -72,142 +294,6 @@ export const useSalesEstimatorCalculations = (
       vatToBePaid: taxValues['FBE'].vatToBePaid,
     },
   };
-
-  // Calculate distributions based on pieces, percentages, and visible cards
-  const calculateDistributions = (pieces: number, percentages: number[]): Distributions => {
-    // Get array of visible calculator types
-    const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
-      .filter(([_, isVisible]) => isVisible)
-      .map(([type]) => type);
-
-    // If no calculators are visible, return zeros
-    if (visibleTypes.length === 0) {
-      return {
-        'FBM-NonGenius': { pieces: 0, percent: 0 },
-        'FBM-Genius': { pieces: 0, percent: 0 },
-        'FBE': { pieces: 0, percent: 0 }
-      };
-    }
-
-    // Handle case of only one calculator visible
-    if (visibleTypes.length === 1) {
-      const visibleType = visibleTypes[0];
-      const result = {
-        'FBM-NonGenius': { pieces: 0, percent: 0 },
-        'FBM-Genius': { pieces: 0, percent: 0 },
-        'FBE': { pieces: 0, percent: 0 }
-      };
-      result[visibleType] = { pieces, percent: 100 };
-      return result;
-    }
-
-    // Handle case of two calculators visible
-    if (visibleTypes.length === 2) {
-      // Determine which calculators are visible
-      const [first, second] = visibleTypes;
-      
-      // For two visible calculators, adjust slider to only show division between them
-      let firstPercent, secondPercent;
-      
-      if (first === 'FBM-NonGenius' && second === 'FBM-Genius') {
-        // First and second calculators visible
-        firstPercent = percentages[0];
-        secondPercent = 100 - firstPercent;
-      } else if (first === 'FBM-NonGenius' && second === 'FBE') {
-        // First and third calculators visible
-        firstPercent = percentages[0];
-        secondPercent = 100 - firstPercent;
-      } else {
-        // Second and third calculators visible
-        firstPercent = percentages[1] - percentages[0];
-        secondPercent = 100 - firstPercent;
-      }
-      
-      // Calculate pieces
-      const firstPieces = Math.floor((firstPercent / 100) * pieces);
-      const secondPieces = pieces - firstPieces;
-      
-      const result = {
-        'FBM-NonGenius': { pieces: 0, percent: 0 },
-        'FBM-Genius': { pieces: 0, percent: 0 },
-        'FBE': { pieces: 0, percent: 0 }
-      };
-      
-      result[first] = { pieces: firstPieces, percent: firstPercent };
-      result[second] = { pieces: secondPieces, percent: secondPercent };
-      
-      return result;
-    }
-
-    // All three calculators are visible - use original logic
-    // Calculate exact percentages from slider positions
-    const nonGeniusPercent = Number((percentages[0]).toFixed(2));
-    const geniusPercent = Number((percentages[1] - percentages[0]).toFixed(2));
-    const fbePercent = Number((100 - percentages[1]).toFixed(2));
-
-    // If there's only 1 piece, assign it to the calculator with highest percentage
-    if (pieces === 1) {
-      const maxPercent = Math.max(nonGeniusPercent, geniusPercent, fbePercent);
-      return {
-        'FBM-NonGenius': {
-          pieces: maxPercent === nonGeniusPercent ? 1 : 0,
-          percent: nonGeniusPercent
-        },
-        'FBM-Genius': {
-          pieces: maxPercent === geniusPercent ? 1 : 0,
-          percent: geniusPercent
-        },
-        'FBE': {
-          pieces: maxPercent === fbePercent ? 1 : 0,
-          percent: fbePercent
-        }
-      };
-    }
-
-    // Calculate pieces based on percentages
-    const piecesArray = [
-      Math.floor((nonGeniusPercent / 100) * pieces),
-      Math.floor((geniusPercent / 100) * pieces),
-      Math.floor((fbePercent / 100) * pieces)
-    ];
-
-    // Distribute remaining pieces to maintain total
-    const remainingPieces = pieces - piecesArray.reduce((a, b) => a + b, 0);
-    if (remainingPieces > 0) {
-      // Calculate decimal parts
-      const decimalParts = [
-        ((nonGeniusPercent / 100) * pieces) % 1,
-        ((geniusPercent / 100) * pieces) % 1,
-        ((fbePercent / 100) * pieces) % 1
-      ];
-
-      // Sort indices by decimal parts descending
-      const indices = [0, 1, 2].sort((a, b) => decimalParts[b] - decimalParts[a]);
-
-      // Distribute remaining pieces to calculators with highest decimal parts
-      for (let i = 0; i < remainingPieces; i++) {
-        piecesArray[indices[i]]++;
-      }
-    }
-
-    return {
-      'FBM-NonGenius': {
-        pieces: Math.max(0, piecesArray[0]),
-        percent: nonGeniusPercent
-      },
-      'FBM-Genius': {
-        pieces: Math.max(0, piecesArray[1]),
-        percent: geniusPercent
-      },
-      'FBE': {
-        pieces: Math.max(0, piecesArray[2]),
-        percent: fbePercent
-      }
-    };
-  };
-
-  // Get current distributions
-  const distributions = calculateDistributions(totalPieces, sliderValue);
 
   // Calculate total revenue
   const calculateTotalRevenue = () => {
@@ -271,12 +357,18 @@ export const useSalesEstimatorCalculations = (
 
   // Handle slider change
   const handleSliderChange = (newValue: number[]) => {
+    // Skip if we're loading from context
+    if (loadingFromContextRef.current) return;
+    
     setSliderValue(newValue);
     onDistributionChange(calculateDistributions(totalPieces, newValue));
   };
 
   // Handle pieces change
   const handlePiecesChange = (type: CalculatorType, value: number) => {
+    // Skip if we're loading from context
+    if (loadingFromContextRef.current) return;
+    
     const newPieces = { ...manualPieces, [type]: value };
     const total = Object.values(newPieces).reduce((sum, val) => sum + val, 0);
     
@@ -300,20 +392,12 @@ export const useSalesEstimatorCalculations = (
 
   // Handle total pieces change
   const handleTotalPiecesChange = (value: number) => {
+    // Skip if we're loading from context
+    if (loadingFromContextRef.current) return;
+    
     setTotalPieces(value);
     onDistributionChange(calculateDistributions(value, sliderValue));
   };
-
-  // Watch for changes in visibleCards and update distributions
-  useEffect(() => {
-    const newDistributions = calculateDistributions(totalPieces, sliderValue);
-    onDistributionChange(newDistributions);
-  }, [visibleCards]);
-
-  // Trigger initial distribution calculation
-  useEffect(() => {
-    onDistributionChange(calculateDistributions(1, [33.33, 66.66]));
-  }, []);
 
   // Calculate all metrics
   const totalRevenue = calculateTotalRevenue();

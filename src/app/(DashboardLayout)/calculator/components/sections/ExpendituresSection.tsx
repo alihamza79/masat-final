@@ -36,6 +36,12 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
     setExpenditureHeaderValue(category, headerValue);
   }, [category, headerValue, setExpenditureHeaderValue]);
 
+  // Handle expenditure changes with proper storage
+  const handleExpenditureChange = (value: number) => {
+    // Always update each calculator independently to ensure values are saved separately
+    onUpdateCategory(category, { otherExpenses: value });
+  };
+
   return (
     <Box>
       <SectionHeader
@@ -78,7 +84,7 @@ const ExpendituresSection: React.FC<ExpendituresSectionProps> = ({
                   <NumberInput
                     label={t('calculator.sections.expenditures.otherExpenses')}
                     value={data.otherExpenses || 0}
-                    onChange={(value) => onUpdateCategory(category, { otherExpenses: value })}
+                    onChange={handleExpenditureChange}
                     showLabel={false}
                   />
                 </Box>
