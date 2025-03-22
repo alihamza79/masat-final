@@ -28,6 +28,7 @@ export const useIntegrations = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: INTEGRATIONS_QUERY_KEY,
     queryFn: async () => {
+      console.log('Fetching integrations...');
       if (storeIntegrations.length > 0) {
         return storeIntegrations;
       }
@@ -41,22 +42,22 @@ export const useIntegrations = () => {
     },
     initialData: storeIntegrations.length > 0 ? storeIntegrations : undefined,
     refetchOnMount: false,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    refetchInterval: INTEGRATIONS_FETCH_INTERVAL,
+    refetchIntervalInBackground: false
   });
-
-  // Set up interval to refetch integrations every 5 minutes
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      console.log('Refetching integrations...');
-      refetch();
-    }, INTEGRATIONS_FETCH_INTERVAL);
-    
-    return () => clearInterval(intervalId);
-  }, [refetch]);
 
   // Utility function to fetch data for a single integration
   const fetchIntegrationData = async (integrationId: string) => {
     try {
+      // First, set the loading status and reset the fetched flags
+      // This ensures the UI shows "importing" when updating an integration
+      setIntegrationData(integrationId, {
+        ordersFetched: false,
+        productOffersFetched: false
+      });
+      setIntegrationImportStatus(integrationId, 'loading');
+      
       // Fetch orders
       const ordersResponse = await axios.get(`/api/integrations/${integrationId}/orders`);
       if (ordersResponse.data.success) {
@@ -101,7 +102,7 @@ export const useIntegrations = () => {
         throw error;
       }
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       const integration = result.success && result.integration;
       if (!integration) return;
       
@@ -111,39 +112,63 @@ export const useIntegrations = () => {
         [...old, integration]
       );
       
-      // Initialize the integration with loading status in the emagData store
+      // Return the result immediately so the toast can be shown
+      
+      // Initialize the integration and fetch data
       if (integration._id) {
-        console.log(`Setting initial loading status for new integration ${integration.accountName}`);
-        setIntegrationImportStatus(integration._id, 'loading');
+        const integrationId = integration._id; // Store in a variable to fix TypeScript issues
+        
+        // No need to set loading status here since fetchIntegrationData handles it
+        
+        // Fetch data for the newly created integration in the background
+        setTimeout(async () => {
+          try {
+            await fetchIntegrationData(integrationId);
+          } catch (err: any) {
+            console.error(`Error fetching data for new integration ${integration.accountName}:`, err);
+          }
+        }, 0);
       }
     }
   });
 
   // Update integration mutation
   const updateIntegrationMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: IntegrationFormData }) => {
+    mutationFn: async (data: { id: string; data: IntegrationFormData }) => {
       try {
-        return await updateIntegration(id, data);
+        return await updateIntegration(data.id, data.data);
       } catch (error) {
-        // Re-throw the error so it can be caught by the component
         throw error;
       }
     },
-    onSuccess: async (result) => {
+    onSuccess: async (result, variables) => {
       const integration = result.success && result.integration;
-      if (!integration || !integration._id) return;
+      if (!integration) return;
       
-      // Update store and cache directly
+      // Update store and cache with the updated integration
       updateStoreIntegration(integration);
-      queryClient.setQueryData(INTEGRATIONS_QUERY_KEY, (old: Integration[] = []) => 
-        old.map(item => item._id === integration._id ? integration : item)
+      queryClient.setQueryData(INTEGRATIONS_QUERY_KEY, (old: Integration[] = []) =>
+        old.map(i => i._id === integration._id ? integration : i)
       );
 
-      // Refetch data for only the updated integration
-      try {
-        await fetchIntegrationData(integration._id);
-      } catch (err: any) {
-        console.error(`Error refetching data for integration ${integration.accountName}:`, err);
+      // Return success immediately so toast can show right away
+      // This will happen before the orders/products are fetched
+      
+      // Then refetch data for this integration if it has an ID
+      if (integration._id) {
+        const integrationId = integration._id; // Store in a variable to fix TypeScript issues
+        
+        // No need to set loading status here since fetchIntegrationData handles it
+        // This avoids unnecessary state updates
+        
+        // Fetch data for the updated integration in the background
+        setTimeout(async () => {
+          try {
+            await fetchIntegrationData(integrationId);
+          } catch (err: any) {
+            console.error(`Error fetching data for updated integration ${integration.accountName}:`, err);
+          }
+        }, 0);
       }
     }
   });

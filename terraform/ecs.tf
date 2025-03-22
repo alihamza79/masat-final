@@ -34,18 +34,20 @@ resource "aws_ecs_task_definition" "this" {
             "awslogs-stream-prefix" : "${var.project_name}-sample-app"
           }
         },
+        # mongodb+srv://masat-dev-username:<db_password>@masat-dev-cluster.annucyt.mongodb.net/?retryWrites=true&w=majority&appName=masat-dev-cluster
+        # "mongodb+srv://masat-dev-username:jcxI9%oc5nQsC9cG@masat-dev-cluster.annucyt.mongodb.net?retryWrites=true&w=majority&appName=masat"
         environment = [
           {
             "name" : "MONGODB_URI",
-            "value" : "mongodb+srv://masat:qlXQItiG3UzoENFI@masatdev.hosmfl0.mongodb.net/?retryWrites=true&w=majority&appName=masatdev"
+            "value" : "${replace(mongodbatlas_serverless_instance.test.connection_strings_standard_srv, "mongodb+srv://", "mongodb+srv://${mongodbatlas_database_user.test.username}:${random_password.db_user_password.result}@")}/masat?retryWrites=true&w=majority&appName=${var.project_name}"
           },
           {
             "name" : "MONGODB_CLUSTER",
-            "value" : "masatdev.hosmfl0.mongodb.net"
+            "value" : replace(mongodbatlas_serverless_instance.test.connection_strings_standard_srv, "mongodb+srv://", "")
           },
           {
             "name" : "MONGODB_DATABASE",
-            "value" : "masatdev"
+            "value" : var.project_name
           },
           {
             "name" : "NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY",
@@ -66,8 +68,8 @@ resource "aws_ecs_task_definition" "this" {
 
           }
         ],
-        "cpu" : 512,
-        "memory" : 1024,
+        "cpu" : 256,
+        "memory" : 512,
         "networkMode" : "awsvpc"
       }
     ])
@@ -148,4 +150,35 @@ resource "aws_security_group" "service" {
   }
 }
 
-  
+resource "aws_s3_bucket" "this" {
+  bucket = "${var.project_name}-${var.env}-bucket"
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-bucket"
+  }
+}
+
+resource "aws_iam_policy" "ecs_task_s3_policy" {
+  name        = "${var.project_name}-${var.env}-ecs-task-s3-policy"
+  description = "Policy for ECS task to access S3 bucket"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["s3:ListBucket"],
+        Resource = ["arn:aws:s3:::${aws_s3_bucket.this.bucket}"]
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+        Resource = ["arn:aws:s3:::${aws_s3_bucket.this.bucket}/*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_s3_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.ecs_task_s3_policy.arn
+}

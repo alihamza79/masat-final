@@ -114,6 +114,7 @@ export const useEmagData = () => {
   } = useQuery({
     queryKey: [EMAG_ORDERS_QUERY_KEY],
     queryFn: async () => {
+      console.log('Fetching orders data...');
       const results = await Promise.all(
         integrations.map(async (integration) => {
           if (!integration._id) return null;
@@ -127,6 +128,8 @@ export const useEmagData = () => {
     refetchOnWindowFocus: false,
     enabled: integrations.length > 0,
     staleTime: ORDERS_FETCH_INTERVAL,
+    refetchInterval: ORDERS_FETCH_INTERVAL,
+    refetchIntervalInBackground: true,
     gcTime: 0 // Don't keep data in garbage collection
   });
 
@@ -138,6 +141,7 @@ export const useEmagData = () => {
   } = useQuery({
     queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY],
     queryFn: async () => {
+      console.log('Fetching product offers data...');
       const results = await Promise.all(
         integrations.map(async (integration) => {
           if (!integration._id) return null;
@@ -151,32 +155,10 @@ export const useEmagData = () => {
     refetchOnWindowFocus: false,
     enabled: integrations.length > 0,
     staleTime: PRODUCT_OFFERS_FETCH_INTERVAL,
+    refetchInterval: PRODUCT_OFFERS_FETCH_INTERVAL,
+    refetchIntervalInBackground: true,
     gcTime: 0 // Don't keep data in garbage collection
   });
-
-  // Set up interval to refetch orders every 5 minutes
-  useEffect(() => {
-    if (integrations.length === 0) return;
-    
-    const ordersIntervalId = setInterval(() => {
-      console.log('Refetching orders data...');
-      refetchOrders();
-    }, ORDERS_FETCH_INTERVAL);
-    
-    return () => clearInterval(ordersIntervalId);
-  }, [integrations, refetchOrders]);
-
-  // Set up interval to refetch product offers every 12 hours
-  useEffect(() => {
-    if (integrations.length === 0) return;
-    
-    const productOffersIntervalId = setInterval(() => {
-      console.log('Refetching product offers data...');
-      refetchProductOffers();
-    }, PRODUCT_OFFERS_FETCH_INTERVAL);
-    
-    return () => clearInterval(productOffersIntervalId);
-  }, [integrations, refetchProductOffers]);
 
   // Update import status when both queries complete
   useEffect(() => {
@@ -223,7 +205,15 @@ export const useEmagData = () => {
 
   // Combined refetch function
   const refetch = async () => {
+    console.log(`[${new Date().toISOString()}] Manually triggered refetch for orders and product offers`);
     await Promise.all([refetchOrders(), refetchProductOffers()]);
+  };
+
+  // Helper function to force refetch regardless of stale time
+  const forceRefetch = async () => {
+    console.log(`[${new Date().toISOString()}] Force refetching orders and product offers`);
+    await queryClient.invalidateQueries({ queryKey: [EMAG_ORDERS_QUERY_KEY] });
+    await queryClient.invalidateQueries({ queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY] });
   };
 
   // Helper function to get all orders across all integrations
@@ -256,6 +246,7 @@ export const useEmagData = () => {
     isLoading,
     error,
     refetch,
+    forceRefetch,
     refetchOrders,
     refetchProductOffers,
     getAllOrders,
