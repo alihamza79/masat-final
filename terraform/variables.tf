@@ -27,3 +27,16 @@ variable "image_uri" {
   type = string
   description = "Docker image URI"
 }
+
+variable "mongo_atlas_public_key" {
+  type = string
+}
+
+variable "mongo_atlas_private_key" {
+  type = string
+}
+
+variable "atlas_org_id" {
+  type = string
+}
+
