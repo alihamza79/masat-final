@@ -118,8 +118,9 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       setError(null);
       setSuccess(false);
       setImage(null);
-      // Only set image preview if it's not the default image
-      if (initialImage && initialImage !== '/products/default.jpg') {
+      
+      // Always set image preview if there's an initial image
+      if (initialImage) {
         setImagePreview(initialImage);
       } else {
         setImagePreview('');
