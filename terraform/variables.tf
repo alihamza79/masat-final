@@ -30,10 +30,12 @@ variable "image_uri" {
 
 variable "mongo_atlas_public_key" {
   type = string
+  sensitive = true
 }
 
 variable "mongo_atlas_private_key" {
   type = string
+  sensitive = true
 }
 
 variable "atlas_org_id" {
