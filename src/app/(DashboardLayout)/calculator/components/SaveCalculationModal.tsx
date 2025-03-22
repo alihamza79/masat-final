@@ -91,7 +91,7 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
   savedCalculationId,
   initialTitle,
   initialDescription,
-  initialImage = '/products/default.jpg',
+  initialImage,
   onSaveComplete
 }) => {
   const { t } = useTranslation();
@@ -119,14 +119,15 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       setSuccess(false);
       setImage(null);
       
-      // Always set image preview if there's an initial image
-      if (initialImage) {
+      // For update mode, use the initialImage
+      if (isUpdate && initialImage) {
         setImagePreview(initialImage);
       } else {
+        // For new calculations, always start with empty image
         setImagePreview('');
       }
     }
-  }, [open, initialTitle, initialDescription, savedCalculationId, initialImage]);
+  }, [open, initialTitle, initialDescription, savedCalculationId, initialImage, isUpdate]);
 
   // Handle file validation and setting
   const processFile = (file: File) => {
