@@ -80,16 +80,27 @@
         "saveCalculation": {
             "title": "Salvează Calculul",
             "updateTitle": "Actualizează Calculul",
-            "titleField": "Titlu",
-            "descriptionField": "Descriere (opțional)",
+            "titleLabel": "Titlu",
+            "descriptionLabel": "Descriere",
+            "imageLabel": "Imagine Calcul",
+            "titlePlaceholder": "Introduceți un titlu descriptiv",
+            "descriptionPlaceholder": "Adăugați note sau detalii despre acest calcul (opțional)",
+            "uploadImageInstruction": "Faceți clic sau trageți imaginea pentru a încărca",
+            "dropImageHere": "Plasați imaginea aici",
+            "supportedFormats": "Formate acceptate: JPG, PNG, GIF (Max 5MB)",
             "save": "Salvează",
             "update": "Actualizează",
             "cancel": "Anulează",
             "saveSuccess": "Calculul a fost salvat cu succes!",
             "updateSuccess": "Calculul a fost actualizat cu succes!",
-            "uploadImage": "Încarcă Imagine",
-            "imageFormats": "Formate acceptate: JPG, PNG, GIF, WEBP (Max 5MB)",
-            "noSavedCalculations": "Nu s-au găsit calcule salvate"
+            "errors": {
+                "titleRequired": "Titlul este obligatoriu",
+                "imageRequired": "Imaginea este obligatorie",
+                "invalidFileType": "Vă rugăm să selectați un fișier imagine",
+                "fileTooLarge": "Dimensiunea imaginii trebuie să fie mai mică de 5MB",
+                "saveFailed": "Eroare la salvarea calculului",
+                "generic": "A apărut o eroare"
+            }
         },
         "cards": {
             "FBM-NonGenius": "FBM-NonGenius",
@@ -169,7 +180,7 @@
                 "subtitle": "Produse Magazin Oficial"
             },
             "createdProducts": {
-                "title": "Produse Create",
+                "title": "Calcule Salvate",
                 "subtitle": "Produse Create Personalizat"
             },
             "price": "RON",
@@ -180,7 +191,8 @@
             "calculationsFound": "calcule găsite",
             "noProductsFound": "Niciun produs nu corespunde criteriilor de căutare",
             "noSavedCalculationsFound": "Niciun calcul salvat nu corespunde criteriilor de căutare",
-            "confirmDelete": "Sunteți sigur că doriți să ștergeți acest calcul?"
+            "confirmDelete": "Sunteți sigur că doriți să ștergeți acest calcul?",
+            "calculationDeleted": "Calculul a fost șters cu succes!"
         }
     },
     "analytics": {
@@ -288,6 +300,11 @@
             "thisItem": "acest element",
             "cancel": "Anulează",
             "delete": "Șterge"
-        }
+        },
+        "save": "Salvează",
+        "update": "Actualizează",
+        "cancel": "Anulează",
+        "close": "Închide",
+        "remove": "Șterge"
     }
 } 
