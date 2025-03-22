@@ -65,20 +65,23 @@ const Calculator = () => {
       try {
         const [prefix, integrationId, productId] = selectedProduct.split('-');
         
+        // Create FormData for the request
+        const formData = new FormData();
+        
+        // Add eMAG product data as JSON string
+        formData.append('emagProduct', JSON.stringify({
+          integrationId,
+          productId,
+          selectedProduct // Store the full product identifier
+        }));
+        
+        // Add calculator state as JSON string
+        formData.append('calculatorState', JSON.stringify(state));
+        
         // Create a direct API request to save the calculation
         const response = await fetch('/api/calculations', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            emagProduct: {
-              integrationId,
-              productId,
-              selectedProduct // Store the full product identifier
-            },
-            calculatorState: state
-          }),
+          body: formData,
         });
         
         const result = await response.json();

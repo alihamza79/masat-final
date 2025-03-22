@@ -144,13 +144,13 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
 
   const handleFulfillmentCostChange = (value: number) => {
     // Each calculator type should maintain its own fulfillment cost
-    // but for FBM variants, we sync between them
-    if (category === 'FBM-NonGenius' || category === 'FBM-Genius') {
-      // Sync between FBM variants only
+    // but for FBM variants, we sync between them only when sync is enabled
+    if ((category === 'FBM-NonGenius' || category === 'FBM-Genius') && state.syncValues) {
+      // Sync between FBM variants only when sync is enabled
       onUpdateCategory('FBM-NonGenius', { fulfillmentCost: value });
       onUpdateCategory('FBM-Genius', { fulfillmentCost: value });
     } else {
-      // FBE gets its own value
+      // Update only the current calculator when sync is disabled or for FBE
       onUpdateCategory(category, { fulfillmentCost: value });
     }
   };
