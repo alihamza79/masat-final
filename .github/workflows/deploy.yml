@@ -56,9 +56,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
-          MONGO_ATLAS_PRIVATE_KEY: ${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}
-          $MONGO_ATLAS_PUBLIC_KEY: ${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}
-        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=$MONGO_ATLAS_PRIVATE_KEY" -var="mongo_atlas_public_key=$MONGO_ATLAS_PUBLIC_KEY" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}"
+        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}"
         working-directory: terraform
 
       - name: Terraform Apply
@@ -66,5 +64,5 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
-        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=$MONGO_ATLAS_PRIVATE_KEY" -var="mongo_atlas_public_key=$MONGO_ATLAS_PUBLIC_KEY" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}"
+        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}"
         working-directory: terraform
