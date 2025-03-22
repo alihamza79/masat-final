@@ -60,6 +60,10 @@ resource "aws_ecs_task_definition" "this" {
           {
             "name" : "ENCRYPTION_IV",
             "value" : "0123456789abcdef"
+          },
+          {
+            "name" : "S3_BUCKET_NAME",
+            "value" : "${aws_s3_bucket.this.bucket}"
           }
         ]
         "portMappings" : [
@@ -75,10 +79,11 @@ resource "aws_ecs_task_definition" "this" {
     ])
 
   requires_compatibilities = ["FARGATE"]
-  network_mode       = "awsvpc"
-  cpu                = "512"
-  memory             = "1024"
-  execution_role_arn = aws_iam_role.ecs_task_execution.arn
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   tags = {
     Name = "${var.project_name}-${var.env}-ecs-task_definition"
@@ -158,25 +163,73 @@ resource "aws_s3_bucket" "this" {
   }
 }
 
-resource "aws_iam_policy" "ecs_task_s3_policy" {
-  name        = "${var.project_name}-${var.env}-ecs-task-s3-policy"
-  description = "Policy for ECS task to access S3 bucket"
-  policy      = jsonencode({
-    Version = "2012-10-17",
+# Set ACL for the bucket
+resource "aws_s3_bucket_acl" "this" {
+  bucket = aws_s3_bucket.this.id
+  acl    = "public-read"
+  
+  # Must be configured after ownership controls
+  depends_on = [aws_s3_bucket_ownership_controls.this]
+}
+
+# Configure CORS for the S3 bucket
+resource "aws_s3_bucket_cors_configuration" "this" {
+  bucket = aws_s3_bucket.this.bucket
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
+    allowed_origins = ["*"]  # In production, you should restrict this to your domain
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
+}
+
+# Configure public access block for the S3 bucket
+resource "aws_s3_bucket_public_access_block" "this" {
+  bucket = aws_s3_bucket.this.bucket
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+# Set bucket ownership controls
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.this.bucket
+  
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# Create a bucket policy to allow public read access
+resource "aws_s3_bucket_policy" "this" {
+  bucket = aws_s3_bucket.this.bucket
+  
+  # Wait for the public access block to be configured first
+  depends_on = [aws_s3_bucket_public_access_block.this]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow",
-        Action   = ["s3:ListBucket"],
-        Resource = ["arn:aws:s3:::${aws_s3_bucket.this.bucket}"]
-      },
-      {
-        Effect   = "Allow",
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        Resource = ["arn:aws:s3:::${aws_s3_bucket.this.bucket}/*"]
+        Principal = "*"
+        Action = [
+          "s3:GetObject"
+        ]
+        Effect = "Allow"
+        Resource = [
+          "${aws_s3_bucket.this.arn}/*"
+        ]
       }
     ]
   })
 }
+
+# The aws_iam_policy for S3 access is defined in iam.tf
+# We'll keep only the attachment here, which references the policy
 
 resource "aws_iam_role_policy_attachment" "ecs_task_s3_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution.name

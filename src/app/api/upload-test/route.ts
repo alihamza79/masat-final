@@ -15,20 +15,31 @@ const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'masat-dev-bucket';
 const IS_LOCAL_ENV = process.env.NODE_ENV === 'development';
 
-// Initialize the S3 client
-const s3Client = new S3Client({
+// Create configuration for S3 client
+const s3Config: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
   region: AWS_REGION,
-  // Use credentials only in local development environment
-  credentials: IS_LOCAL_ENV && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY 
-    ? {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      }
-    : undefined // When undefined, the SDK will use the IAM role
-});
+  // Important: In production/ECS environment, the IAM task role will be used automatically
+  // Only provide explicit credentials in local development
+};
+
+// Add explicit credentials only in local development
+if (IS_LOCAL_ENV && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  s3Config.credentials = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY
+  };
+}
+
+// Initialize the S3 client with the configuration
+const s3Client = new S3Client(s3Config);
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("Processing upload test to bucket:", S3_BUCKET_NAME);
+    console.log("Using Region:", AWS_REGION);
+    console.log("Environment:", IS_LOCAL_ENV ? "development" : "production");
+    console.log("Using explicit credentials:", !!s3Config.credentials);
+    
     const formData = await request.formData();
     const file = formData.get('image') as File;
     
@@ -95,7 +106,7 @@ export async function POST(request: NextRequest) {
       fileSize: file.size,
       fileType: file.type,
       environment: IS_LOCAL_ENV ? 'development' : 'production',
-      usingCredentials: !!AWS_ACCESS_KEY_ID && !!AWS_SECRET_ACCESS_KEY,
+      usingCredentials: !!s3Config.credentials,
       urlExpires: 'in 1 hour'
     });
     

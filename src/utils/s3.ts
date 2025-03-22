@@ -24,18 +24,23 @@ const IS_LOCAL_ENV = process.env.NODE_ENV === 'development';
  * - s3:DeleteBucket
  */
 
-// Initialize the S3 client
-const s3Client = new S3Client({
+// Create configuration for S3 client
+const s3Config: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
   region: AWS_REGION,
-  // Use credentials only in local development environment
-  // In ECS, the application will use the IAM role provided in the task role
-  credentials: IS_LOCAL_ENV && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY 
-    ? {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      }
-    : undefined // When undefined, the SDK will use the IAM role in ECS
-});
+  // Important: In production/ECS environment, the IAM task role will be used automatically
+  // Only provide explicit credentials in local development
+};
+
+// Add explicit credentials only in local development
+if (IS_LOCAL_ENV && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  s3Config.credentials = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY
+  };
+}
+
+// Initialize the S3 client with the configuration
+const s3Client = new S3Client(s3Config);
 
 /**
  * Upload a file to S3
