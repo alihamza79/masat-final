@@ -15,6 +15,9 @@ export const EMAG_PRODUCT_OFFERS_QUERY_KEY = 'emag-product-offers';
 const ORDERS_FETCH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const PRODUCT_OFFERS_FETCH_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
 
+// API timeout (3 minutes)
+const API_TIMEOUT = 10 * 60 * 1000;
+
 export const useEmagData = () => {
   const queryClient = useQueryClient();
   const { integrations } = useIntegrationsStore();
@@ -35,8 +38,10 @@ export const useEmagData = () => {
         setIntegrationImportStatus(integration._id, 'loading');
       }
       
-      // Fetch orders using API endpoint
-      const response = await axios.get(`/api/integrations/${integration._id}/orders`);
+      // Fetch orders using API endpoint with timeout
+      const response = await axios.get(`/api/integrations/${integration._id}/orders`, {
+        timeout: API_TIMEOUT
+      });
       
       // Check if the API call was successful
       if (!response.data.success) {
@@ -101,7 +106,10 @@ export const useEmagData = () => {
       return decryptedData;
     } catch (error: any) {
       console.error(`Error fetching product offers for integration ${integration.accountName}:`, error);
-      setIntegrationImportStatus(integration._id, 'error', error.message || 'Failed to fetch product offers');
+      const errorMessage = error.code === 'ECONNABORTED' 
+        ? 'Request timed out after 3 minutes' 
+        : error.message || 'Failed to fetch product offers';
+      setIntegrationImportStatus(integration._id, 'error', errorMessage);
       return null;
     }
   };
