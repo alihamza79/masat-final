@@ -87,6 +87,8 @@
             "cancel": "Cancel",
             "saveSuccess": "Calculation saved successfully!",
             "updateSuccess": "Calculation updated successfully!",
+            "uploadImage": "Upload Image",
+            "imageFormats": "Supported formats: JPG, PNG, GIF, WEBP (Max 5MB)",
             "noSavedCalculations": "No saved calculations found"
         },
         "cards": {

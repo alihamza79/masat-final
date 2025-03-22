@@ -20,6 +20,7 @@ WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 
+# MongoDB environment variables
 ARG MONGODB_URI
 ENV MONGODB_URI=$MONGODB_URI
 
@@ -29,6 +30,7 @@ ENV MONGODB_CLUSTER=$MONGODB_CLUSTER
 ARG MONGODB_DATABASE
 ENV MONGODB_DATABASE=$MONGODB_DATABASE
 
+# Encryption environment variables
 ARG ENCRYPTION_KEY
 ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
 
@@ -38,6 +40,19 @@ ENV NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=$NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
 ARG ENCRYPTION_IV
 ENV ENCRYPTION_IV=$ENCRYPTION_IV
 
+# AWS S3 environment variables
+# In ECS, these will be ignored and the application will use the IAM role:
+ARG AWS_REGION
+ENV AWS_REGION=$AWS_REGION
+
+ARG AWS_ACCESS_KEY_ID
+ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+
+ARG AWS_SECRET_ACCESS_KEY
+ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+ARG S3_BUCKET_NAME
+ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry

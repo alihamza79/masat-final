@@ -33,6 +33,7 @@ export const useSavedCalculations = () => {
   const [currentSavedCalculationId, setCurrentSavedCalculationId] = useState<string | null>(null);
   const [currentSavedCalculationTitle, setCurrentSavedCalculationTitle] = useState<string>('');
   const [currentSavedCalculationDescription, setCurrentSavedCalculationDescription] = useState<string>('');
+  const [currentSavedCalculationImage, setCurrentSavedCalculationImage] = useState<string>('/products/default.jpg');
   
   // State for the save modal
   const [openSaveModal, setOpenSaveModal] = useState(false);
@@ -82,6 +83,7 @@ export const useSavedCalculations = () => {
         // Use the already loaded calculation data
         setCurrentSavedCalculationTitle(savedCalculation.title || '');
         setCurrentSavedCalculationDescription(savedCalculation.description || '');
+        setCurrentSavedCalculationImage(savedCalculation.image || '/products/default.jpg');
         
         // Load the saved calculator state
         if (savedCalculation.calculatorState) {
@@ -134,6 +136,7 @@ export const useSavedCalculations = () => {
         if (result.data) {
           setCurrentSavedCalculationTitle(result.data.title || '');
           setCurrentSavedCalculationDescription(result.data.description || '');
+          setCurrentSavedCalculationImage(result.data.image || '/products/default.jpg');
         }
         
         // Load the saved calculator state
@@ -186,6 +189,7 @@ export const useSavedCalculations = () => {
     setCurrentSavedCalculationId(null);
     setCurrentSavedCalculationTitle('');
     setCurrentSavedCalculationDescription('');
+    setCurrentSavedCalculationImage('/products/default.jpg');
   };
   
   return {
@@ -196,6 +200,7 @@ export const useSavedCalculations = () => {
     currentSavedCalculationId,
     currentSavedCalculationTitle,
     currentSavedCalculationDescription,
+    currentSavedCalculationImage,
     openSaveModal,
     
     // Functions
@@ -206,7 +211,8 @@ export const useSavedCalculations = () => {
     setOpenSaveModal,
     setCurrentSavedCalculationId,
     setCurrentSavedCalculationTitle,
-    setCurrentSavedCalculationDescription
+    setCurrentSavedCalculationDescription,
+    setCurrentSavedCalculationImage
   };
 };
 

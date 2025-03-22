@@ -49,6 +49,7 @@ const Calculator = () => {
     currentSavedCalculationId,
     currentSavedCalculationTitle,
     currentSavedCalculationDescription,
+    currentSavedCalculationImage,
     openSaveModal,
     handleSaveSuccess,
     loadSavedCalculation,
@@ -545,6 +546,7 @@ const Calculator = () => {
         savedCalculationId={currentSavedCalculationId}
         initialTitle={currentSavedCalculationTitle}
         initialDescription={currentSavedCalculationDescription}
+        initialImage={currentSavedCalculationImage}
         onSaveComplete={handleSaveComplete}
       />
 

@@ -472,13 +472,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               >
                 {product.brand}
               </Typography>
-              <Typography 
-                variant="caption" 
-                color="text.secondary"
-                sx={{ fontSize: '11px' }}
-              >
-                {product.category}
-              </Typography>
+              
             </Stack>
           </Box>
           <Typography 
@@ -724,16 +718,39 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              overflow: 'hidden'
             }}
           >
-            <Typography 
-              variant="h3" 
-              color="success.main"
-              sx={{ opacity: 0.7 }}
-            >
-              <IconBuildingStore size={32} />
-            </Typography>
+            {calculation.image && calculation.image !== '/products/default.jpg' ? (
+              <Box
+                component="img"
+                src={calculation.image}
+                alt={calculation.title}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                  // If image fails to load, show the default icon instead
+                  e.currentTarget.style.display = 'none';
+                  const fallbackIcon = (e.currentTarget.parentNode as HTMLElement).querySelector('.fallback-icon') as HTMLElement;
+                  if (fallbackIcon) {
+                    fallbackIcon.style.display = 'block';
+                  }
+                }}
+              />
+            ) : (
+              <Typography 
+                className="fallback-icon"
+                variant="h3" 
+                color="success.main"
+                sx={{ opacity: 0.7, display: 'block' }}
+              >
+                <IconBuildingStore size={32} />
+              </Typography>
+            )}
           </Box>
           <Stack spacing={1} flex={1}>
             <Box>

@@ -87,6 +87,8 @@
             "cancel": "Anulează",
             "saveSuccess": "Calculul a fost salvat cu succes!",
             "updateSuccess": "Calculul a fost actualizat cu succes!",
+            "uploadImage": "Încarcă Imagine",
+            "imageFormats": "Formate acceptate: JPG, PNG, GIF, WEBP (Max 5MB)",
             "noSavedCalculations": "Nu s-au găsit calcule salvate"
         },
         "cards": {
