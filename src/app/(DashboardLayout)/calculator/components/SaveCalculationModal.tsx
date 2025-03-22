@@ -371,7 +371,7 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
           {/* Image Upload Section */}
           <Box>
             <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-              <InputLabel variant="body2" component="div">
+              <InputLabel variant="body2">
                 {t('calculator.saveCalculation.imageLabel', 'Calculation Image')}
                 <Box component="span" sx={{ color: theme.palette.error.main, ml: 0.5 }}>*</Box>
               </InputLabel>
