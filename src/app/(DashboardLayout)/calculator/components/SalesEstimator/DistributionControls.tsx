@@ -45,19 +45,26 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
       // Sort visible types to maintain consistent order
       const sortedTypes = [...visibleTypes].sort();
       
-      if (sortedTypes[0] === 'FBM-NonGenius') {
-        // FBM-NonGenius is visible
+      if (sortedTypes[0] === 'FBM-NonGenius' && sortedTypes[1] === 'FBM-Genius') {
+        // FBM-NonGenius and FBM-Genius are visible
         if (type === 'FBM-NonGenius') {
-          return sliderValue[0]; // First slider point
+          return sliderValue[0];
         } else {
-          return 100 - sliderValue[0]; // Remaining percentage
+          return 100 - sliderValue[0];
+        }
+      } else if (sortedTypes[0] === 'FBM-NonGenius' && sortedTypes[1] === 'FBE') {
+        // FBM-NonGenius and FBE are visible
+        if (type === 'FBM-NonGenius') {
+          return sliderValue[0];
+        } else {
+          return 100 - sliderValue[0];
         }
       } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
         // FBM-Genius and FBE are visible
         if (type === 'FBM-Genius') {
-          return sliderValue[1]; // Second slider point
+          return sliderValue[1]; // Using sliderValue[1] for this combination
         } else {
-          return 100 - sliderValue[1]; // Remaining percentage
+          return 100 - sliderValue[1];
         }
       }
     }
@@ -204,8 +211,8 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                       // When there are only two visible calculators, we get a single number
                       // We need to convert it to the right format based on which calculators are visible
                       const sortedTypes = [...visibleTypes].sort();
-                      if (sortedTypes[0] === 'FBM-NonGenius') {
-                        // First calculator is NonGenius
+                      if (sortedTypes[0] === 'FBM-NonGenius' && (sortedTypes[1] === 'FBM-Genius' || sortedTypes[1] === 'FBE')) {
+                        // First calculator is NonGenius (combined with either Genius or FBE)
                         handleSliderChange([newValue, 100]);
                       } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
                         // Genius and FBE are visible

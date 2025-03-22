@@ -14,18 +14,11 @@ import {
   Divider,
   CircularProgress,
   Alert,
-  styled,
-  useTheme,
-  useMediaQuery
+  Avatar,
+  styled
 } from '@mui/material';
-import { 
-  IconX, 
-  IconPhoto, 
-  IconTrash, 
-  IconCheck, 
-  IconAlertCircle,
-  IconCamera
-} from '@tabler/icons-react';
+import { IconX, IconUpload, IconPhoto, IconTrash } from '@tabler/icons-react';
+import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { CalculatorState } from '../context/CalculatorContext';
 
@@ -67,14 +60,12 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
-  const [imageError, setImageError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -90,7 +81,6 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       setSuccess(false);
       setImage(null);
       setImagePreview(initialImage);
-      setImageError(false);
     }
   }, [open, initialTitle, initialDescription, savedCalculationId, initialImage]);
 
@@ -114,7 +104,6 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       
       setImage(selectedFile);
       setImagePreview(URL.createObjectURL(selectedFile));
-      setImageError(false);
       setError(null);
     }
   };
@@ -123,14 +112,9 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
   const handleClearImage = () => {
     setImage(null);
     setImagePreview(initialImage);
-    setImageError(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleImageError = () => {
-    setImageError(true);
   };
 
   const handleSave = async () => {
@@ -206,7 +190,6 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
     setError(null);
     setSuccess(false);
     setIsUpdate(false);
-    setImageError(false);
     onClose();
   };
 
@@ -219,15 +202,13 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       PaperProps={{
         sx: {
           borderRadius: { xs: 0, sm: 2 },
-          maxHeight: { xs: '100vh', sm: '90vh' },
           m: { xs: 0, sm: 3 },
-          width: { xs: '100%', sm: 'auto' },
-          minWidth: { sm: '500px' },
-          overflow: 'hidden'
+          width: { xs: '100%', sm: '500px' },
+          minHeight: { xs: 'auto', sm: '300px' }
         }
       }}
     >
-      <DialogTitle sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
+      <DialogTitle sx={{ px: { xs: 2, sm: 3 }, py: 2.5 }}>
         <Stack
           direction="row"
           alignItems="center"
@@ -236,14 +217,14 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
           <Typography 
             variant="h6" 
             sx={{ 
-              fontSize: { xs: '16px', sm: '18px' },
+              fontSize: { xs: '18px', sm: '20px' },
               fontWeight: 600,
               color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
             }}
           >
             {isUpdate 
-              ? t('calculator.saveCalculation.updateTitle', 'Update Calculation') 
-              : t('calculator.saveCalculation.title', 'Save Calculation')}
+              ? t('calculator.saveCalculation.updateTitle') 
+              : t('calculator.saveCalculation.title')}
           </Typography>
           <IconButton
             onClick={handleClose}
@@ -254,32 +235,17 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
               '&:hover': { color: 'text.primary' }
             }}
           >
-            <IconX size={18} />
+            <IconX size={20} />
           </IconButton>
         </Stack>
       </DialogTitle>
       <Divider />
       
-      <DialogContent 
-        sx={{ 
-          p: { xs: 2, sm: 2.5 },
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
+      <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
         {error && (
           <Alert 
             severity="error" 
-            icon={<IconAlertCircle size={20} />}
-            sx={{ 
-              mb: 2.5,
-              borderRadius: '8px',
-              '& .MuiAlert-message': {
-                fontSize: '13px',
-                fontWeight: 500
-              }
-            }}
+            sx={{ mb: 3 }}
             onClose={() => setError(null)}
           >
             {error}
@@ -289,15 +255,7 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
         {success && (
           <Alert 
             severity="success" 
-            icon={<IconCheck size={20} />}
-            sx={{ 
-              mb: 2.5,
-              borderRadius: '8px',
-              '& .MuiAlert-message': {
-                fontSize: '13px',
-                fontWeight: 500
-              }
-            }}
+            sx={{ mb: 3 }}
           >
             {isUpdate 
               ? t('calculator.saveCalculation.updateSuccess', 'Calculation updated successfully!') 
@@ -305,234 +263,171 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
           </Alert>
         )}
         
-        <Stack spacing={2.5}>
+        <Stack spacing={3}>
           {/* Image Upload Section */}
           <Box sx={{ 
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center', 
-            gap: 1, 
-            pb: 1,
-            position: 'relative'
+            gap: 2, 
+            mb: 2,
+            px: 2,
+            py: 3,
+            border: '1px dashed',
+            borderColor: 'divider',
+            borderRadius: 2,
+            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'
           }}>
-            <Box 
-              sx={{ 
-                position: 'relative',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                width: { xs: '100%', sm: '220px' },
-                height: { xs: '160px', sm: '160px' },
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-                border: '1px dashed',
-                borderColor: 'divider',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  cursor: 'pointer'
-                }
-              }}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {imagePreview && !imageError ? (
-                <Box 
-                  component="div"
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    position: 'relative',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    overflow: 'hidden'
+            {imagePreview ? (
+              <Box sx={{ position: 'relative' }}>
+                <Avatar 
+                  src={imagePreview} 
+                  alt={title || 'Product image'} 
+                  variant="rounded"
+                  sx={{ 
+                    width: 120, 
+                    height: 120,
+                    boxShadow: 3
                   }}
-                >
-                  <Box
-                    component="img"
-                    src={imagePreview}
-                    alt=""
-                    onError={handleImageError}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center'
-                    }}
-                  />
-                </Box>
-              ) : (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 1,
-                  p: 2,
-                  textAlign: 'center'
-                }}>
-                  <IconCamera 
-                    size={40} 
-                    style={{ 
-                      opacity: 0.4,
-                      color: theme.palette.mode === 'dark' ? theme.palette.grey[400] : theme.palette.grey[600]
-                    }} 
-                  />
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary"
-                    sx={{ fontSize: '11px' }}
-                  >
-                    {t('calculator.saveCalculation.dropImageHere', 'Click to upload an image')}
-                  </Typography>
-                </Box>
-              )}
-              
-              {imagePreview && !imageError && imagePreview !== initialImage && (
+                />
                 <IconButton 
                   size="small" 
                   color="error" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClearImage();
-                  }}
+                  onClick={handleClearImage}
                   sx={{
                     position: 'absolute',
-                    top: 8,
-                    right: 8,
+                    top: -8,
+                    right: -8,
                     bgcolor: 'background.paper',
                     boxShadow: 1,
-                    opacity: 0.8,
                     '&:hover': {
-                      bgcolor: 'error.lighter',
-                      opacity: 1
+                      bgcolor: 'error.lighter'
                     }
                   }}
                 >
                   <IconTrash size={16} />
                 </IconButton>
-              )}
-              
+              </Box>
+            ) : (
+              <Box sx={{ 
+                width: 120, 
+                height: 120, 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                borderRadius: 2
+              }}>
+                <IconPhoto size={40} color={theme.palette.text.secondary} opacity={0.3} />
+              </Box>
+            )}
+            
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<IconUpload size={18} />}
+              disabled={loading || success}
+              sx={{
+                mt: 1,
+                borderColor: 'divider',
+                color: 'text.secondary',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  bgcolor: 'transparent'
+                }
+              }}
+            >
+              {t('calculator.saveCalculation.uploadImage', 'Upload Image')}
               <VisuallyHiddenInput 
                 ref={fileInputRef}
                 type="file" 
                 accept="image/*" 
                 onChange={handleFileChange} 
               />
-            </Box>
-            
-            <Typography 
-              variant="caption" 
-              color="text.secondary" 
-              align="center"
-              sx={{ 
-                fontSize: '11px',
-                opacity: 0.8,
-                mt: 0.5
-              }}
-            >
-              {t('calculator.saveCalculation.supportedFormats', 'Supported formats: JPG, PNG, GIF, WEBP (Max 5MB)')}
+            </Button>
+            <Typography variant="caption" color="text.secondary" align="center">
+              Supported formats: JPG, PNG, GIF, WEBP (Max 5MB)
             </Typography>
           </Box>
 
           <TextField
-            label={t('calculator.saveCalculation.titleField', 'Title')}
+            label={t('calculator.saveCalculation.titleField')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             fullWidth
             required
             disabled={loading || success}
             variant="outlined"
-            size="small"
-            placeholder={t('calculator.saveCalculation.titlePlaceholder', 'Enter a title for your calculation')}
+            size="medium"
             sx={{
-              mt: 1,
               '& .MuiOutlinedInput-root': {
                 borderRadius: '8px',
-                fontSize: '14px',
-                '& fieldset': {
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'
-                }
+                fontSize: '16px'
               },
               '& .MuiInputLabel-root': {
-                fontSize: '14px'
+                fontSize: '16px'
               }
             }}
           />
           
           <TextField
-            label={t('calculator.saveCalculation.descriptionField', 'Description (optional)')}
+            label={t('calculator.saveCalculation.descriptionField')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
             multiline
-            rows={3}
+            rows={4}
             disabled={loading || success}
             variant="outlined"
-            size="small"
-            placeholder={t('calculator.saveCalculation.descriptionPlaceholder', 'Add some details about this calculation (optional)')}
+            size="medium"
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '8px',
-                fontSize: '14px',
-                '& fieldset': {
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'
-                }
+                fontSize: '16px'
               },
               '& .MuiInputLabel-root': {
-                fontSize: '14px'
+                fontSize: '16px'
               }
             }}
           />
         </Stack>
       </DialogContent>
       
-      <Divider />
-      
-      <DialogActions 
-        sx={{ 
-          px: { xs: 2, sm: 2.5 }, 
-          py: 2,
-          bgcolor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.01)'
-        }}
-      >
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
         <Button 
           onClick={handleClose}
           disabled={loading}
           variant="outlined"
-          size="medium"
+          size="large"
           sx={{
             borderColor: theme.palette.divider,
             color: theme.palette.text.primary,
-            fontSize: '13px',
+            fontSize: '15px',
             fontWeight: 500,
-            px: 2.5,
+            px: 3,
             py: 1,
-            minWidth: '90px',
-            borderRadius: '8px',
             '&:hover': {
               borderColor: theme.palette.text.primary,
               bgcolor: 'transparent',
             }
           }}
         >
-          {t('calculator.saveCalculation.cancel', 'Cancel')}
+          {t('calculator.saveCalculation.cancel')}
         </Button>
         <Button 
           onClick={handleSave}
           disabled={loading || success || !title.trim()}
           variant="contained"
-          size="medium"
+          size="large"
           color="primary"
           sx={{
             bgcolor: '#00c292',
             color: 'white',
-            fontSize: '13px',
+            fontSize: '15px',
             fontWeight: 500,
-            px: 2.5,
+            px: 3,
             py: 1,
-            minWidth: '90px',
-            borderRadius: '8px',
             '&:hover': {
               bgcolor: '#00a67d',
             },
@@ -541,14 +436,13 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
               color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'white',
             }
           }}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {loading ? (
-            t('calculator.saveCalculation.saving', 'Saving...')
+            <CircularProgress size={24} color="inherit" />
           ) : (
             isUpdate 
-              ? t('calculator.saveCalculation.update', 'Update') 
-              : t('calculator.saveCalculation.save', 'Save')
+              ? t('calculator.saveCalculation.update') 
+              : t('calculator.saveCalculation.save')
           )}
         </Button>
       </DialogActions>

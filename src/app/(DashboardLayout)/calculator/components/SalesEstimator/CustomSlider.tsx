@@ -119,12 +119,25 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
     // Get sorted visible types to maintain consistent order
     const sortedVisibleTypes = [...visibleTypes].sort();
 
-    // For two calculators, use only a single thumb slider
-    const currentValue = isTwoVisibleCalculators ? 
-      // When dealing with two visible calculators, determine which value to use
-      (sortedVisibleTypes[0] === 'FBM-NonGenius' ? value[0] : value[1]) : 
-      // For three calculators, use the original array
-      value;
+    // For two calculators, determine the appropriate value to display
+    const getCurrentValue = () => {
+      if (!isTwoVisibleCalculators) return value;
+      
+      // For two calculators, we need to determine which value to use
+      if (sortedVisibleTypes[0] === 'FBM-NonGenius') {
+        // For NonGenius + anything, use value[0]
+        return value[0];
+      } else if (sortedVisibleTypes[0] === 'FBM-Genius' && sortedVisibleTypes[1] === 'FBE') {
+        // For Genius + FBE, use value[1]
+        return value[1];
+      }
+      
+      // Fallback
+      return value[0];
+    };
+
+    // Get the current value to display on the slider
+    const currentValue = isTwoVisibleCalculators ? getCurrentValue() : value;
 
     const handleChange = (event: Event, newValue: number | number[]) => {
       if (isTwoVisibleCalculators) {
@@ -134,9 +147,12 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
         if (sortedVisibleTypes[0] === 'FBM-NonGenius') {
           // If FBM-NonGenius is visible (first position), use first value
           updatedValue = [newValue as number, 100];
-        } else {
-          // If FBM-NonGenius is not visible (FBM-Genius and FBE case), use second value
+        } else if (sortedVisibleTypes[0] === 'FBM-Genius' && sortedVisibleTypes[1] === 'FBE') {
+          // If FBM-Genius and FBE are visible, use second value
           updatedValue = [0, newValue as number];
+        } else {
+          // Fallback for any other combination
+          updatedValue = [newValue as number, 100];
         }
         
         onChange(event, updatedValue);
@@ -210,7 +226,19 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
       const [firstType, secondType] = sortedVisibleTypes as [ColorMapKey, ColorMapKey];
       
       // Determine the slider point based on which calculators are visible
-      const sliderPoint = firstType === 'FBM-NonGenius' ? value[0] : value[1];
+      let sliderPoint: number;
+      
+      if (firstType === 'FBM-NonGenius') {
+        // If NonGenius is visible as first type, use value[0]
+        sliderPoint = value[0];
+      } else if (firstType === 'FBM-Genius' && secondType === 'FBE') {
+        // For Genius and FBE, use value[1] but map it correctly
+        // Convert from 0-100 based on value[1] 
+        sliderPoint = value[1];
+      } else {
+        // Fallback
+        sliderPoint = value[0];
+      }
       
       // Get the colors for the two visible calculator types
       const firstColor = COLOR_MAP[firstType];
@@ -307,6 +335,9 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
         valueLabelFormat={valueLabelFormat}
         min={0}
         max={100}
+        aria-label="Distribution slider"
+        marks={false}
+        track={isTwoVisibleCalculators ? false : "normal"}
       />
     );
   }

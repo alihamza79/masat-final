@@ -144,8 +144,21 @@ export const useSalesEstimatorCalculations = (
     
     // Two visible calculators
     if (visibleTypes.length === 2) {
-      const firstPercentage = percentages[0];
-      const secondPercentage = 100 - firstPercentage;
+      let firstPercentage, secondPercentage;
+      
+      if (visibleTypes[0] === 'FBM-NonGenius') {
+        // If FBM-NonGenius is the first calculator, use percentages[0]
+        firstPercentage = percentages[0];
+        secondPercentage = 100 - firstPercentage;
+      } else if (visibleTypes[0] === 'FBM-Genius' && visibleTypes[1] === 'FBE') {
+        // If FBM-Genius and FBE are visible, use percentages[1]
+        firstPercentage = percentages[1];
+        secondPercentage = 100 - firstPercentage;
+      } else {
+        // Fallback for any other combination
+        firstPercentage = percentages[0];
+        secondPercentage = 100 - firstPercentage;
+      }
       
       const firstPieces = Math.floor((firstPercentage / 100) * pieces);
       const secondPieces = pieces - firstPieces;
@@ -235,16 +248,23 @@ export const useSalesEstimatorCalculations = (
       if (visibleTypes[0] === 'FBM-NonGenius' && visibleTypes[1] === 'FBM-Genius') {
         newSliderValue = [firstPercentage, 100]; // FBM-NonGenius and FBM-Genius
       } else if (visibleTypes[0] === 'FBM-NonGenius' && visibleTypes[1] === 'FBE') {
-        newSliderValue = [firstPercentage, firstPercentage]; // FBM-NonGenius and FBE
-      } else {
+        newSliderValue = [firstPercentage, 100]; // FBM-NonGenius and FBE
+      } else if (visibleTypes[0] === 'FBM-Genius' && visibleTypes[1] === 'FBE') {
         newSliderValue = [0, firstPercentage]; // FBM-Genius and FBE
+      } else {
+        // Fallback for any other unexpected combination
+        newSliderValue = [firstPercentage, 100];
       }
       
+      // Set the slider value first
       setSliderValue(newSliderValue);
       
-      // Calculate new distributions based on the percentages
-      const newDistributions = calculateDistributions(totalPieces, newSliderValue);
-      onDistributionChange(newDistributions);
+      // Wait for the next render to update distributions
+      setTimeout(() => {
+        // Calculate new distributions based on the percentages
+        const newDistributions = calculateDistributions(totalPieces, newSliderValue);
+        onDistributionChange(newDistributions);
+      }, 0);
     }
     
     // Three visible calculators - reset to default three-way split
