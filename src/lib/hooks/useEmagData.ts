@@ -38,6 +38,11 @@ export const useEmagData = () => {
       console.log(`Fetching orders for integration: ${integration.accountName} using server action`);
       const result = await fetchEmagOrders(integration._id);
       
+      // Check if result is undefined or null (server action failed)
+      if (!result) {
+        throw new Error('Server action returned undefined result');
+      }
+      
       // Check if there was an error
       if (result.error) {
         throw new Error(result.error);
@@ -45,17 +50,25 @@ export const useEmagData = () => {
       
       // Update store with orders data
       setIntegrationData(integration._id, {
-        orders: result.orders,
-        ordersCount: result.ordersCount,
+        orders: result.orders || [],
+        ordersCount: result.ordersCount || 0,
         ordersFetched: true,
-        lastUpdated: result.lastUpdated
+        lastUpdated: result.lastUpdated || new Date().toISOString()
       });
       
       return result;
     } catch (error: any) {
       console.error(`Error fetching orders for integration ${integration.accountName}:`, error);
       setIntegrationImportStatus(integration._id, 'error', error.message || 'Failed to fetch orders');
-      return null;
+      
+      // Return a valid result object even in case of error
+      return {
+        integrationId: integration._id,
+        orders: [],
+        ordersCount: 0,
+        lastUpdated: new Date().toISOString(),
+        error: error.message || 'Failed to fetch orders'
+      };
     }
   };
 
@@ -74,6 +87,11 @@ export const useEmagData = () => {
       console.log(`Fetching product offers for integration: ${integration.accountName} using server action`);
       const result = await fetchEmagProductOffers(integration._id);
       
+      // Check if result is undefined or null (server action failed)
+      if (!result) {
+        throw new Error('Server action returned undefined result');
+      }
+      
       // Check if there was an error
       if (result.error) {
         throw new Error(result.error);
@@ -81,17 +99,25 @@ export const useEmagData = () => {
       
       // Update store with product offers data
       setIntegrationData(integration._id, {
-        productOffers: result.productOffers,
-        productOffersCount: result.productOffersCount,
+        productOffers: result.productOffers || [],
+        productOffersCount: result.productOffersCount || 0,
         productOffersFetched: true,
-        lastUpdated: result.lastUpdated
+        lastUpdated: result.lastUpdated || new Date().toISOString()
       });
       
       return result;
     } catch (error: any) {
       console.error(`Error fetching product offers for integration ${integration.accountName}:`, error);
       setIntegrationImportStatus(integration._id, 'error', error.message || 'Failed to fetch product offers');
-      return null;
+      
+      // Return a valid result object even in case of error
+      return {
+        integrationId: integration._id,
+        productOffers: [],
+        productOffersCount: 0,
+        lastUpdated: new Date().toISOString(),
+        error: error.message || 'Failed to fetch product offers'
+      };
     }
   };
 
@@ -106,15 +132,20 @@ export const useEmagData = () => {
     queryFn: async () => {
       console.log(`React Query is automatically refetching orders at ${new Date().toLocaleTimeString()}`);
       
-      const results = await Promise.all(
-        integrations.map(async (integration) => {
-          if (!integration._id) return null;
-          console.log(`Fetching orders for integration: ${integration.accountName}`);
-          return fetchOrders(integration);
-        })
-      );
-      
-      return results.filter(Boolean);
+      try {
+        const results = await Promise.all(
+          integrations.map(async (integration) => {
+            if (!integration._id) return null;
+            console.log(`Fetching orders for integration: ${integration.accountName}`);
+            return fetchOrders(integration);
+          })
+        );
+        
+        return results.filter(Boolean);
+      } catch (error) {
+        console.error('Error in orders query function:', error);
+        return [];
+      }
     },
     // Don't refetch on component remounts to prevent page navigation refetches
     refetchOnMount: false,
@@ -143,15 +174,20 @@ export const useEmagData = () => {
     queryFn: async () => {
       console.log(`React Query is automatically refetching product offers at ${new Date().toLocaleTimeString()}`);
       
-      const results = await Promise.all(
-        integrations.map(async (integration) => {
-          if (!integration._id) return null;
-          console.log(`Fetching product offers for integration: ${integration.accountName}`);
-          return fetchProductOffers(integration);
-        })
-      );
-      
-      return results.filter(Boolean);
+      try {
+        const results = await Promise.all(
+          integrations.map(async (integration) => {
+            if (!integration._id) return null;
+            console.log(`Fetching product offers for integration: ${integration.accountName}`);
+            return fetchProductOffers(integration);
+          })
+        );
+        
+        return results.filter(Boolean);
+      } catch (error) {
+        console.error('Error in product offers query function:', error);
+        return [];
+      }
     },
     // Don't refetch on component remounts to prevent page navigation refetches
     refetchOnMount: false,
