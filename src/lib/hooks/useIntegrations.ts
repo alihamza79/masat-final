@@ -10,8 +10,7 @@ import {
   Integration
 } from '@/lib/services/integrationService';
 import { IntegrationFormData } from '@/app/(DashboardLayout)/integrations/components/IntegrationFormDialog';
-import axios from 'axios';
-import { decryptResponse } from '@/lib/utils/responseEncryption';
+import { fetchEmagOrders, fetchEmagProductOffers } from '@/app/actions/emagData';
 
 // Query key for integrations
 export const INTEGRATIONS_QUERY_KEY = ['integrations'];
@@ -58,31 +57,39 @@ export const useIntegrations = () => {
       });
       setIntegrationImportStatus(integrationId, 'loading');
       
-      // Fetch orders
-      const ordersResponse = await axios.get(`/api/integrations/${integrationId}/orders`);
-      if (ordersResponse.data.success) {
-        const responseData = ordersResponse.data.data;
-        const decryptedOrders = JSON.parse(decryptResponse(responseData.orderData));
-        setIntegrationData(integrationId, {
-          orders: decryptedOrders.orders,
-          ordersCount: decryptedOrders.ordersCount,
-          ordersFetched: true,
-          lastUpdated: responseData.lastUpdated
-        });
+      // Use server action to fetch orders
+      console.log(`Fetching orders for integration ${integrationId} using server action`);
+      const ordersResult = await fetchEmagOrders(integrationId);
+      
+      // Check if there was an error fetching orders
+      if (ordersResult.error) {
+        throw new Error(ordersResult.error);
       }
+      
+      // Update store with orders data
+      setIntegrationData(integrationId, {
+        orders: ordersResult.orders,
+        ordersCount: ordersResult.ordersCount,
+        ordersFetched: true,
+        lastUpdated: ordersResult.lastUpdated
+      });
 
-      // Fetch product offers
-      const productOffersResponse = await axios.get(`/api/integrations/${integrationId}/product-offers`);
-      if (productOffersResponse.data.success) {
-        const responseData = productOffersResponse.data.data;
-        const decryptedProducts = JSON.parse(decryptResponse(responseData.productOffersData));
-        setIntegrationData(integrationId, {
-          productOffers: decryptedProducts.productOffers,
-          productOffersCount: decryptedProducts.productOffersCount,
-          productOffersFetched: true,
-          lastUpdated: responseData.lastUpdated
-        });
+      // Use server action to fetch product offers
+      console.log(`Fetching product offers for integration ${integrationId} using server action`);
+      const productOffersResult = await fetchEmagProductOffers(integrationId);
+      
+      // Check if there was an error fetching product offers
+      if (productOffersResult.error) {
+        throw new Error(productOffersResult.error);
       }
+      
+      // Update store with product offers data
+      setIntegrationData(integrationId, {
+        productOffers: productOffersResult.productOffers,
+        productOffersCount: productOffersResult.productOffersCount,
+        productOffersFetched: true,
+        lastUpdated: productOffersResult.lastUpdated
+      });
 
       // Set success status
       setIntegrationImportStatus(integrationId, 'success');

@@ -1,11 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import axios from 'axios';
 import { useIntegrationsStore } from '@/app/(DashboardLayout)/integrations/store/integrations';
 import { useEmagDataStore, ImportStatus } from '@/app/(DashboardLayout)/integrations/store/emagData';
 import { EmagOrder, EmagProductOffer } from '@/lib/services/emagApiService';
 import { Integration } from '@/lib/services/integrationService';
-import { decryptResponse } from '@/lib/utils/responseEncryption';
+import { fetchEmagOrders, fetchEmagProductOffers } from '@/app/actions/emagData';
 
 // Query keys
 export const EMAG_ORDERS_QUERY_KEY = 'emag-orders';
@@ -14,9 +13,6 @@ export const EMAG_PRODUCT_OFFERS_QUERY_KEY = 'emag-product-offers';
 // Fetch intervals
 const ORDERS_FETCH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const PRODUCT_OFFERS_FETCH_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
-
-// API timeout (3 minutes)
-const API_TIMEOUT = 10 * 60 * 1000;
 
 export const useEmagData = () => {
   const queryClient = useQueryClient();
@@ -38,31 +34,24 @@ export const useEmagData = () => {
         setIntegrationImportStatus(integration._id, 'loading');
       }
       
-      // Fetch orders using API endpoint with timeout
-      const response = await axios.get(`/api/integrations/${integration._id}/orders`, {
-        timeout: API_TIMEOUT
-      });
+      // Use server action directly instead of API call
+      console.log(`Fetching orders for integration: ${integration.accountName} using server action`);
+      const result = await fetchEmagOrders(integration._id);
       
-      // Check if the API call was successful
-      if (!response.data.success) {
-        // If the API returned an error, throw it to be caught by the catch block
-        throw new Error(response.data.error || 'Failed to fetch orders');
+      // Check if there was an error
+      if (result.error) {
+        throw new Error(result.error);
       }
-      
-      const responseData = response.data.data;
-      
-      // Decrypt the response data
-      const decryptedData = JSON.parse(decryptResponse(responseData.orderData));
       
       // Update store with orders data
       setIntegrationData(integration._id, {
-        orders: decryptedData.orders,
-        ordersCount: decryptedData.ordersCount,
+        orders: result.orders,
+        ordersCount: result.ordersCount,
         ordersFetched: true,
-        lastUpdated: responseData.lastUpdated
+        lastUpdated: result.lastUpdated
       });
       
-      return decryptedData;
+      return result;
     } catch (error: any) {
       console.error(`Error fetching orders for integration ${integration.accountName}:`, error);
       setIntegrationImportStatus(integration._id, 'error', error.message || 'Failed to fetch orders');
@@ -81,35 +70,27 @@ export const useEmagData = () => {
         setIntegrationImportStatus(integration._id, 'loading');
       }
       
-      // Fetch product offers using API endpoint
-      const response = await axios.get(`/api/integrations/${integration._id}/product-offers`);
+      // Use server action directly instead of API call
+      console.log(`Fetching product offers for integration: ${integration.accountName} using server action`);
+      const result = await fetchEmagProductOffers(integration._id);
       
-      // Check if the API call was successful
-      if (!response.data.success) {
-        // If the API returned an error, throw it to be caught by the catch block
-        throw new Error(response.data.error || 'Failed to fetch product offers');
+      // Check if there was an error
+      if (result.error) {
+        throw new Error(result.error);
       }
-      
-      const responseData = response.data.data;
-      
-      // Decrypt the response data
-      const decryptedData = JSON.parse(decryptResponse(responseData.productOffersData));
       
       // Update store with product offers data
       setIntegrationData(integration._id, {
-        productOffers: decryptedData.productOffers,
-        productOffersCount: decryptedData.productOffersCount,
+        productOffers: result.productOffers,
+        productOffersCount: result.productOffersCount,
         productOffersFetched: true,
-        lastUpdated: responseData.lastUpdated
+        lastUpdated: result.lastUpdated
       });
       
-      return decryptedData;
+      return result;
     } catch (error: any) {
       console.error(`Error fetching product offers for integration ${integration.accountName}:`, error);
-      const errorMessage = error.code === 'ECONNABORTED' 
-        ? 'Request timed out after 3 minutes' 
-        : error.message || 'Failed to fetch product offers';
-      setIntegrationImportStatus(integration._id, 'error', errorMessage);
+      setIntegrationImportStatus(integration._id, 'error', error.message || 'Failed to fetch product offers');
       return null;
     }
   };
@@ -118,55 +99,93 @@ export const useEmagData = () => {
   const { 
     isLoading: isLoadingOrders, 
     error: ordersError, 
-    refetch: refetchOrders 
+    refetch: refetchOrders,
+    dataUpdatedAt: ordersUpdatedAt
   } = useQuery({
     queryKey: [EMAG_ORDERS_QUERY_KEY],
     queryFn: async () => {
-      console.log('Fetching orders data...');
+      console.log(`React Query is automatically refetching orders at ${new Date().toLocaleTimeString()}`);
+      
       const results = await Promise.all(
         integrations.map(async (integration) => {
           if (!integration._id) return null;
+          console.log(`Fetching orders for integration: ${integration.accountName}`);
           return fetchOrders(integration);
         })
       );
       
       return results.filter(Boolean);
     },
-    refetchOnMount: true,
+    // Don't refetch on component remounts to prevent page navigation refetches
+    refetchOnMount: false,
+    // Don't refetch on window focus
     refetchOnWindowFocus: false,
+    // Enable only if we have integrations
     enabled: integrations.length > 0,
-    staleTime: ORDERS_FETCH_INTERVAL,
+    // Consider data stale immediately so interval refetching works
+    staleTime: 0,
+    // Set the refetch interval to 10 minutes
     refetchInterval: ORDERS_FETCH_INTERVAL,
-    refetchIntervalInBackground: true,
-    gcTime: 0 // Don't keep data in garbage collection
+    // Don't refetch in background
+    refetchIntervalInBackground: false,
+    // Don't keep data in cache after unmounting
+    gcTime: 0
   });
 
   // Use React Query to fetch product offers for all integrations
   const { 
     isLoading: isLoadingProductOffers, 
     error: productOffersError, 
-    refetch: refetchProductOffers 
+    refetch: refetchProductOffers,
+    dataUpdatedAt: productOffersUpdatedAt
   } = useQuery({
     queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY],
     queryFn: async () => {
-      console.log('Fetching product offers data...');
+      console.log(`React Query is automatically refetching product offers at ${new Date().toLocaleTimeString()}`);
+      
       const results = await Promise.all(
         integrations.map(async (integration) => {
           if (!integration._id) return null;
+          console.log(`Fetching product offers for integration: ${integration.accountName}`);
           return fetchProductOffers(integration);
         })
       );
       
       return results.filter(Boolean);
     },
-    refetchOnMount: true,
+    // Don't refetch on component remounts to prevent page navigation refetches
+    refetchOnMount: false,
+    // Don't refetch on window focus
     refetchOnWindowFocus: false,
+    // Enable only if we have integrations
     enabled: integrations.length > 0,
+    // Prevent refetching on page navigation by keeping it "fresh" longer
     staleTime: PRODUCT_OFFERS_FETCH_INTERVAL,
+    // Set the refetch interval to 12 hours
     refetchInterval: PRODUCT_OFFERS_FETCH_INTERVAL,
-    refetchIntervalInBackground: true,
-    gcTime: 0 // Don't keep data in garbage collection
+    // Don't refetch in background
+    refetchIntervalInBackground: false,
+    // Don't keep data in cache after unmounting
+    gcTime: 0
   });
+
+  // Monitor when orders are updated
+  useEffect(() => {
+    if (ordersUpdatedAt > 0) {
+      const lastUpdate = new Date(ordersUpdatedAt);
+      console.log(`Orders data was last updated at: ${lastUpdate.toLocaleString()}`);
+      console.log(`Next refetch should occur around: ${new Date(ordersUpdatedAt + ORDERS_FETCH_INTERVAL).toLocaleString()}`);
+    }
+  }, [ordersUpdatedAt]);
+
+  // Monitor when product offers are updated
+  useEffect(() => {
+    if (productOffersUpdatedAt > 0) {
+      const lastUpdate = new Date(productOffersUpdatedAt);
+      console.log(`Product offers data was last updated at: ${lastUpdate.toLocaleString()}`);
+      console.log(`Next refetch should occur around: ${new Date(productOffersUpdatedAt + PRODUCT_OFFERS_FETCH_INTERVAL).toLocaleString()}`);
+    }
+  }, [productOffersUpdatedAt]);
 
   // Update import status when both queries complete
   useEffect(() => {
