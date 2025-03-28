@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useIntegrationsStore } from '@/app/(DashboardLayout)/integrations/store/integrations';
 import { useEmagDataStore, ImportStatus } from '@/app/(DashboardLayout)/integrations/store/emagData';
@@ -15,8 +15,12 @@ export const EMAG_PRODUCT_OFFERS_QUERY_KEY = 'emag-product-offers';
 const ORDERS_FETCH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const PRODUCT_OFFERS_FETCH_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
 
-// API timeout (3 minutes)
+// API timeout (10 minutes)
 const API_TIMEOUT = 10 * 60 * 1000;
+
+// Page sizes for pagination
+const ORDERS_PAGE_SIZE = 1000; // Use 1000 for orders
+const PRODUCT_OFFERS_PAGE_SIZE = 100; // Use 100 for product offers
 
 export const useEmagData = () => {
   const queryClient = useQueryClient();
@@ -26,10 +30,40 @@ export const useEmagData = () => {
     setIntegrationData,
     setIntegrationImportStatus 
   } = useEmagDataStore();
-
-  // Function to fetch orders for a specific integration
-  const fetchOrders = async (integration: Integration) => {
-    if (!integration._id) return;
+  
+  // Function to fetch orders for all integrations (with pagination)
+  const fetchOrders = useCallback(async () => {
+    console.log('Fetching orders data...');
+    
+    // Process each integration in parallel
+    const results = await Promise.all(
+      integrations.map(async (integration) => {
+        if (!integration._id) return null;
+        return fetchOrdersForIntegration(integration);
+      })
+    );
+    
+    return results.filter(Boolean);
+  }, [integrations]);
+  
+  // Function to fetch product offers for all integrations (with pagination)
+  const fetchProductOffers = useCallback(async () => {
+    console.log('Fetching product offers data...');
+    
+    // Process each integration in parallel
+    const results = await Promise.all(
+      integrations.map(async (integration) => {
+        if (!integration._id) return null;
+        return fetchProductOffersForIntegration(integration);
+      })
+    );
+    
+    return results.filter(Boolean);
+  }, [integrations]);
+  
+  // Function to fetch orders for a specific integration with pagination
+  const fetchOrdersForIntegration = async (integration: Integration) => {
+    if (!integration._id) return null;
     
     try {
       // Set status to loading only if not in error state
@@ -38,41 +72,126 @@ export const useEmagData = () => {
         setIntegrationImportStatus(integration._id, 'loading');
       }
       
-      // Fetch orders using API endpoint with timeout
-      const response = await axios.get(`/api/integrations/${integration._id}/orders`, {
-        timeout: API_TIMEOUT
-      });
+      // 1. First fetch the count to determine number of pages
+      const countResponse = await axios.get(
+        `/api/integrations/${integration._id}/orders?countOnly=true`, 
+        { timeout: API_TIMEOUT }
+      );
       
-      // Check if the API call was successful
-      if (!response.data.success) {
-        // If the API returned an error, throw it to be caught by the catch block
-        throw new Error(response.data.error || 'Failed to fetch orders');
+      if (!countResponse.data.success) {
+        throw new Error(countResponse.data.error || 'Failed to fetch orders count');
       }
       
-      const responseData = response.data.data;
+      const countData = countResponse.data.data;
+      let totalPages = countData.totalPages;
+      const totalCount = countData.totalCount;
       
-      // Decrypt the response data
-      const decryptedData = JSON.parse(decryptResponse(responseData.orderData));
+      // If no orders, return early
+      if (totalCount === 0) {
+        setIntegrationData(integration._id, {
+          orders: [],
+          ordersCount: 0,
+          ordersFetched: true,
+          lastUpdated: new Date().toISOString()
+        });
+        return {
+          orders: [],
+          ordersCount: 0
+        };
+      }
       
-      // Update store with orders data
+      // 2. Fetch the first page to get actual page count and first batch of data
+      const firstPageResponse = await axios.get(
+        `/api/integrations/${integration._id}/orders?page=1&pageSize=${ORDERS_PAGE_SIZE}`, 
+        { timeout: API_TIMEOUT }
+      );
+      
+      if (!firstPageResponse.data.success) {
+        throw new Error(firstPageResponse.data.error || 'Failed to fetch first page of orders');
+      }
+      
+      const firstPageData = firstPageResponse.data.data;
+      const decryptedFirstPage = JSON.parse(decryptResponse(firstPageData.orderData));
+      
+      // Use totalPages from the response if available (more accurate)
+      if (decryptedFirstPage.totalPages !== undefined) {
+        totalPages = decryptedFirstPage.totalPages;
+      }
+      
+      console.log(`Integration ${integration.accountName} has ${totalCount} orders in ${totalPages} pages`);
+      
+      // Update store with first page data
       setIntegrationData(integration._id, {
-        orders: decryptedData.orders,
-        ordersCount: decryptedData.ordersCount,
-        ordersFetched: true,
-        lastUpdated: responseData.lastUpdated
+        orders: decryptedFirstPage.orders || [],
+        ordersCount: totalCount,
+        lastUpdated: firstPageData.lastUpdated
       });
       
-      return decryptedData;
+      // If only one page, we're done
+      if (totalPages <= 1) {
+        setIntegrationData(integration._id, {
+          ordersFetched: true
+        });
+        return {
+          orders: decryptedFirstPage.orders || [],
+          ordersCount: totalCount
+        };
+      }
+      
+      // 3. Fetch remaining pages in parallel (use a Set to ensure unique page numbers)
+      const pagesToFetch = new Set<number>();
+      for (let page = 2; page <= Math.min(totalPages, 100); page++) {
+        pagesToFetch.add(page);
+      }
+      
+      // Convert to array and fetch remaining pages
+      const pagePromises = Array.from(pagesToFetch).map(page => 
+        axios.get(
+          `/api/integrations/${integration._id}/orders?page=${page}&pageSize=${ORDERS_PAGE_SIZE}`, 
+          { timeout: API_TIMEOUT }
+        )
+      );
+      
+      const pageResponses = await Promise.all(pagePromises);
+      
+      // Process all responses
+      const allOrders = [...decryptedFirstPage.orders || []];
+      
+      for (const response of pageResponses) {
+        if (response.data.success) {
+          const pageData = response.data.data;
+          const decryptedPage = JSON.parse(decryptResponse(pageData.orderData));
+          if (decryptedPage.orders && decryptedPage.orders.length > 0) {
+            allOrders.push(...decryptedPage.orders);
+          }
+        }
+      }
+      
+      // Update store with all orders
+      setIntegrationData(integration._id, {
+        orders: allOrders,
+        ordersCount: totalCount,
+        ordersFetched: true,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      return {
+        orders: allOrders,
+        ordersCount: totalCount
+      };
     } catch (error: any) {
       console.error(`Error fetching orders for integration ${integration.accountName}:`, error);
-      setIntegrationImportStatus(integration._id, 'error', error.message || 'Failed to fetch orders');
+      const errorMessage = error.code === 'ECONNABORTED' 
+        ? 'Request timed out after 10 minutes' 
+        : error.message || 'Failed to fetch orders';
+      setIntegrationImportStatus(integration._id, 'error', errorMessage);
       return null;
     }
   };
-
-  // Function to fetch product offers for a specific integration
-  const fetchProductOffers = async (integration: Integration) => {
-    if (!integration._id) return;
+  
+  // Function to fetch product offers for a specific integration with pagination
+  const fetchProductOffersForIntegration = async (integration: Integration) => {
+    if (!integration._id) return null;
     
     try {
       // Set status to loading only if not in error state
@@ -81,39 +200,123 @@ export const useEmagData = () => {
         setIntegrationImportStatus(integration._id, 'loading');
       }
       
-      // Fetch product offers using API endpoint
-      const response = await axios.get(`/api/integrations/${integration._id}/product-offers`);
+      // 1. First fetch the count to determine number of pages
+      const countResponse = await axios.get(
+        `/api/integrations/${integration._id}/product-offers?countOnly=true`, 
+        { timeout: API_TIMEOUT }
+      );
       
-      // Check if the API call was successful
-      if (!response.data.success) {
-        // If the API returned an error, throw it to be caught by the catch block
-        throw new Error(response.data.error || 'Failed to fetch product offers');
+      if (!countResponse.data.success) {
+        throw new Error(countResponse.data.error || 'Failed to fetch product offers count');
       }
       
-      const responseData = response.data.data;
+      const countData = countResponse.data.data;
+      let totalPages = countData.totalPages;
+      const totalCount = countData.totalCount;
       
-      // Decrypt the response data
-      const decryptedData = JSON.parse(decryptResponse(responseData.productOffersData));
+      // If no product offers, return early
+      if (totalCount === 0) {
+        setIntegrationData(integration._id, {
+          productOffers: [],
+          productOffersCount: 0,
+          productOffersFetched: true,
+          lastUpdated: new Date().toISOString()
+        });
+        return {
+          productOffers: [],
+          productOffersCount: 0
+        };
+      }
       
-      // Update store with product offers data
+      // 2. Fetch the first page to get actual page count and first batch of data
+      const firstPageResponse = await axios.get(
+        `/api/integrations/${integration._id}/product-offers?page=1&pageSize=${PRODUCT_OFFERS_PAGE_SIZE}`, 
+        { timeout: API_TIMEOUT }
+      );
+      
+      if (!firstPageResponse.data.success) {
+        throw new Error(firstPageResponse.data.error || 'Failed to fetch first page of product offers');
+      }
+      
+      const firstPageData = firstPageResponse.data.data;
+      const decryptedFirstPage = JSON.parse(decryptResponse(firstPageData.productOffersData));
+      
+      // Use totalPages from the response if available (more accurate)
+      if (decryptedFirstPage.totalPages !== undefined) {
+        totalPages = decryptedFirstPage.totalPages;
+      }
+      
+      console.log(`Integration ${integration.accountName} has ${totalCount} product offers in ${totalPages} pages`);
+      
+      // Update store with first page data
       setIntegrationData(integration._id, {
-        productOffers: decryptedData.productOffers,
-        productOffersCount: decryptedData.productOffersCount,
-        productOffersFetched: true,
-        lastUpdated: responseData.lastUpdated
+        productOffers: decryptedFirstPage.productOffers || [],
+        productOffersCount: totalCount,
+        lastUpdated: firstPageData.lastUpdated
       });
       
-      return decryptedData;
+      // If only one page, we're done
+      if (totalPages <= 1) {
+        setIntegrationData(integration._id, {
+          productOffersFetched: true
+        });
+        return {
+          productOffers: decryptedFirstPage.productOffers || [],
+          productOffersCount: totalCount
+        };
+      }
+      
+      // 3. Fetch remaining pages in parallel (use a Set to ensure unique page numbers)
+      const pagesToFetch = new Set<number>();
+      for (let page = 2; page <= Math.min(totalPages, 100); page++) {
+        pagesToFetch.add(page);
+      }
+      
+      // Convert to array and fetch remaining pages
+      const pagePromises = Array.from(pagesToFetch).map(page => 
+        axios.get(
+          `/api/integrations/${integration._id}/product-offers?page=${page}&pageSize=${PRODUCT_OFFERS_PAGE_SIZE}`, 
+          { timeout: API_TIMEOUT }
+        )
+      );
+      
+      const pageResponses = await Promise.all(pagePromises);
+      
+      // Process all responses
+      const allProductOffers = [...decryptedFirstPage.productOffers || []];
+      
+      for (const response of pageResponses) {
+        if (response.data.success) {
+          const pageData = response.data.data;
+          const decryptedPage = JSON.parse(decryptResponse(pageData.productOffersData));
+          if (decryptedPage.productOffers && decryptedPage.productOffers.length > 0) {
+            allProductOffers.push(...decryptedPage.productOffers);
+          }
+        }
+      }
+      
+      // Update store with all product offers
+      setIntegrationData(integration._id, {
+        productOffers: allProductOffers,
+        productOffersCount: totalCount,
+        productOffersFetched: true,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      return {
+        productOffers: allProductOffers,
+        productOffersCount: totalCount
+      };
     } catch (error: any) {
       console.error(`Error fetching product offers for integration ${integration.accountName}:`, error);
       const errorMessage = error.code === 'ECONNABORTED' 
-        ? 'Request timed out after 3 minutes' 
+        ? 'Request timed out after 10 minutes' 
         : error.message || 'Failed to fetch product offers';
       setIntegrationImportStatus(integration._id, 'error', errorMessage);
       return null;
     }
   };
-
+  
   // Use React Query to fetch orders for all integrations
   const { 
     isLoading: isLoadingOrders, 
@@ -121,17 +324,7 @@ export const useEmagData = () => {
     refetch: refetchOrders 
   } = useQuery({
     queryKey: [EMAG_ORDERS_QUERY_KEY],
-    queryFn: async () => {
-      console.log('Fetching orders data...');
-      const results = await Promise.all(
-        integrations.map(async (integration) => {
-          if (!integration._id) return null;
-          return fetchOrders(integration);
-        })
-      );
-      
-      return results.filter(Boolean);
-    },
+    queryFn: fetchOrders,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     enabled: integrations.length > 0,
@@ -148,17 +341,7 @@ export const useEmagData = () => {
     refetch: refetchProductOffers 
   } = useQuery({
     queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY],
-    queryFn: async () => {
-      console.log('Fetching product offers data...');
-      const results = await Promise.all(
-        integrations.map(async (integration) => {
-          if (!integration._id) return null;
-          return fetchProductOffers(integration);
-        })
-      );
-      
-      return results.filter(Boolean);
-    },
+    queryFn: fetchProductOffers,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     enabled: integrations.length > 0,
@@ -212,42 +395,42 @@ export const useEmagData = () => {
   const error = ordersError || productOffersError;
 
   // Combined refetch function
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     console.log(`[${new Date().toISOString()}] Manually triggered refetch for orders and product offers`);
     await Promise.all([refetchOrders(), refetchProductOffers()]);
-  };
+  }, [refetchOrders, refetchProductOffers]);
 
   // Helper function to force refetch regardless of stale time
-  const forceRefetch = async () => {
+  const forceRefetch = useCallback(async () => {
     console.log(`[${new Date().toISOString()}] Force refetching orders and product offers`);
     await queryClient.invalidateQueries({ queryKey: [EMAG_ORDERS_QUERY_KEY] });
     await queryClient.invalidateQueries({ queryKey: [EMAG_PRODUCT_OFFERS_QUERY_KEY] });
-  };
+  }, [queryClient]);
 
   // Helper function to get all orders across all integrations
-  const getAllOrders = (): EmagOrder[] => {
-    return Object.values(integrationsData).flatMap(data => data.orders);
-  };
+  const getAllOrders = useCallback((): EmagOrder[] => {
+    return Object.values(integrationsData).flatMap(data => data.orders || []);
+  }, [integrationsData]);
 
   // Helper function to get all product offers across all integrations
-  const getAllProductOffers = (): EmagProductOffer[] => {
-    return Object.values(integrationsData).flatMap(data => data.productOffers);
-  };
+  const getAllProductOffers = useCallback((): EmagProductOffer[] => {
+    return Object.values(integrationsData).flatMap(data => data.productOffers || []);
+  }, [integrationsData]);
 
   // Helper function to get import status for a specific integration
-  const getImportStatus = (integrationId: string): ImportStatus => {
+  const getImportStatus = useCallback((integrationId: string): ImportStatus => {
     return integrationsData[integrationId]?.importStatus || 'idle';
-  };
+  }, [integrationsData]);
 
   // Helper function to get orders count for a specific integration
-  const getOrdersCount = (integrationId: string): number => {
+  const getOrdersCount = useCallback((integrationId: string): number => {
     return integrationsData[integrationId]?.ordersCount || 0;
-  };
+  }, [integrationsData]);
 
   // Helper function to get product offers count for a specific integration
-  const getProductOffersCount = (integrationId: string): number => {
+  const getProductOffersCount = useCallback((integrationId: string): number => {
     return integrationsData[integrationId]?.productOffersCount || 0;
-  };
+  }, [integrationsData]);
 
   return {
     integrationsData,

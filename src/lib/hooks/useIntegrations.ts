@@ -22,7 +22,7 @@ const INTEGRATIONS_FETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 export const useIntegrations = () => {
   const queryClient = useQueryClient();
   const { integrations: storeIntegrations, setIntegrations, addIntegration, updateIntegration: updateStoreIntegration, removeIntegration } = useIntegrationsStore();
-  const { setIntegrationImportStatus, setIntegrationData, removeIntegrationData } = useEmagDataStore();
+  const { setIntegrationImportStatus, setIntegrationData, removeIntegrationData, integrationsData } = useEmagDataStore();
 
   // Fetch integrations
   const { data, isLoading, error, refetch } = useQuery({
@@ -58,32 +58,118 @@ export const useIntegrations = () => {
       });
       setIntegrationImportStatus(integrationId, 'loading');
       
-      // Fetch orders
-      const ordersResponse = await axios.get(`/api/integrations/${integrationId}/orders`);
-      if (ordersResponse.data.success) {
-        const responseData = ordersResponse.data.data;
-        const decryptedOrders = JSON.parse(decryptResponse(responseData.orderData));
-        setIntegrationData(integrationId, {
-          orders: decryptedOrders.orders,
-          ordersCount: decryptedOrders.ordersCount,
-          ordersFetched: true,
-          lastUpdated: responseData.lastUpdated
-        });
+      // Step 1: Get initial page for orders to determine total pages
+      const ordersResponse = await axios.get(`/api/integrations/${integrationId}/orders?page=1`);
+      if (!ordersResponse.data.success) {
+        throw new Error(ordersResponse.data.error || 'Failed to fetch orders');
       }
-
-      // Fetch product offers
-      const productOffersResponse = await axios.get(`/api/integrations/${integrationId}/product-offers`);
-      if (productOffersResponse.data.success) {
-        const responseData = productOffersResponse.data.data;
-        const decryptedProducts = JSON.parse(decryptResponse(responseData.productOffersData));
-        setIntegrationData(integrationId, {
-          productOffers: decryptedProducts.productOffers,
-          productOffersCount: decryptedProducts.productOffersCount,
-          productOffersFetched: true,
-          lastUpdated: responseData.lastUpdated
-        });
+      
+      // Decrypt first page data
+      const responseOrdersData = ordersResponse.data.data;
+      const decryptedOrders = JSON.parse(decryptResponse(responseOrdersData.orderData));
+      
+      // Get total orders and pages
+      const totalOrdersPages = decryptedOrders.totalPages || 1;
+      
+      // Add first page orders to store
+      const currentOrders = integrationsData[integrationId]?.orders || [];
+      setIntegrationData(integrationId, {
+        orders: [...currentOrders, ...(decryptedOrders.orders || [])],
+        ordersCount: decryptedOrders.totalCount || 0,
+        lastUpdated: responseOrdersData.lastUpdated
+      });
+      
+      // If there are additional pages (more than just page 1), fetch them
+      if (totalOrdersPages > 1) {
+        // Create array of page numbers to fetch (skip page 1 which we already have)
+        const orderPagesToFetch = Array.from({ length: totalOrdersPages - 1 }, (_, i) => i + 2);
+        
+        // Fetch remaining order pages in parallel
+        await Promise.all(orderPagesToFetch.map(async (page) => {
+          try {
+            const pageResponse = await axios.get(
+              `/api/integrations/${integrationId}/orders?page=${page}`
+            );
+            
+            if (pageResponse.data.success) {
+              const pageData = pageResponse.data.data;
+              const decryptedPage = JSON.parse(decryptResponse(pageData.orderData));
+              
+              // Append orders to the already stored orders
+              const currentOrdersUpdated = integrationsData[integrationId]?.orders || [];
+              setIntegrationData(integrationId, {
+                orders: [...currentOrdersUpdated, ...(decryptedPage.orders || [])],
+                lastUpdated: pageData.lastUpdated
+              });
+            }
+          } catch (error) {
+            console.error(`Error fetching orders page ${page}:`, error);
+            // Continue with other pages even if one fails
+          }
+        }));
       }
-
+      
+      // Mark orders as fetched
+      setIntegrationData(integrationId, {
+        ordersFetched: true
+      });
+      
+      // Step 2: Get initial page for product offers to determine total pages
+      const productOffersResponse = await axios.get(`/api/integrations/${integrationId}/product-offers?page=1`);
+      if (!productOffersResponse.data.success) {
+        throw new Error(productOffersResponse.data.error || 'Failed to fetch product offers');
+      }
+      
+      // Decrypt first page data
+      const responseProductData = productOffersResponse.data.data;
+      const decryptedProducts = JSON.parse(decryptResponse(responseProductData.productOffersData));
+      
+      // Get total product offers and pages
+      const totalProductOffersPages = decryptedProducts.totalPages || 1;
+      
+      // Add first page product offers to store
+      const currentProductOffers = integrationsData[integrationId]?.productOffers || [];
+      setIntegrationData(integrationId, {
+        productOffers: [...currentProductOffers, ...(decryptedProducts.productOffers || [])],
+        productOffersCount: decryptedProducts.totalCount || 0,
+        lastUpdated: responseProductData.lastUpdated
+      });
+      
+      // If there are additional pages (more than just page 1), fetch them
+      if (totalProductOffersPages > 1) {
+        // Create array of page numbers to fetch (skip page 1 which we already have)
+        const productOffersPagesToFetch = Array.from({ length: totalProductOffersPages - 1 }, (_, i) => i + 2);
+        
+        // Fetch remaining product offers pages in parallel
+        await Promise.all(productOffersPagesToFetch.map(async (page) => {
+          try {
+            const pageResponse = await axios.get(
+              `/api/integrations/${integrationId}/product-offers?page=${page}`
+            );
+            
+            if (pageResponse.data.success) {
+              const pageData = pageResponse.data.data;
+              const decryptedPage = JSON.parse(decryptResponse(pageData.productOffersData));
+              
+              // Append product offers to the already stored product offers
+              const currentProductOffersUpdated = integrationsData[integrationId]?.productOffers || [];
+              setIntegrationData(integrationId, {
+                productOffers: [...currentProductOffersUpdated, ...(decryptedPage.productOffers || [])],
+                lastUpdated: pageData.lastUpdated
+              });
+            }
+          } catch (error) {
+            console.error(`Error fetching product offers page ${page}:`, error);
+            // Continue with other pages even if one fails
+          }
+        }));
+      }
+      
+      // Mark product offers as fetched
+      setIntegrationData(integrationId, {
+        productOffersFetched: true
+      });
+      
       // Set success status
       setIntegrationImportStatus(integrationId, 'success');
     } catch (error: any) {

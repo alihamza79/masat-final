@@ -13,6 +13,14 @@ export async function GET(
   try {
     const id = params.id;
     
+    // Get page and pageSize from query params
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(searchParams.get('pageSize') || '100', 10);
+    
+    // For count-only requests (used to determine total count/pages)
+    const countOnly = searchParams.get('countOnly') === 'true';
+    
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -52,10 +60,9 @@ export async function GET(
       region: integration.region
     });
 
-    // First, get the total product offers count to calculate total pages
+    // Get the total product offers count
     const productOffersCountResults = await emagApi.getProductOffersCount();
     
-
     // Check if there was an error getting the product offers count
     if (!productOffersCountResults) {
       return NextResponse.json(
@@ -67,11 +74,25 @@ export async function GET(
       );
     }
     
-
     // Extract the count
     const totalProductOffersCount = productOffersCountResults.noOfItems 
       ? parseInt(productOffersCountResults.noOfItems, 10) 
       : 0;
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(totalProductOffersCount / pageSize);
+    
+    // If count-only request, return just the count info
+    if (countOnly) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          totalCount: totalProductOffersCount,
+          totalPages: totalPages,
+          pageSize: pageSize
+        }
+      });
+    }
     
     // If there are no product offers, return an empty array (not an error)
     if (totalProductOffersCount === 0) {
@@ -82,168 +103,158 @@ export async function GET(
           productOffersData: encryptResponse(JSON.stringify({
             productOffers: [],
             productOffersCount: 0,
+            currentPage: page,
+            totalPages: 0,
+            totalCount: 0
           })),
           lastUpdated: new Date().toISOString()
         }
       });
     }
     
-    // Set items per page to match the eMAG API's actual limit
-    const itemsPerPage = 100;
-    
-    // Calculate total pages (using ceiling function to ensure we get all product offers)
-    const totalPages = Math.ceil(totalProductOffersCount / itemsPerPage);
-    
-    // Fetch all product offers using pagination
-    let allProductOffers: EmagProductOffer[] = [];
-    let hasError = false;
+    // Validate page parameter
+    if (page < 1 || page > totalPages) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Invalid page number. Valid range is 1-${totalPages}` 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Fetch product offers for the specified page with retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
+    let success = false;
+    let productOffersResponse: EmagProductOffersResponse | undefined;
     let errorMessage = '';
     
-    // Iterate through all pages
-    for (let currentPage = 1; currentPage <= totalPages; currentPage++) {
-      // Fetch product offers for the current page
+    while (retryCount < maxRetries && !success) {
+      // For tracking if we need to clear a timeout
+      let timeoutId: NodeJS.Timeout | null = null;
       
-      let retryCount = 0;
-      const maxRetries = 3;
-      let success = false;
-      let productOffersResponse: EmagProductOffersResponse;
-      
-      while (retryCount < maxRetries && !success) {
-        // For tracking if we need to clear a timeout
-        let timeoutId: NodeJS.Timeout | null = null;
+      try {
+        if (retryCount > 0) {
+          console.log(`[API] Retry attempt ${retryCount} for page ${page}`);
+          // Add a delay before retrying that increases with each retry
+          await new Promise(resolve => setTimeout(resolve, 3000 * retryCount));
+        }
         
-        try {
-          if (retryCount > 0) {
-            console.log(`[API] Retry attempt ${retryCount} for page ${currentPage}`);
-            // Add a delay before retrying that increases with each retry
-            await new Promise(resolve => setTimeout(resolve, 3000 * retryCount));
-          }
+        // Set a timeout for this specific request
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Request timed out after 180 seconds')), 180000);
+        });
+        
+        // Create the actual API request
+        const apiRequestPromise = emagApi.getProductOffers({
+          currentPage: page,
+          itemsPerPage: pageSize
+        });
+        
+        // Race the API request against the timeout
+        productOffersResponse = await Promise.race([apiRequestPromise, timeoutPromise]) as EmagProductOffersResponse;
+        
+        // Cancel the timeout since we got a response
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        // Check if we got a valid response
+        if (!productOffersResponse) {
+          throw new Error('Empty response received from eMAG API from getProductOffers()');
+        }
+        
+        // Check for errors in response
+        if (productOffersResponse.isError) {
+          const errMsg = productOffersResponse.messages.join(', ');
+          console.log(`[API] Error in response: ${errMsg}`);
           
-          // Set a timeout for this specific request (matching the 120s Axios timeout)
-          // Store the timeout ID so we can clear it later
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('Request timed out after 180 seconds')), 180000);
-          });
-          
-          // Create the actual API request
-          const apiRequestPromise = emagApi.getProductOffers({
-            currentPage: currentPage,
-            itemsPerPage: itemsPerPage
-          });
-          
-          // Race the API request against the timeout
-          productOffersResponse = await Promise.race([apiRequestPromise, timeoutPromise]) as EmagProductOffersResponse;
-          
-          // Cancel the timeout since we got a response
-          if (timeoutId) clearTimeout(timeoutId);
-          
-          // Check if we got a valid response
-          if (!productOffersResponse) {
-            throw new Error('Empty response received from eMAG API from getProductOffers()');
-          }
-          
-          // Check for errors in response
-          if (productOffersResponse.isError) {
-            const errorMsg = productOffersResponse.messages.join(', ');
-            console.log(`[API] Error in response: ${errorMsg}`);
-            
-            // Check if it's a timeout or temporary error that we should retry
-            if ((errorMsg.includes('timeout') || 
-                 errorMsg.includes('time-out') || 
-                 errorMsg.includes('timing out') || 
-                 errorMsg.includes('temporary')) && 
-                retryCount < maxRetries - 1) {
-              console.log(`[API] Temporary error detected, will retry (attempt ${retryCount + 1} of ${maxRetries})`);
-              retryCount++;
-              // Add a longer delay for timeout retries
-              await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
-              continue;
-            }
-            
-            hasError = true;
-            errorMessage = `Failed to fetch product offers: ${errorMsg}`;
-            break;
-          }          
-          // Add product offers from this page to our collection
-          const productOffersWithIntegrationId = productOffersResponse.results.map((offer: EmagProductOffer) => ({
-            ...offer,
-            integrationId: id
-          }));
-          
-          // Filter out any EOL products (status=2) that might have slipped through
-          const filteredProductOffers = productOffersWithIntegrationId.filter(offer => offer.status !== 2);
-          
-          allProductOffers = [...allProductOffers, ...filteredProductOffers];
-          
-          // Mark as successful and continue to next page
-          success = true;
-          
-        } catch (error: any) {
-          // Make sure to cancel the timeout if there was an error
-          if (timeoutId) clearTimeout(timeoutId);
-          
-          console.error(`[API] Error fetching page ${currentPage}:`, error.message);
-          
-          // Check if it's a timeout error that we should retry
-          const isTimeout = error.message && (
-            error.message.includes('timeout') || 
-            error.message.includes('time-out') || 
-            error.message.includes('timing out') ||
-            error.code === 'ECONNABORTED'
-          );
-          
-          if (isTimeout && retryCount < maxRetries - 1) {
-            console.log(`[API] Timeout detected, will retry (attempt ${retryCount + 1} of ${maxRetries})`);
+          // Check if it's a timeout or temporary error that we should retry
+          if ((errMsg.includes('timeout') || 
+               errMsg.includes('time-out') || 
+               errMsg.includes('timing out') || 
+               errMsg.includes('temporary')) && 
+              retryCount < maxRetries - 1) {
+            console.log(`[API] Temporary error detected, will retry (attempt ${retryCount + 1} of ${maxRetries})`);
             retryCount++;
             // Add a longer delay for timeout retries
             await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
             continue;
           }
           
-          // If we've exhausted retries or it's not a timeout error, mark as failed
-          hasError = true;
-          errorMessage = error.message || `Error fetching page ${currentPage}`;
-          break;
+          errorMessage = `Failed to fetch product offers: ${errMsg}`;
+          throw new Error(errorMessage);
         }
-      }
-      
-      // If we couldn't successfully fetch this page after all retries, break the pagination loop
-      if (!success) {
-        console.log(`[API] Failed to fetch page ${currentPage} after ${retryCount} retries, stopping pagination`);
-        break;
+        
+        // Add integration ID to each product offer
+        const productOffersWithIntegrationId = productOffersResponse.results.map((offer: EmagProductOffer) => ({
+          ...offer,
+          integrationId: id
+        }));
+        
+        // Filter out any EOL products (status=2) that might have slipped through
+        const filteredProductOffers = productOffersWithIntegrationId.filter(offer => offer.status !== 2);
+        
+        // Replace the results with our filtered offers
+        productOffersResponse.results = filteredProductOffers;
+        
+        // Mark as successful
+        success = true;
+        
+      } catch (error: any) {
+        // Make sure to cancel the timeout if there was an error
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        console.error(`[API] Error fetching page ${page}:`, error.message);
+        
+        // Check if it's a timeout error that we should retry
+        const isTimeout = error.message && (
+          error.message.includes('timeout') || 
+          error.message.includes('time-out') || 
+          error.message.includes('timing out') ||
+          error.code === 'ECONNABORTED'
+        );
+        
+        if (isTimeout && retryCount < maxRetries - 1) {
+          console.log(`[API] Timeout detected, will retry (attempt ${retryCount + 1} of ${maxRetries})`);
+          retryCount++;
+          // Add a longer delay for timeout retries
+          await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
+          continue;
+        }
+        
+        // If we've exhausted retries or it's not a timeout error, return error
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: error.message || `Error fetching page ${page}` 
+          },
+          { status: 500 }
+        );
       }
     }
     
-    // If there was an error during fetching, return error response
-    if (hasError) {
+    // If we didn't succeed after all retries
+    if (!success || !productOffersResponse) {
       return NextResponse.json(
         { 
           success: false, 
-          error: errorMessage 
-        },
-        { status: 500 }
-      );
-    }
-    
-    // If no product offers were fetched despite the count indicating there should be some, return error
-    if (allProductOffers.length === 0 && totalProductOffersCount > 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch any product offers despite count indicating product offers exist' 
+          error: errorMessage || `Failed to fetch page ${page} after ${retryCount} retries` 
         },
         { status: 500 }
       );
     }
 
-    // Return success response with data
+    // Return success response with data for this page
     return NextResponse.json({
       success: true,
       data: {
         integrationId: id,
         productOffersData: encryptResponse(JSON.stringify({
-          productOffers: allProductOffers,
-          productOffersCount: allProductOffers.length,
+          productOffers: productOffersResponse.results,
+          productOffersCount: totalProductOffersCount,
+          currentPage: page,
+          totalPages: totalPages,
+          totalCount: totalProductOffersCount
         })),
         lastUpdated: new Date().toISOString()
       }

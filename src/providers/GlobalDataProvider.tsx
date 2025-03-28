@@ -18,8 +18,7 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
   const { 
     isLoading: isLoadingEmagData, 
     error: emagDataError,
-    refetchOrders,
-    refetchProductOffers
+    refetch
   } = useEmagData();
 
   // Log errors if they occur
@@ -38,8 +37,7 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
     // Only fetch data on initial load
     if (integrations.length > 0 && !isLoadingIntegrations) {
       console.log('Initial data load for integrations');
-      refetchOrders();
-      refetchProductOffers();
+      refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingIntegrations]); // Only depend on loading state, not integrations array
