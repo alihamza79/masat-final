@@ -180,7 +180,6 @@ export const useEmagDataSync = () => {
           itemsPerPage: ORDERS_PAGE_SIZE
         });
 
-        console.log('Orders response', response);
         
         if (response?.results) {
           // Add integrationId to each order

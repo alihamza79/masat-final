@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST endpoint to store orders
  * Required body: integrationId, orders
+ * This endpoint completely replaces existing orders for the integration with the newly fetched data.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -119,34 +120,38 @@ export async function POST(request: NextRequest) {
     
     await connectToDatabase();
     
-    // Prepare bulk operations for all orders (without batching)
-    const bulkOps = orders
+
+    
+    // First delete all existing orders for this integration
+    console.log(`Deleting all existing orders for integration ${integrationId}...`);
+    const deleteResult = await Order.deleteMany({ integrationId });
+    console.log(`Deleted ${deleteResult.deletedCount || 0} existing orders`);
+    
+    // Map the orders; for each order, remove the 'id' field and set 'emagOrderId' to that value,
+    // and include integrationId
+    const formattedOrders = orders
       .filter(order => order.id !== undefined && order.id !== null)  // ensure valid id
       .map(order => {
         const { id, ...orderData } = order;
-        const orderWithIntegrationId = {
+        return {
           ...orderData,
           integrationId,
           emagOrderId: id
         };
-        return {
-          updateOne: {
-            filter: { emagOrderId: id, integrationId },
-            update: { $set: orderWithIntegrationId },
-            upsert: true
-          }
-        };
       });
-      
-    // Execute bulkWrite for all orders in one go
-    const result = await Order.bulkWrite(bulkOps);
     
-    // console.log('BulkWrite result for orders:', result);
+    // Insert all new orders in one go
+    const insertedDocs = await Order.insertMany(formattedOrders);
+    
+    console.log(`Inserted ${insertedDocs.length} orders for integration ${integrationId}`);
     
     return NextResponse.json({
       success: true,
       data: {
-        results: result,
+        results: {
+          deletedCount: deleteResult.deletedCount,
+          insertedCount: insertedDocs.length
+        },
         totalProcessed: orders.length
       }
     });

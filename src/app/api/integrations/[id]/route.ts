@@ -33,7 +33,20 @@ export async function GET(
     // Return integration with success status
     return NextResponse.json({
       success: true,
-      integration: integration.toObject()
+      integration: {
+        _id: integration._id,
+        accountName: integration.accountName,
+        username: integration.username,
+        password: integration.password, // Password will be encrypted
+        region: integration.region,
+        accountType: integration.accountType,
+        ordersCount: integration.ordersCount,
+        productOffersCount: integration.productOffersCount,
+        lastOrdersImport: integration.lastOrdersImport,
+        lastProductOffersImport: integration.lastProductOffersImport,
+        importStatus: integration.importStatus,
+        importError: integration.importError
+      }
     });
   } catch (error: any) {
     console.error('Error fetching integration:', error);

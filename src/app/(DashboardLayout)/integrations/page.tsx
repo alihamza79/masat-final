@@ -7,10 +7,10 @@ import PageContainer from '@/app/components/container/PageContainer';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import IntegrationFormDialog, { IntegrationFormData } from './components/IntegrationFormDialog';
 import { useIntegrations } from '@/lib/hooks/useIntegrations';
-import { useEmagData } from '@/lib/hooks/useEmagData';
-import { useEmagDataStore } from '@/app/(DashboardLayout)/integrations/store/emagData';
 import Toast from '@/app/components/common/Toast';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import { INTEGRATIONS_STATUS_QUERY_KEY } from '@/lib/hooks/useIntegrationSync';
 
 const IntegrationsPage = () => {
   const { t } = useTranslation();
@@ -22,6 +22,8 @@ const IntegrationsPage = () => {
     severity: 'info' as 'success' | 'error' | 'info' | 'warning'
   });
 
+  const queryClient = useQueryClient();
+
   const { 
     integrations,
     isLoading,
@@ -31,9 +33,6 @@ const IntegrationsPage = () => {
     isCreating,
     refetch: refetchIntegrations
   } = useIntegrations();
-
-  const { refetch: refetchEmagData } = useEmagData();
-  const { resetIntegrationsData } = useEmagDataStore();
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -58,14 +57,9 @@ const IntegrationsPage = () => {
   const handleRefetchData = async () => {
     setIsRefetching(true);
     try {
-      // Clear existing data from the store
-      resetIntegrationsData();
-      
-      // Refetch both integrations and eMAG data
-      await Promise.all([
-        refetchIntegrations(),
-        refetchEmagData()
-      ]);
+      // Invalidate queries to force refresh
+      queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
+      await refetchIntegrations();
     } catch (error) {
       console.error('Failed to refresh data:', error);
     } finally {
@@ -78,18 +72,14 @@ const IntegrationsPage = () => {
       const result = await createIntegration(data);
       
       if (result.success) {
-        showToast(t('integrations.toast.addSuccess'), 'success');
+        // Close dialog immediately upon successful creation
         setOpenDialog(false);
         
-        // Trigger import for the new integration
-        if (result.integration && result.integration._id) {
-          // Refresh integrations data to include the new one
-          await refetchIntegrations();
-          
-          // For immediate feedback, we'll also refresh eMAG data
-          // This will automatically start the data sync process
-          await refetchEmagData();
-        }
+        // Show success toast
+        showToast(t('integrations.toast.addSuccess'), 'success');
+        
+        // The data will be synced in the background automatically
+        // through the createIntegration function we've modified
       } else {
         // Don't show toast for errors - they're already shown in the dialog
         // Keep the dialog open so the user can fix the error

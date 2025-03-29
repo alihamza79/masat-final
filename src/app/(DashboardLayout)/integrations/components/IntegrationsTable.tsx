@@ -21,15 +21,30 @@ import { IconDotsVertical, IconEdit, IconTrash, IconCheck, IconX } from '@tabler
 import IntegrationFormDialog, { IntegrationFormData } from './IntegrationFormDialog';
 import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
 import { Integration } from '@/lib/services/integrationService';
-import { TableRowProps as MuiTableRowProps } from '@mui/material';
-import { useEmagDataStore, ImportStatus } from '@/app/(DashboardLayout)/integrations/store/emagData';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { INTEGRATIONS_STATUS_QUERY_KEY } from '@/lib/hooks/useIntegrationSync';
 
 interface IntegrationsTableProps {
   integrations: Integration[];
   isLoading: boolean;
   onIntegrationUpdate?: (updatedIntegration: IntegrationFormData, index: number) => void;
   onIntegrationDelete?: (index: number) => void;
+}
+
+// Type for integration status from the database
+export type ImportStatus = 'idle' | 'loading' | 'success' | 'error';
+
+interface IntegrationStatus {
+  _id: string;
+  accountName: string;
+  importStatus: ImportStatus;
+  importError?: string;
+  lastOrdersImport: string | null;
+  lastProductOffersImport: string | null;
+  ordersCount: number;
+  productOffersCount: number;
 }
 
 const IntegrationsTableRow = memo(({ 
@@ -46,14 +61,29 @@ const IntegrationsTableRow = memo(({
   onMenuClick: (event: React.MouseEvent<HTMLButtonElement>, index: number) => void;
 }) => {
   const { t } = useTranslation();
-  const { integrationsData } = useEmagDataStore();
-  const integrationData = integration._id ? integrationsData[integration._id] : undefined;
   
-  const importStatus: ImportStatus = integrationData?.importStatus || 'loading';
-  const ordersCount = integrationData?.ordersCount || 0;
-  const productOffersCount = integrationData?.productOffersCount || 0;
-  const ordersFetched = integrationData?.ordersFetched || false;
-  const productOffersFetched = integrationData?.productOffersFetched || false;
+  // Fetch integration status directly from API
+  const { data: integrationStatus, isLoading: isLoadingStatus } = useQuery({
+    queryKey: [INTEGRATIONS_STATUS_QUERY_KEY, integration._id],
+    queryFn: async () => {
+      if (!integration._id) return null;
+      try {
+        const response = await axios.get(`/api/db/integrations/status?integrationId=${integration._id}`);
+        return response.data.success ? response.data.data : null;
+      } catch (error) {
+        console.error(`Error fetching status for integration ${integration._id}:`, error);
+        return null;
+      }
+    },
+    enabled: !!integration._id,
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+
+  const importStatus: ImportStatus = integrationStatus?.importStatus || 'idle';
+  const ordersCount = integrationStatus?.ordersCount || 0;
+  const productOffersCount = integrationStatus?.productOffersCount || 0;
+  const ordersFetched = !!integrationStatus?.lastOrdersImport;
+  const productOffersFetched = !!integrationStatus?.lastProductOffersImport;
   
   const renderImportStatusChip = () => {
     switch (importStatus) {
@@ -180,7 +210,11 @@ const IntegrationsTableRow = memo(({
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Box display="flex" justifyContent="center">
-          {renderImportStatusChip()}
+          {isLoadingStatus ? (
+            <CircularProgress size={20} />
+          ) : (
+            renderImportStatusChip()
+          )}
         </Box>
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>

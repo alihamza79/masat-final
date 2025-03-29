@@ -10,8 +10,15 @@ export interface Integration {
   _id?: string;
   accountName: string;
   username: string;
+  password?: string;
   region: string;
   accountType: string;
+  ordersCount?: number;
+  productOffersCount?: number;
+  lastOrdersImport?: Date | string | null;
+  lastProductOffersImport?: Date | string | null;
+  importStatus?: string;
+  importError?: string;
 }
 
 /**
