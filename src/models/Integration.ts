@@ -9,6 +9,13 @@ export interface IIntegration extends Document {
   accountType: string;
   createdAt: Date;
   updatedAt: Date;
+  // New fields for tracking counts and last import times
+  ordersCount: number;
+  productOffersCount: number;
+  lastOrdersImport: Date | null;
+  lastProductOffersImport: Date | null;
+  importStatus: 'idle' | 'importing' | 'loading' | 'completed' | 'success' | 'error';
+  importError?: string;
 }
 
 // Integration schema
@@ -38,6 +45,32 @@ const IntegrationSchema = new Schema<IIntegration>({
     required: [true, 'Account type is required'],
     enum: ['FBE', 'Non-FBE'],
     default: 'Non-FBE'
+  },
+  // New fields with default values
+  ordersCount: {
+    type: Number,
+    default: 0
+  },
+  productOffersCount: {
+    type: Number,
+    default: 0
+  },
+  lastOrdersImport: {
+    type: Date,
+    default: null
+  },
+  lastProductOffersImport: {
+    type: Date,
+    default: null
+  },
+  importStatus: {
+    type: String,
+    enum: ['idle', 'importing', 'loading', 'completed', 'success', 'error'],
+    default: 'idle'
+  },
+  importError: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true // Automatically manage createdAt and updatedAt fields

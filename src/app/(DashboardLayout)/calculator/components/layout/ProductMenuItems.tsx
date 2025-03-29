@@ -1,4 +1,4 @@
-import { useEmagData } from '@/lib/hooks/useEmagData';
+import { useEmagDataStore } from '@/app/(DashboardLayout)/integrations/store/emagData';
 import { SavedCalculation } from '../../hooks/useSavedCalculations';
 
 export interface MenuItem {
@@ -19,7 +19,7 @@ const staticProducts = {
 };
 
 export const useProductMenuItems = () => {
-  const { integrationsData } = useEmagData();
+  const { integrationsData } = useEmagDataStore();
 
   // Get eMAG product menu items
   const getEmagProductMenuItems = (): MenuItem[] => {

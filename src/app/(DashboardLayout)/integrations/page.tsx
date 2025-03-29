@@ -80,6 +80,16 @@ const IntegrationsPage = () => {
       if (result.success) {
         showToast(t('integrations.toast.addSuccess'), 'success');
         setOpenDialog(false);
+        
+        // Trigger import for the new integration
+        if (result.integration && result.integration._id) {
+          // Refresh integrations data to include the new one
+          await refetchIntegrations();
+          
+          // For immediate feedback, we'll also refresh eMAG data
+          // This will automatically start the data sync process
+          await refetchEmagData();
+        }
       } else {
         // Don't show toast for errors - they're already shown in the dialog
         // Keep the dialog open so the user can fix the error

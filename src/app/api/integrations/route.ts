@@ -7,6 +7,7 @@ import { encrypt, decrypt } from '@/lib/utils/encryption';
 import { encryptResponse } from '@/lib/utils/responseEncryption';
 import { EmagApiService } from '@/lib/services/emagApiService';
 import Integration from '@/models/Integration';
+import mongoose from 'mongoose';
 
 // GET - Retrieve all integrations
 export async function GET() {
@@ -239,6 +240,19 @@ export async function DELETE(request: NextRequest) {
         { success: false, error: 'Integration not found' },
         { status: 404 }
       );
+    }
+
+    // Also delete associated orders and product offers
+    // Import the models
+    const Order = mongoose.models.Order;
+    const ProductOffer = mongoose.models.ProductOffer;
+    
+    if (Order) {
+      await Order.deleteMany({ integrationId: id });
+    }
+    
+    if (ProductOffer) {
+      await ProductOffer.deleteMany({ integrationId: id });
     }
 
     return NextResponse.json({ success: true });

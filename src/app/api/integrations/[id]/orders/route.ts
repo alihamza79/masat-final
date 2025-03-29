@@ -155,6 +155,7 @@ export async function GET(
         // Race the API request against the timeout
         ordersResponse = await Promise.race([apiRequestPromise, timeoutPromise]) as EmagOrdersResponse;
         
+        
         // Cancel the timeout since we got a response
         if (timeoutId) clearTimeout(timeoutId);
         
