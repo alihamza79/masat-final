@@ -46,6 +46,7 @@ export const useCalculatorReset = (
     // Reset other values
     dispatch({ type: 'SET_TOTAL_PIECES', payload: 1 });
     dispatch({ type: 'SET_EMAG_COMMISSION', payload: '0' });
+    dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'default' });
     
     // Explicitly reset the SalesEstimator to default values
     dispatch({ 
@@ -88,6 +89,7 @@ export const useCalculatorReset = (
     dispatch({ type: 'SET_VAT_RATE_OF_PURCHASE', payload: '19' });
     dispatch({ type: 'SET_SYNC_VALUES', payload: true });
     dispatch({ type: 'SET_EMAG_COMMISSION', payload: '0' });
+    dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'default' });
     
     // Force a complete reset using the RESET action 
     // This ensures all state is reset to initial values

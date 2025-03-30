@@ -118,10 +118,17 @@ export const useSavedCalculations = () => {
               dispatch({ type: 'SET_SYNC_VALUES', payload: value as boolean });
             } else if (key === 'emagCommission') {
               dispatch({ type: 'SET_EMAG_COMMISSION', payload: value as string });
+            } else if (key === 'commissionSource') {
+              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: value as 'default' | 'emag' | 'manual' });
             } else if (key === 'salesEstimator') {
               dispatch({ type: 'UPDATE_SALES_ESTIMATOR', payload: value as any });
             }
           });
+          
+          // If this is an eMAG product calculation, ensure the commission source is set to 'emag'
+          if (savedCalculation.emagProduct) {
+            dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+          }
         }
       } else {
         // If not found in the preloaded data, fetch it from the API
@@ -172,10 +179,17 @@ export const useSavedCalculations = () => {
               dispatch({ type: 'SET_SYNC_VALUES', payload: value as boolean });
             } else if (key === 'emagCommission') {
               dispatch({ type: 'SET_EMAG_COMMISSION', payload: value as string });
+            } else if (key === 'commissionSource') {
+              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: value as 'default' | 'emag' | 'manual' });
             } else if (key === 'salesEstimator') {
               dispatch({ type: 'UPDATE_SALES_ESTIMATOR', payload: value as any });
             }
           });
+          
+          // If this is an eMAG product calculation, ensure the commission source is set to 'emag'
+          if (result.data.emagProduct) {
+            dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+          }
         }
       }
     } catch (error) {

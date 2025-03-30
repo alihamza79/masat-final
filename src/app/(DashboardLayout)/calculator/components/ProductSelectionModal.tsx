@@ -217,16 +217,29 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
       setLoadingEmagProducts(true);
       
       try {
-        const allProducts = products.map((product: any) => ({
-          id: `emag-${product.integrationId}-${product.id}`,
-          name: product.name || `Product ${product.id}`,
-          category: `Category ${product.category_id || 'Unknown'}`,
-          price: product.sale_price?.toString() || '0',
-          brand: product.brand_name || product.brand || 'Unknown',
-          image: product.images && product.images[0]?.url || '',
-          originalData: product
-        }));
+        console.log('Processing products from database:', products[0]);
         
+        const allProducts = products.map((product: any) => {
+          // Use emagProductOfferId or _id (database ID) if present
+          const productId = product.emagProductOfferId || product._id;
+          
+          if (!productId) {
+            console.warn('Product without valid ID:', product);
+            return null; // Skip this product
+          }
+          
+          return {
+            id: `emag-${product.integrationId}-${productId}`,
+            name: product.name || `Product ${productId}`,
+            category: `Category ${product.category_id || 'Unknown'}`,
+            price: product.sale_price?.toString() || '0',
+            brand: product.brand_name || product.brand || 'Unknown',
+            image: product.images && product.images[0]?.url || '',
+            originalData: product
+          };
+        }).filter(Boolean); // Remove null entries
+        
+        console.log('Processed product count:', allProducts.length);
         setEmagProducts(allProducts);
         setFilteredEmagProducts(allProducts);
       } catch (err) {
@@ -359,7 +372,10 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
 
   const ProductCard = ({ product }: { product: any }) => (
     <Card
-      onClick={() => onSelectProduct(product.id)}
+      onClick={() => {
+        console.log('Product selected in modal:', product.id);
+        onSelectProduct(product.id);
+      }}
       sx={{
         p: 2,
         cursor: 'pointer',

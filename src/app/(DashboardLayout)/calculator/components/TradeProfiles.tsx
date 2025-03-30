@@ -11,16 +11,19 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   SelectChangeEvent,
+  CircularProgress
 } from '@mui/material';
 import CustomSelect from '@/app/components/forms/theme-elements/CustomSelect';
 import CustomTextField from '@/app/components/forms/theme-elements/CustomTextField';
 import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { useTranslation } from 'react-i18next';
+import useCommission from '@/lib/hooks/useCommission';
 
 const TradeProfiles = () => {
   const { t } = useTranslation();
   const { state, dispatch } = useCalculator();
+  const { loading: commissionLoading } = useCommission();
 
   // State for form values
   const [profileType, setProfileType] = React.useState(state.profileType);
@@ -29,6 +32,8 @@ const TradeProfiles = () => {
   const [taxRate, setTaxRate] = React.useState(state.taxRate.toString());
   const [purchaseType, setPurchaseType] = React.useState(state.purchaseType);
   const [vatRateOfPurchase, setVatRateOfPurchase] = React.useState(state.vatRateOfPurchase);
+  const [isEmagProductSelected, setIsEmagProductSelected] = React.useState(false);
+  const [commissionSource, setCommissionSource] = React.useState<'default' | 'emag' | 'manual'>('default');
 
   // Sync local state with context state
   useEffect(() => {
@@ -38,7 +43,10 @@ const TradeProfiles = () => {
     setTaxRate(state.taxRate.toString());
     setPurchaseType(state.purchaseType);
     setVatRateOfPurchase(state.vatRateOfPurchase);
-  }, [state.profileType, state.vatRate, state.emagCommission, state.taxRate, state.purchaseType, state.vatRateOfPurchase]);
+    
+    // Use the commission source directly from the state to determine if the field should be disabled
+    setIsEmagProductSelected(state.commissionSource === 'emag');
+  }, [state.profileType, state.vatRate, state.emagCommission, state.taxRate, state.purchaseType, state.vatRateOfPurchase, state.commissionSource]);
 
   // Handle changes and update calculator
   const handleVatRateChange = (e: SelectChangeEvent<unknown>) => {
@@ -58,7 +66,9 @@ const TradeProfiles = () => {
     // Only allow numbers and validate range
     if (value === '' || (Number(value) >= 0 && Number(value) <= 100)) {
       setEmagCommission(value);
+      // When the user manually changes the commission, mark it as manual source
       dispatch({ type: 'SET_EMAG_COMMISSION', payload: value });
+      dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'manual' });
       
       // Update commission for all categories if value is not empty
       if (value !== '') {
@@ -231,7 +241,10 @@ const TradeProfiles = () => {
               >
                 {t('calculator.tradeProfile.commission')}
               </Typography>
-              <Tooltip title={t('calculator.tradeProfile.commissionTooltip')}>
+              <Tooltip title={isEmagProductSelected 
+                ? t('calculator.tradeProfile.commissionLockedTooltip') || "Commission rate is locked because it's calculated based on the selected eMAG product"
+                : t('calculator.tradeProfile.commissionTooltip')
+              }>
                 <IconInfoCircle size={14} />
               </Tooltip>
             </Stack>
@@ -240,17 +253,42 @@ const TradeProfiles = () => {
               onChange={handleCommissionChange}
               fullWidth
               type="number"
+              disabled={isEmagProductSelected}
               inputProps={{
                 min: 0,
                 max: 100,
                 step: "0.1",
-                style: { textAlign: 'left', paddingLeft: '10px' }
+                style: { 
+                  textAlign: 'left', 
+                  paddingLeft: '10px',
+                  backgroundColor: isEmagProductSelected ? 'rgba(0, 0, 0, 0.04)' : 'transparent'
+                }
               }}
-              sx={textFieldStyles}
+              sx={{
+                ...textFieldStyles,
+                '& .Mui-disabled': {
+                  color: 'text.primary', 
+                  WebkitTextFillColor: 'unset',
+                  opacity: 0.8,
+                  cursor: 'not-allowed'
+                },
+                ...(isEmagProductSelected && {
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderStyle: 'dashed',
+                      borderColor: 'primary.main'
+                    }
+                  }
+                })
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end" sx={{ mr: 0.5 }}>
-                    <Typography variant="caption" color="textSecondary">%</Typography>
+                    {commissionLoading ? (
+                      <CircularProgress size={16} thickness={5} color="inherit" />
+                    ) : (
+                      <Typography variant="caption" color="textSecondary">%</Typography>
+                    )}
                   </InputAdornment>
                 ),
               }}

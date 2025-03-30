@@ -349,6 +349,67 @@ export class EmagApiService {
     
     return `${year}-${month}-${day} 23:59:59`;
   }
+
+  /**
+   * Get commission estimate for a specific category ID
+   * @param categoryId - The eMAG category ID
+   * @returns Promise with the commission estimate
+   */
+  async getCommissionEstimate(categoryId: string | number): Promise<any> {
+    try {
+      // IMPORTANT: The correct endpoint format according to eMAG docs
+      // Note: /api/ should NOT be included here as it's already in the baseURL
+      const response = await this.axiosInstance.get(`/v1/commission/estimate/${categoryId}`);
+      
+      console.log('eMAG API raw response:', {
+        url: `${this.baseURL}/v1/commission/estimate/${categoryId}`,
+        status: response.status,
+        data: response.data,
+        headers: response.headers
+      });
+      
+      // Check if the response indicates an error
+      if (response.data?.isError) {
+        console.error('eMAG API error:', response.data.messages);
+        throw new Error(response.data.messages?.[0] || 'Unknown eMAG API error');
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Full eMAG API error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+          headers: error.config?.headers ? {...error.config.headers, Authorization: '[REDACTED]'} : null
+        }
+      });
+      
+      // Handle 404 errors specifically for category IDs that don't exist
+      if (error.response?.status === 404) {
+        throw new Error(`Category ID ${categoryId} not found in eMAG system`);
+      }
+      
+      // Handle eMAG API specific error format
+      if (error.response?.data?.isError) {
+        const errorMessage = error.response.data.messages?.[0];
+        if (errorMessage === 'You are not allowed to use this API.') {
+          throw new Error('Invalid eMAG Account credentials or insufficient permissions');
+        }
+        if (errorMessage?.includes('Invalid vendor ip')) {
+          throw new Error('Invalid vendor IP. Please whitelist your IP address in eMAG Marketplace settings.');
+        }
+        throw new Error(errorMessage || 'Unknown eMAG API error');
+      }
+      
+      // Rethrow the error to be caught by the caller
+      throw error;
+    }
+  }
 }
 
 export default EmagApiService; 

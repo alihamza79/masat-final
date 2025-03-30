@@ -1,6 +1,7 @@
 'use client';
 import { useIntegrationsStore } from '@/app/(DashboardLayout)/integrations/store/integrations';
 import { useEmagData } from '@/lib/hooks/useEmagData';
+import useCommission from '@/lib/hooks/useCommission';
 import categoryCommissions from '@/utils/categoryCommissions.json';
 import {
   Box,
@@ -38,6 +39,7 @@ const Calculator = () => {
   // integrationsData removed since it's no longer used
   const { integrations } = useIntegrationsStore();
   const { products, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
+  const { fetchCommission } = useCommission();
   
   // Move selectedProduct state declaration before the hooks that use it
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -59,14 +61,34 @@ const Calculator = () => {
   } = useSavedCalculations();
 
   // Define a helper function to get product name by value
-  const getProductNameByValue = (value: string): string | undefined => {
-    if (!value.startsWith('emag-')) return undefined;
-    const parts = value.split('-');
-    if (parts.length < 3) return undefined;
-    const integrationId = parts[1];
-    const productId = parts[2];
-    const product = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
-    return product ? product.name : undefined;
+  const getProductNameByValue = (value: string, calculationsParam?: SavedCalculation[]): string | undefined => {
+    // Check if it's a saved calculation
+    if (value.startsWith('saved-')) {
+      const savedCalcsToUse = calculationsParam || savedCalculations;
+      const calculationId = value.replace('saved-', '');
+      const savedCalculation = savedCalcsToUse.find(calc => calc._id === calculationId);
+      if (savedCalculation) {
+        return savedCalculation.title;
+      }
+      return 'Saved Calculation';
+    }
+    
+    // Check if it's an eMAG product
+    if (value.startsWith('emag-')) {
+      const parts = value.split('-');
+      if (parts.length < 3) return undefined;
+      const integrationId = parts[1];
+      const productId = parts[2];
+      const product = products.find((p: any) => 
+        p.integrationId === integrationId && 
+        (String(p.emagProductOfferId) === productId || 
+         String(p._id) === productId)
+      );
+      return product ? product.name : undefined;
+    }
+    
+    // For other product types
+    return undefined;
   };
 
   // Add a new function to handle the save calculation button click
@@ -217,97 +239,262 @@ const Calculator = () => {
 
   // Handle product selection
   const handleSelectProduct = async (value: string) => {
+    console.log('handleSelectProduct called with value:', value);
+    
+    // Skip processing if value contains "undefined"
+    if (value && value.includes('undefined')) {
+      console.error('Invalid product ID detected:', value);
+      toast.error('Invalid product selected. Please try another product.');
+      return;
+    }
+    
     setSelectedProduct(value);
     if (!value) {
       resetCalculatorValues();
       return;
     }
+    
+    // Handle saved calculations
     if (value.startsWith('saved-')) {
       resetCalculatorValues();
       const calculationId = value.replace('saved-', '');
       await loadSavedCalculation(calculationId);
       return;
     }
+    
+    // Reset calculator values for all other types
+    resetCalculatorValues();
+    
     // Handle eMAG product selection check for saved calculations
     if (value.startsWith('emag-') && value.split('-').length > 2) {
+      console.log('Processing eMAG product:', value);
       const [prefix, integrationId, productId] = value.split('-');
+      console.log('Split values:', { prefix, integrationId, productId });
+      
+      // First check if there's a saved calculation for this eMAG product
       const emagSavedCalculation = savedCalculations.find(
         calc => calc.emagProduct && 
                 calc.emagProduct.integrationId === integrationId && 
                 calc.emagProduct.productId === productId
       );
+      
       if (emagSavedCalculation) {
-        resetCalculatorValues();
+        console.log('Found saved calculation for this eMAG product:', emagSavedCalculation._id);
         await loadSavedCalculation(emagSavedCalculation._id);
         return;
       }
-    }
-    resetCalculatorValues();
-    // For integration products with colon separator
-    if (value.includes(':')) {
-      const [integrationId, productId] = value.split(':');
-      const categoryCommissions = { '3038': 0.05, '2': 0.07 };
-      const productOffer = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
+      
+      // If no saved calculation, process as standard eMAG product
+      console.log('Processing as standard eMAG product');
+      console.log('Looking for product in products array with length:', products.length);
+      
+      const productOffer = products.find((p: any) => {
+        // Check if product matches integrationId and either emagProductOfferId or _id
+        const match = p.integrationId === integrationId && 
+                    (String(p.emagProductOfferId) === productId || 
+                     String(p._id) === productId);
+        
+        if (match) {
+          console.log('Found matching product:', p);
+        }
+        return match;
+      });
+      
       if (productOffer) {
+        console.log('Found product offer:', productOffer);
+        
         const salePrice = productOffer.sale_price || 0;
         const anyProductOffer: any = productOffer;
-        const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
-        let commission: number | null = null;
-        if (categoryId) {
-          if (categoryId in categoryCommissions) {
-            commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
-          } else {
-            commission = 0;
-          }
-          dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-        }
+        
+        // Immediately update the sale price for all categories
         Object.keys(state.categories).forEach((category) => {
-          const updateData: Partial<CategoryData> = { salePrice };
-          if (commission !== null) {
-            updateData.commission = commission;
-          }
           dispatch({
             type: 'UPDATE_CATEGORY',
-            payload: { category: category as keyof typeof state.categories, data: updateData }
+            payload: { 
+              category: category as keyof typeof state.categories, 
+              data: { salePrice }
+            }
           });
         });
+        
+        // Get product offer ID from product for commission calculation
+        const productOfferId = anyProductOffer.emagProductOfferId ? anyProductOffer.emagProductOfferId.toString() : null;
+        
+        // Fetch commission from API if product offer ID exists
+        let commission: number | null = null;
+        
+        if (productOfferId) {
+          try {
+            // Fetch commission from API using product offer ID
+            commission = await fetchCommission(productOfferId);
+            
+            if (commission !== null) {
+              // Set commission in the global state
+              dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+              
+              // Update commission for all categories
+              Object.keys(state.categories).forEach((category) => {
+                dispatch({
+                  type: 'UPDATE_CATEGORY',
+                  payload: { 
+                    category: category as keyof typeof state.categories, 
+                    data: { commission: commission as number }
+                  }
+                });
+              });
+            } else {
+              // Fallback to static JSON if API fails
+              let fallbackCommission = 0;
+              if (productOfferId in categoryCommissions) {
+                fallbackCommission = categoryCommissions[productOfferId as keyof typeof categoryCommissions] * 100;
+              }
+              
+              dispatch({ type: 'SET_EMAG_COMMISSION', payload: fallbackCommission.toString() });
+              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+              
+              // Update commission for all categories
+              Object.keys(state.categories).forEach((category) => {
+                dispatch({
+                  type: 'UPDATE_CATEGORY',
+                  payload: { 
+                    category: category as keyof typeof state.categories, 
+                    data: { commission: fallbackCommission }
+                  }
+                });
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching commission:', error);
+            
+            // Fallback to static JSON
+            let fallbackCommission = 0;
+            if (productOfferId in categoryCommissions) {
+              fallbackCommission = categoryCommissions[productOfferId as keyof typeof categoryCommissions] * 100;
+            }
+            
+            dispatch({ type: 'SET_EMAG_COMMISSION', payload: fallbackCommission.toString() });
+            dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+            
+            // Update commission for all categories
+            Object.keys(state.categories).forEach((category) => {
+              dispatch({
+                type: 'UPDATE_CATEGORY',
+                payload: { 
+                  category: category as keyof typeof state.categories, 
+                  data: { commission: fallbackCommission }
+                }
+              });
+            });
+          }
+        }
+        
         const integration = integrations.find(integration => integration._id === integrationId);
         if (integration && integration.accountType === 'FBE') {
           setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
         } else {
           setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
+        return;
       }
     }
-    // Handle legacy static product format
-    else if (value.startsWith('emag-') && value.split('-').length > 2) {
-      resetCalculatorValues();
-      const [prefix, integrationId, productId] = value.split('-');
-      const categoryCommissions = { '3038': 0.05, '2': 0.07 };
-      const productOffer = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
+    // For integration products with colon separator
+    else if (value.includes(':')) {
+      const [integrationId, productId] = value.split(':');
+      
+      const productOffer = products.find((p: any) => 
+        p.integrationId === integrationId && 
+        (String(p.emagProductOfferId) === productId || 
+         String(p._id) === productId)
+      );
+      
       if (productOffer) {
         const salePrice = productOffer.sale_price || 0;
         const anyProductOffer: any = productOffer;
-        const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
-        let commission: number | null = null;
-        if (categoryId) {
-          if (categoryId in categoryCommissions) {
-            commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
-          } else {
-            commission = 0;
-          }
-          dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-        }
+        
+        // Immediately update the sale price for all categories
         Object.keys(state.categories).forEach((category) => {
-          const updateData: Partial<CategoryData> = { salePrice };
-          if (commission !== null) {
-            updateData.commission = commission;
-          }
           dispatch({
             type: 'UPDATE_CATEGORY',
-            payload: { category: category as keyof typeof state.categories, data: updateData }
+            payload: { 
+              category: category as keyof typeof state.categories, 
+              data: { salePrice }
+            }
           });
         });
+        
+        // Get product offer ID from product for commission calculation
+        const productOfferId = anyProductOffer.emagProductOfferId ? anyProductOffer.emagProductOfferId.toString() : null;
+        
+        // Fetch commission from API if product offer ID exists
+        let commission: number | null = null;
+        
+        if (productOfferId) {
+          try {
+            // Fetch commission from API using product offer ID
+            commission = await fetchCommission(productOfferId);
+            
+            if (commission !== null) {
+              // Set commission in the global state
+              dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+              
+              // Update commission for all categories
+              Object.keys(state.categories).forEach((category) => {
+                dispatch({
+                  type: 'UPDATE_CATEGORY',
+                  payload: { 
+                    category: category as keyof typeof state.categories, 
+                    data: { commission: commission as number }
+                  }
+                });
+              });
+            } else {
+              // Fallback to static JSON if API fails
+              let fallbackCommission = 0;
+              if (productOfferId in categoryCommissions) {
+                fallbackCommission = categoryCommissions[productOfferId as keyof typeof categoryCommissions] * 100;
+              }
+              
+              dispatch({ type: 'SET_EMAG_COMMISSION', payload: fallbackCommission.toString() });
+              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+              
+              // Update commission for all categories
+              Object.keys(state.categories).forEach((category) => {
+                dispatch({
+                  type: 'UPDATE_CATEGORY',
+                  payload: { 
+                    category: category as keyof typeof state.categories, 
+                    data: { commission: fallbackCommission }
+                  }
+                });
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching commission:', error);
+            
+            // Fallback to static JSON
+            let fallbackCommission = 0;
+            if (productOfferId in categoryCommissions) {
+              fallbackCommission = categoryCommissions[productOfferId as keyof typeof categoryCommissions] * 100;
+            }
+            
+            dispatch({ type: 'SET_EMAG_COMMISSION', payload: fallbackCommission.toString() });
+            dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+            
+            // Update commission for all categories
+            Object.keys(state.categories).forEach((category) => {
+              dispatch({
+                type: 'UPDATE_CATEGORY',
+                payload: { 
+                  category: category as keyof typeof state.categories, 
+                  data: { commission: fallbackCommission }
+                }
+              });
+            });
+          }
+        }
+        
         const integration = integrations.find(integration => integration._id === integrationId);
         if (integration && integration.accountType === 'FBE') {
           setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
@@ -318,12 +505,11 @@ const Calculator = () => {
     }
     // Handle created products
     else if (value.startsWith('created-')) {
-      // Reset all values first
-      resetCalculatorValues();
-      
+      console.log('Processing created product:', value);
       // Find the product in the static products
       const staticProduct = products.find((p: any) => p.id === value);
       if (staticProduct) {
+        console.log('Found static product:', staticProduct);
         const salePrice = parseFloat(staticProduct.price);
         
         // Update all categories with only the sale price
@@ -348,6 +534,7 @@ const Calculator = () => {
         });
       }
     } else {
+      console.log('No specific product type matched, using default settings');
       // Show all calculators by default
       setVisibleCards({
         'FBM-NonGenius': true,

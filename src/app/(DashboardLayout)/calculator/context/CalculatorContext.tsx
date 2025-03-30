@@ -35,6 +35,7 @@ export interface CalculatorState {
   vatRateOfPurchase: string;
   syncValues: boolean;
   emagCommission: string;
+  commissionSource: 'default' | 'emag' | 'manual'; // Track where the commission value came from
   salesEstimator: {
     totalPieces: number;
     distribution: Record<string, { pieces: number; percent: number }>;
@@ -52,6 +53,7 @@ type Action =
   | { type: 'SET_VAT_RATE_OF_PURCHASE'; payload: string }
   | { type: 'SET_SYNC_VALUES'; payload: boolean }
   | { type: 'SET_EMAG_COMMISSION'; payload: string }
+  | { type: 'SET_COMMISSION_SOURCE'; payload: 'default' | 'emag' | 'manual' }
   | { type: 'UPDATE_SALES_ESTIMATOR'; payload: Partial<CalculatorState['salesEstimator']> }
   | { type: 'RESET' };
 
@@ -105,6 +107,7 @@ const initialState: CalculatorState = {
   vatRateOfPurchase: '19',
   syncValues: true,
   emagCommission: '20',
+  commissionSource: 'default', // Default source for the commission value
   salesEstimator: {
     totalPieces: 1,
     distribution: {
@@ -264,6 +267,12 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
       return {
         ...state,
         emagCommission: action.payload,
+      };
+
+    case 'SET_COMMISSION_SOURCE':
+      return {
+        ...state,
+        commissionSource: action.payload,
       };
 
     case 'UPDATE_SALES_ESTIMATOR':

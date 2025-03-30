@@ -48,6 +48,7 @@
             "vatProfile": "Profil TVA",
             "commission": "Comision + TVA",
             "commissionTooltip": "Comision eMAG inclusiv TVA",
+            "commissionLockedTooltip": "Rata comisionului este blocată deoarece este calculată pe baza produsului eMAG selectat",
             "vatRateFromSale": "Cota TVA la Vânzare",
             "vatRateFromSaleTooltip": "Cota TVA aplicată vânzărilor",
             "taxRate": "Cota de Impozitare",
