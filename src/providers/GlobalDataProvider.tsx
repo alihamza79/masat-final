@@ -88,7 +88,7 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchInterval: SYNC_CHECK_INTERVAL,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
     // Don't retry on error
     retry: false
   });
