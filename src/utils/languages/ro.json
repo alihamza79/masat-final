@@ -219,17 +219,18 @@
             "username": "Nume Utilizator",
             "region": "Regiune",
             "accountType": "Tip Cont",
-            "importStatus": "Stare Import",
-            "productOffers": "Nr. Oferte Produse",
-            "orderCount": "Nr. Comenzi",
+            "importStatus": "Status",
+            "productOffers": "Oferte Produse",
+            "orderCount": "Comenzi",
             "actions": "Acțiuni",
             "status": {
+                "pending": "În așteptare",
                 "importing": "Se importă",
                 "completed": "Finalizat",
                 "failed": "Eșuat",
-                "failedGeneric": "Integrarea nu s-a putut sincroniza. Vă rugăm să încercați din nou mai târziu.",
-                "pending": "În așteptare"
+                "failedGeneric": "Import eșuat. Treceți cursorul pentru detalii."
             },
+            "lastImport": "Ultimul Import",
             "menu": {
                 "edit": "Editează",
                 "delete": "Șterge"
@@ -296,9 +297,9 @@
     },
     "common": {
         "deleteDialog": {
-            "title": "Ștergere Element",
+            "title": "Șterge Element",
             "confirmationQuestion": "Sigur doriți să ștergeți acest element?",
-            "defaultMessage": "Sunteți pe cale să ștergeți {{name}}. Această acțiune nu poate fi anulată și toate datele asociate vor fi șterse definitiv.",
+            "defaultMessage": "Sunteți pe cale să ștergeți {{name}}. Această acțiune nu poate fi anulată și toate datele asociate vor fi eliminate definitiv.",
             "thisItem": "acest element",
             "cancel": "Anulează",
             "delete": "Șterge"
@@ -307,6 +308,15 @@
         "update": "Actualizează",
         "cancel": "Anulează",
         "close": "Închide",
-        "remove": "Șterge"
+        "remove": "Elimină",
+        "time": {
+            "justNow": "chiar acum",
+            "minutesAgo": "acum {{count}} minut",
+            "minutesAgo_plural": "acum {{count}} minute",
+            "hourAgo": "acum 1 oră",
+            "hoursAgo": "acum {{count}} ore",
+            "dayAgo": "acum 1 zi",
+            "daysAgo": "acum {{count}} zile"
+        }
     }
 } 

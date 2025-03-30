@@ -219,17 +219,18 @@
             "username": "Username",
             "region": "Region",
             "accountType": "Account Type",
-            "importStatus": "Import Status",
-            "productOffers": "No. Product Offers",
-            "orderCount": "No. Orders",
+            "importStatus": "Status",
+            "productOffers": "Product Offers",
+            "orderCount": "Orders",
             "actions": "Actions",
             "status": {
+                "pending": "Pending",
                 "importing": "Importing",
                 "completed": "Completed",
                 "failed": "Failed",
-                "failedGeneric": "The integration failed to sync. Please try again later.",
-                "pending": "Pending"
+                "failedGeneric": "Import failed. Hover for details."
             },
+            "lastImport": "Last Import",
             "menu": {
                 "edit": "Edit",
                 "delete": "Delete"
@@ -307,6 +308,15 @@
         "update": "Update",
         "cancel": "Cancel",
         "close": "Close",
-        "remove": "Remove"
+        "remove": "Remove",
+        "time": {
+            "justNow": "just now",
+            "minutesAgo": "{{count}} minute ago",
+            "minutesAgo_plural": "{{count}} minutes ago",
+            "hourAgo": "1 hour ago",
+            "hoursAgo": "{{count}} hours ago",
+            "dayAgo": "1 day ago",
+            "daysAgo": "{{count}} days ago"
+        }
     }
 }

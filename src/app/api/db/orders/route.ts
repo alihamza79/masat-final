@@ -46,8 +46,12 @@ export async function GET(request: NextRequest) {
  * POST endpoint to store orders
  * Required body: integrationId, orders
  * This endpoint completely replaces existing orders for the integration with the newly fetched data.
+ * Uses MongoDB transactions for atomicity - either all operations succeed or none do.
  */
 export async function POST(request: NextRequest) {
+  // We'll need this to track the session for cleanup in finally block
+  let session = null;
+  
   try {
     const body = await request.json();
     const { integrationId, orders } = body;
@@ -66,7 +70,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Validate ID format
+    // Validate integrationId format
     if (!mongoose.Types.ObjectId.isValid(integrationId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid integration ID format' },
@@ -76,46 +80,68 @@ export async function POST(request: NextRequest) {
     
     await connectToDatabase();
     
-
-    
-    // First delete all existing orders for this integration
-    console.log(`Deleting all existing orders for integration ${integrationId}...`);
-    const deleteResult = await Order.deleteMany({ integrationId });
-    console.log(`Deleted ${deleteResult.deletedCount || 0} existing orders`);
-    
     // Map the orders; for each order, remove the 'id' field and set 'emagOrderId' to that value,
     // and include integrationId
-    const formattedOrders = orders
-      .filter(order => order.id !== undefined && order.id !== null)  // ensure valid id
-      .map(order => {
-        const { id, ...orderData } = order;
-        return {
-          ...orderData,
-          integrationId,
-          emagOrderId: id
-        };
-      });
-    
-    // Insert all new orders in one go
-    const insertedDocs = await Order.insertMany(formattedOrders);
-    
-    console.log(`Inserted ${insertedDocs.length} orders for integration ${integrationId}`);
-    
-    return NextResponse.json({
-      success: true,
-      data: {
-        results: {
-          deletedCount: deleteResult.deletedCount,
-          insertedCount: insertedDocs.length
-        },
-        totalProcessed: orders.length
-      }
+    const formattedOrders = orders.map(order => {
+      const { id, ...orderData } = order;
+      return {
+        ...orderData,
+        integrationId,
+        emagOrderId: id
+      };
     });
+    
+    // Start a MongoDB session and transaction
+    session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // Delete all existing orders for this integration within the transaction
+      console.log(`Deleting all existing orders for integration ${integrationId} in transaction...`);
+      const deleteResult = await Order.deleteMany(
+        { integrationId }, 
+        { session }
+      );
+      console.log(`Deleted ${deleteResult.deletedCount || 0} existing orders`);
+      
+      // Insert all new orders in one go within the same transaction
+      const insertedDocs = await Order.insertMany(
+        formattedOrders,
+        { session }
+      );
+      
+      console.log(`Inserted ${insertedDocs.length} orders for integration ${integrationId}`);
+      
+      // Commit the transaction if both operations succeeded
+      await session.commitTransaction();
+      console.log(`Transaction committed successfully for integration ${integrationId}`);
+      
+      return NextResponse.json({
+        success: true,
+        data: {
+          results: {
+            deletedCount: deleteResult.deletedCount,
+            insertedCount: insertedDocs.length
+          },
+          totalProcessed: orders.length
+        }
+      });
+    } catch (transactionError) {
+      // If any operation fails, abort the transaction to roll back all changes
+      await session.abortTransaction();
+      console.error(`Transaction aborted for integration ${integrationId}:`, transactionError);
+      throw transactionError; // Re-throw to be caught by outer catch block
+    }
   } catch (error: any) {
     console.error('Error storing orders:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to store orders' },
       { status: 500 }
     );
+  } finally {
+    // Always end the session, even if there was an error
+    if (session) {
+      session.endSession();
+    }
   }
 } 

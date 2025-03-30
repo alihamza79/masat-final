@@ -227,6 +227,102 @@ export const useIntegrationSync = () => {
   }, [updateIntegrationStatus, startSyncing, isSyncing, updateProgress]);
 
   /**
+   * Fetches product offers from eMAG API with pagination
+   */
+  const fetchProductOffersFromEmagApi = useCallback(async (integration: Integration): Promise<EmagProductOffer[]> => {
+    const allProductOffers: EmagProductOffer[] = [];
+    let page = 1;
+    let totalPages = 1;
+    
+    // Ensure integration has a valid ID
+    if (!integration._id) {
+      throw new Error('Integration ID is required');
+    }
+    
+    const integrationId = String(integration._id);
+    
+    try {
+      // Start syncing in the store if not already syncing
+      if (!isSyncing(integrationId)) {
+        startSyncing(integrationId);
+      }
+      
+      // Instead of calling eMAG API directly, use our server-side API endpoint
+      // Get the product offers count first
+      const productOffersCountResponse = await axios.get(`/api/integrations/${integrationId}/product-offers?countOnly=true`);
+      
+      if (!productOffersCountResponse.data.success) {
+        throw new Error(productOffersCountResponse.data.error || 'Failed to fetch product offers count');
+      }
+      
+      const productOffersCountData = productOffersCountResponse.data.data;
+      totalPages = productOffersCountData.totalPages || 1;
+      
+      console.log(`Found ${productOffersCountData.totalCount || 0} product offers (${totalPages} pages) for integration ${integrationId}`);
+      
+      // Fetch all pages through our server endpoint
+      for (page = 1; page <= totalPages; page++) {
+        console.log(`Fetching product offers page ${page}/${totalPages} for integration ${integrationId}...`);
+        
+        const response = await axios.get(
+          `/api/integrations/${integrationId}/product-offers?page=${page}&pageSize=${PRODUCT_OFFERS_PAGE_SIZE}`
+        );
+        
+        if (!response.data.success) {
+          throw new Error(response.data.error || 'Failed to fetch product offers');
+        }
+        
+        const responseData = response.data.data;
+        // Decrypt the response data before parsing
+        const decryptedData = decryptResponse(responseData.productOffersData);
+        const productOffersData = JSON.parse(decryptedData);
+        
+        if (productOffersData.productOffers && productOffersData.productOffers.length > 0) {
+          // Add integrationId to each product offer (should already be there, but ensuring it)
+          const productOffersWithId = productOffersData.productOffers.map((offer: any) => ({
+            ...offer,
+            integrationId
+          }));
+          
+          console.log(`Fetched ${productOffersWithId.length} product offers from page ${page}/${totalPages}`);
+          allProductOffers.push(...productOffersWithId);
+        } else {
+          console.log(`No product offers found on page ${page}/${totalPages}`);
+        }
+        
+        // Calculate progress percentage
+        const progress = Math.round((page / totalPages) * 100);
+        console.log(`Product offers import progress: ${progress}% (${allProductOffers.length} product offers so far)`);
+        
+        // Update progress in the store ONLY - don't update DB count until fully saved
+        updateProgress(integrationId, {
+          productOffersProgress: progress,
+          productOffersCount: allProductOffers.length
+        });
+        
+        // Update status in DB but don't update counts
+        await updateIntegrationStatus(
+          integrationId, 
+          'loading'
+        );
+      }
+      
+      console.log(`Completed fetching all ${allProductOffers.length} product offers for integration ${integrationId}`);
+      
+      // Update final progress in store only
+      updateProgress(integrationId, {
+        productOffersProgress: 100,
+        productOffersCount: allProductOffers.length
+      });
+      
+      return allProductOffers;
+    } catch (error) {
+      console.error(`Error fetching product offers for integration ${integrationId}:`, error);
+      throw error;
+    }
+  }, [updateIntegrationStatus, startSyncing, isSyncing, updateProgress]);
+
+  /**
    * Fetches product offers from eMAG API with parallel pagination
    */
   const fetchProductOffersFromEmagApi = useCallback(async (integration: Integration): Promise<EmagProductOffer[]> => {
@@ -454,7 +550,8 @@ export const useIntegrationSync = () => {
       // Update status to loading
       await updateIntegrationStatus(integrationId, 'loading');
       
-      // Track dates for last import - will only set them at the moment of success
+      // Track dates for last import
+      const now = new Date();
       let lastOrdersImport: Date | undefined = undefined;
       let lastProductOffersImport: Date | undefined = undefined;
       
@@ -468,8 +565,7 @@ export const useIntegrationSync = () => {
           // Save orders to DB and get the actual count
           ordersCount = await saveOrdersToDb(integrationId, orders);
           console.log(`Successfully imported ${ordersCount} orders for integration ${integrationId}`);
-          // Set the timestamp at the moment of success
-          lastOrdersImport = new Date();
+          lastOrdersImport = now;
         } catch (error) {
           console.error(`Error importing orders for integration ${integrationId}:`, error);
           await updateIntegrationStatus(
@@ -495,8 +591,7 @@ export const useIntegrationSync = () => {
           // Save product offers to DB and get the actual count
           productOffersCount = await saveProductOffersToDb(integrationId, productOffers);
           console.log(`Successfully imported ${productOffersCount} product offers for integration ${integrationId}`);
-          // Set the timestamp at the moment of success
-          lastProductOffersImport = new Date();
+          lastProductOffersImport = now;
         } catch (error) {
           console.error(`Error importing product offers for integration ${integrationId}:`, error);
           await updateIntegrationStatus(
@@ -619,7 +714,8 @@ export const useIntegrationSync = () => {
       
       console.log(`Sync plan for integration ${integrationId}: Orders=${syncOrders}, ProductOffers=${syncProductOffers}`);
       
-      // Track dates for last import - will only set them at the moment of success
+      // Track dates for last import
+      const now = new Date();
       let lastOrdersImport: Date | undefined = undefined;
       let lastProductOffersImport: Date | undefined = undefined;
       
@@ -639,8 +735,7 @@ export const useIntegrationSync = () => {
             // Store orders and get the actual saved count
             ordersCount = await saveOrdersToDb(integrationId, orders);
             console.log(`Stored ${ordersCount} orders for integration: ${integrationId}`);
-            // Create timestamp at the moment of successful save
-            lastOrdersImport = new Date();
+            lastOrdersImport = now;
           } catch (error: any) {
             console.error(`Error storing orders for integration ${integrationId}:`, error);
             throw error;
@@ -665,8 +760,7 @@ export const useIntegrationSync = () => {
             // Store product offers and get the actual saved count
             productOffersCount = await saveProductOffersToDb(integrationId, productOffers);
             console.log(`Stored ${productOffersCount} product offers for integration: ${integrationId}`);
-            // Create timestamp at the moment of successful save
-            lastProductOffersImport = new Date();
+            lastProductOffersImport = now;
           } catch (error: any) {
             console.error(`Error storing product offers for integration ${integrationId}:`, error);
             throw error;

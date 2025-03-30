@@ -142,6 +142,36 @@ const renderImportStatusChip = (
   }
 };
 
+// Utility function to format date with relative time
+const formatImportDate = (dateString: string | null, t: any) => {
+  if (!dateString) return null;
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMin = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  let relativeTime = '';
+  if (diffInMin < 60) {
+    relativeTime = diffInMin <= 1 ? t('common.time.justNow') : t('common.time.minutesAgo', { count: diffInMin });
+  } else if (diffInHours < 24) {
+    relativeTime = diffInHours === 1 ? t('common.time.hourAgo') : t('common.time.hoursAgo', { count: diffInHours });
+  } else if (diffInDays < 30) {
+    relativeTime = diffInDays === 1 ? t('common.time.dayAgo') : t('common.time.daysAgo', { count: diffInDays });
+  } else {
+    // If more than 30 days, just use the date
+    relativeTime = date.toLocaleDateString();
+  }
+  
+  // Return both formatted date and relative time
+  return {
+    fullDate: date.toLocaleString(),
+    relativeTime
+  };
+};
+
 const IntegrationsTableRow = memo(({ 
   integration,
   index,
@@ -279,14 +309,48 @@ const IntegrationsTableRow = memo(({
         </Box>
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
-        <Typography sx={{ fontWeight: 500 }}>
-          {integrationStatus?.productOffersCount !== undefined ? integrationStatus.productOffersCount : 'N/A'}
-        </Typography>
+        {integrationStatus?.lastProductOffersImport ? (
+          <Tooltip 
+            title={formatImportDate(integrationStatus.lastProductOffersImport, t)?.fullDate}
+            arrow
+            placement="top"
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Typography sx={{ fontWeight: 500 }}>
+                {integrationStatus.productOffersCount !== undefined ? integrationStatus.productOffersCount : 'N/A'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
+                {formatImportDate(integrationStatus.lastProductOffersImport, t)?.relativeTime}
+              </Typography>
+            </Box>
+          </Tooltip>
+        ) : (
+          <Typography sx={{ fontWeight: 500 }}>
+            {integrationStatus?.productOffersCount !== undefined ? integrationStatus.productOffersCount : 'N/A'}
+          </Typography>
+        )}
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
-        <Typography sx={{ fontWeight: 500 }}>
-          {integrationStatus?.ordersCount !== undefined ? integrationStatus.ordersCount : 'N/A'}
-        </Typography>
+        {integrationStatus?.lastOrdersImport ? (
+          <Tooltip 
+            title={formatImportDate(integrationStatus.lastOrdersImport, t)?.fullDate}
+            arrow
+            placement="top"
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Typography sx={{ fontWeight: 500 }}>
+                {integrationStatus?.ordersCount !== undefined ? integrationStatus.ordersCount : 'N/A'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
+                {formatImportDate(integrationStatus.lastOrdersImport, t)?.relativeTime}
+              </Typography>
+            </Box>
+          </Tooltip>
+        ) : (
+          <Typography sx={{ fontWeight: 500 }}>
+            {integrationStatus?.ordersCount !== undefined ? integrationStatus.ordersCount : 'N/A'}
+          </Typography>
+        )}
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Box display="flex" justifyContent="center">
