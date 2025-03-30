@@ -1,5 +1,5 @@
-import { useEmagDataStore } from '@/app/(DashboardLayout)/integrations/store/emagData';
 import { SavedCalculation } from '../../hooks/useSavedCalculations';
+import useProducts from '@/lib/hooks/useProducts';
 
 export interface MenuItem {
   value: string;
@@ -19,31 +19,19 @@ const staticProducts = {
 };
 
 export const useProductMenuItems = () => {
-  const { integrationsData } = useEmagDataStore();
+  const { products } = useProducts();
 
   // Get eMAG product menu items
   const getEmagProductMenuItems = (): MenuItem[] => {
-    if (!integrationsData || Object.keys(integrationsData).length === 0) {
+    if (!products || products.length === 0) {
       return [];
     }
-
-    const menuItems: MenuItem[] = [];
-
-    // Process integrations data
-    Object.entries(integrationsData).forEach(([integrationId, data]) => {
-      if (data.productOffers && Array.isArray(data.productOffers)) {
-        data.productOffers.forEach((product: any) => {
-          menuItems.push({
-            value: `emag-${integrationId}-${product.id}`,
-            label: product.name,
-            group: 'eMAG Products',
-            data: product
-          });
-        });
-      }
-    });
-
-    return menuItems;
+    return products.map((product: any) => ({
+      value: `emag-${product.integrationId}-${product.id}`,
+      label: product.name,
+      group: 'eMAG Products',
+      data: product
+    }));
   };
 
   // Get static menu items
@@ -84,13 +72,8 @@ export const useProductMenuItems = () => {
     // Check if it's an eMAG product with new format
     if (value.startsWith('emag-') && value.split('-').length > 2) {
       const [prefix, integrationId, productId] = value.split('-');
-      if (integrationsData && integrationsData[integrationId]) {
-        const product = integrationsData[integrationId].productOffers?.find(
-          (p: any) => p.id.toString() === productId
-        );
-        return product ? (product as any).name : undefined;
-      }
-      return undefined;
+      const product = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
+      return product ? product.name : undefined;
     }
     
     // Otherwise use the menu items

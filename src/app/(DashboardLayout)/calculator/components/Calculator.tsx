@@ -20,7 +20,7 @@ import { useProfitStore } from '../store/profitStore';
 import CalculatorControls from './layout/CalculatorControls';
 import CalculatorHeader from './layout/CalculatorHeader';
 import MobileSaveButton from './layout/MobileSaveButton';
-import useProductMenuItems from './layout/ProductMenuItems';
+import useProducts from '@/lib/hooks/useProducts';
 import ProductSelector from './layout/ProductSelector';
 import SalesEstimator from './SalesEstimator/index';
 import SaveCalculationModal from './SaveCalculationModal';
@@ -35,9 +35,9 @@ import { toast } from 'react-hot-toast';
 
 const Calculator = () => {
   const { t } = useTranslation();
-  const { integrationsData } = useEmagData();
+  // integrationsData removed since it's no longer used
   const { integrations } = useIntegrationsStore();
-  const { getAllMenuItems, getProductNameByValue, staticProducts } = useProductMenuItems();
+  const { products, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
   
   // Move selectedProduct state declaration before the hooks that use it
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -57,6 +57,17 @@ const Calculator = () => {
     setOpenSaveModal,
     
   } = useSavedCalculations();
+
+  // Define a helper function to get product name by value
+  const getProductNameByValue = (value: string): string | undefined => {
+    if (!value.startsWith('emag-')) return undefined;
+    const parts = value.split('-');
+    if (parts.length < 3) return undefined;
+    const integrationId = parts[1];
+    const productId = parts[2];
+    const product = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
+    return product ? product.name : undefined;
+  };
 
   // Add a new function to handle the save calculation button click
   const handleSaveCalculation = async () => {
@@ -206,256 +217,104 @@ const Calculator = () => {
 
   // Handle product selection
   const handleSelectProduct = async (value: string) => {
-    // Update selected product value
     setSelectedProduct(value);
-    
-    // If no product is selected, reset the calculator
     if (!value) {
-      // For clean state, reset the SalesEstimator
       resetCalculatorValues();
       return;
     }
-    
-    // Check if this is a saved calculation
     if (value.startsWith('saved-')) {
-      // First reset to ensure clean state before loading saved calculation
       resetCalculatorValues();
-      
       const calculationId = value.replace('saved-', '');
       await loadSavedCalculation(calculationId);
-      return; // Return early to avoid other processing
+      return;
     }
-    
-    // Handle eMAG product selection
+    // Handle eMAG product selection check for saved calculations
     if (value.startsWith('emag-') && value.split('-').length > 2) {
       const [prefix, integrationId, productId] = value.split('-');
-      
-      // Check if we have a saved calculation for this eMAG product
       const emagSavedCalculation = savedCalculations.find(
         calc => calc.emagProduct && 
-        calc.emagProduct.integrationId === integrationId && 
-        calc.emagProduct.productId === productId
+                calc.emagProduct.integrationId === integrationId && 
+                calc.emagProduct.productId === productId
       );
-      
       if (emagSavedCalculation) {
-        // If we found a saved calculation for this eMAG product, load it
         resetCalculatorValues();
         await loadSavedCalculation(emagSavedCalculation._id);
-        return; // Return early to avoid other processing
+        return;
       }
-      
-      // If no saved calculation exists, continue with default handling
     }
-    
-    // For all other product types, ensure we start with a clean state
-    resetCalculatorValues(); // This also resets the SalesEstimator
-    
-    // If this is an integration product (contains : separator)
+    resetCalculatorValues();
+    // For integration products with colon separator
     if (value.includes(':')) {
       const [integrationId, productId] = value.split(':');
-      
-      // Load category commissions from the static mapping
-      const categoryCommissions = {
-        '3038': 0.05, // Example: 5% commission
-        '2': 0.07, // Example: 7% commission
-        // Add more mappings here as needed
-      };
-      
-      // Find the product in the integrations data
-      if (integrationsData && integrationsData[integrationId]) {
-        const productOffer = integrationsData[integrationId].productOffers?.find(
-          (p: any) => p.id.toString() === productId
-        );
-        
-        if (productOffer) {
-          // Update calculator state with product data - only set values that are available
-          const salePrice = productOffer.sale_price || 0;
-          
-          // Get category ID and set commission if available
-          // Using any type since category_id is not part of the official EmagProductOffer type
-          const anyProductOffer = productOffer as any;
-          const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
-          let commission: number | null = null;
-          
-          if (categoryId) {
-            if (categoryId in categoryCommissions) {
-              // Convert commission to percentage (multiply by 100)
-              commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
-            } else {
-              // If category exists but not in our mapping, set commission to 0
-              commission = 0;
-            }
-            
-            // Update the global commission setting
-            dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-          }
-          
-          // Update all categories with the sale price and commission
-          Object.keys(state.categories).forEach((category) => {
-            const updateData: Partial<CategoryData> = { salePrice };
-            
-            // Add commission to update data if available
-            if (commission !== null) {
-              updateData.commission = commission;
-            }
-            
-            dispatch({
-              type: 'UPDATE_CATEGORY',
-              payload: {
-                category: category as keyof typeof state.categories,
-                data: updateData
-              },
-            });
-          });
-          
-          // Check if this integration is FBE type and update visible cards accordingly
-          const integration = integrations.find(integration => integration._id === integrationId);
-          if (integration && integration.accountType === 'FBE') {
-            // For FBE integrations, only show the FBE calculator
-            setVisibleCards({
-              'FBM-NonGenius': false,
-              'FBM-Genius': false,
-              'FBE': true
-            });
+      const categoryCommissions = { '3038': 0.05, '2': 0.07 };
+      const productOffer = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
+      if (productOffer) {
+        const salePrice = productOffer.sale_price || 0;
+        const anyProductOffer: any = productOffer;
+        const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
+        let commission: number | null = null;
+        if (categoryId) {
+          if (categoryId in categoryCommissions) {
+            commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
           } else {
-            // For non-FBE integrations, show all calculators
-            setVisibleCards({
-              'FBM-NonGenius': true,
-              'FBM-Genius': true,
-              'FBE': true
-            });
+            commission = 0;
           }
+          dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+        }
+        Object.keys(state.categories).forEach((category) => {
+          const updateData: Partial<CategoryData> = { salePrice };
+          if (commission !== null) {
+            updateData.commission = commission;
+          }
+          dispatch({
+            type: 'UPDATE_CATEGORY',
+            payload: { category: category as keyof typeof state.categories, data: updateData }
+          });
+        });
+        const integration = integrations.find(integration => integration._id === integrationId);
+        if (integration && integration.accountType === 'FBE') {
+          setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
+        } else {
+          setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
       }
     }
     // Handle legacy static product format
     else if (value.startsWith('emag-') && value.split('-').length > 2) {
-      // Reset all values first
       resetCalculatorValues();
-      
-      // If it's a new format eMAG product (emag-integrationId-productId)
-      if (value.split('-').length > 2) {
-        const [prefix, integrationId, productId] = value.split('-');
-        
-        // Find the product in the integrations data
-        if (integrationsData && integrationsData[integrationId]) {
-          const productOffer = integrationsData[integrationId].productOffers?.find(
-            (p: any) => p.id.toString() === productId
-          );
-          
-          if (productOffer) {
-            // Update calculator state with product data - only set values that are available
-            const salePrice = productOffer.sale_price || 0;
-            
-            // Get category ID and set commission if available
-            // Using any type since category_id is not part of the official EmagProductOffer type
-            const anyProductOffer = productOffer as any;
-            const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
-            let commission: number | null = null;
-            
-            if (categoryId) {
-              if (categoryId in categoryCommissions) {
-                // Convert commission to percentage (multiply by 100)
-                commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
-              } else {
-                // If category exists but not in our mapping, set commission to 0
-                commission = 0;
-              }
-              
-              // Update the global commission setting
-              dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-            }
-            
-            // Update all categories with the sale price and commission
-            Object.keys(state.categories).forEach((category) => {
-              const updateData: Partial<CategoryData> = { salePrice };
-              
-              // Add commission to update data if available
-              if (commission !== null) {
-                updateData.commission = commission;
-              }
-              
-                  dispatch({
-                    type: 'UPDATE_CATEGORY',
-                    payload: {
-                      category: category as keyof typeof state.categories,
-                  data: updateData
-                },
-              });
-            });
-            
-            // Check if this integration is FBE type and update visible cards accordingly
-            const integration = integrations.find(integration => integration._id === integrationId);
-            if (integration && integration.accountType === 'FBE') {
-              // For FBE integrations, only show the FBE calculator
-              setVisibleCards({
-                'FBM-NonGenius': false,
-                'FBM-Genius': false,
-                'FBE': true
-              });
-            } else {
-              // For non-FBE integrations, show all calculators
-              setVisibleCards({
-                'FBM-NonGenius': true,
-                'FBM-Genius': true,
-                'FBE': true
-              });
-            }
+      const [prefix, integrationId, productId] = value.split('-');
+      const categoryCommissions = { '3038': 0.05, '2': 0.07 };
+      const productOffer = products.find((p: any) => p.integrationId === integrationId && p.id.toString() === productId);
+      if (productOffer) {
+        const salePrice = productOffer.sale_price || 0;
+        const anyProductOffer: any = productOffer;
+        const categoryId = anyProductOffer.category_id ? anyProductOffer.category_id.toString() : null;
+        let commission: number | null = null;
+        if (categoryId) {
+          if (categoryId in categoryCommissions) {
+            commission = categoryCommissions[categoryId as keyof typeof categoryCommissions] * 100;
+          } else {
+            commission = 0;
           }
+          dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
+        }
+        Object.keys(state.categories).forEach((category) => {
+          const updateData: Partial<CategoryData> = { salePrice };
+          if (commission !== null) {
+            updateData.commission = commission;
+          }
+          dispatch({
+            type: 'UPDATE_CATEGORY',
+            payload: { category: category as keyof typeof state.categories, data: updateData }
+          });
+        });
+        const integration = integrations.find(integration => integration._id === integrationId);
+        if (integration && integration.accountType === 'FBE') {
+          setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
+        } else {
+          setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
       }
-      // Handle legacy static product format
-      else {
-        // Find the product in the static products
-        const staticProduct = staticProducts.emag.find(p => p.id === value);
-        if (staticProduct) {
-          const salePrice = parseFloat(staticProduct.price);
-          
-          // For static products, check if we have a category in the name (for demo purposes)
-          // Example: if the product name contains "Category 3038", we can extract that
-          const categoryMatch = staticProduct.name.match(/Category (\d+)/);
-          let commission: number | null = null;
-          
-          if (categoryMatch && categoryMatch[1]) {
-            const matchedCategoryId = categoryMatch[1];
-            if (matchedCategoryId in categoryCommissions) {
-              // Convert commission to percentage (multiply by 100)
-              commission = categoryCommissions[matchedCategoryId as keyof typeof categoryCommissions] * 100;
-            } else {
-              // If category exists but not in our mapping, set commission to 0
-              commission = 0;
-            }
-            
-            // Update the global commission setting
-            dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-          }
-          
-          // Update all categories with the sale price and commission
-          Object.keys(state.categories).forEach((category) => {
-            const updateData: Partial<CategoryData> = { salePrice };
-            
-            // Add commission to update data if available
-            if (commission !== null) {
-              updateData.commission = commission;
-            }
-            
-                  dispatch({
-                    type: 'UPDATE_CATEGORY',
-                    payload: {
-                      category: category as keyof typeof state.categories,
-                data: updateData
-              },
-                  });
-                });
-          
-          // For static products, show all calculators
-          setVisibleCards({
-            'FBM-NonGenius': true,
-            'FBM-Genius': true,
-            'FBE': true
-            });
-          }
-        }
     }
     // Handle created products
     else if (value.startsWith('created-')) {
@@ -463,7 +322,7 @@ const Calculator = () => {
       resetCalculatorValues();
       
       // Find the product in the static products
-      const staticProduct = staticProducts.created.find(p => p.id === value);
+      const staticProduct = products.find((p: any) => p.id === value);
       if (staticProduct) {
         const salePrice = parseFloat(staticProduct.price);
         
@@ -517,14 +376,13 @@ const Calculator = () => {
       >
         {/* Product Selection Button */}
         <ProductSelector
-            selectedProduct={selectedProduct}
-            onSelectProduct={handleSelectProduct}
+          selectedProduct={selectedProduct}
+          onSelectProduct={handleSelectProduct}
           getProductNameByValue={getProductNameByValue}
-            savedCalculations={savedCalculations}
+          savedCalculations={savedCalculations}
           loadingSavedCalculations={loadingSavedCalculations}
           savedCalculationsError={savedCalculationsError}
-          integrationsData={integrationsData}
-          />
+        />
 
         {/* Controls Stack */}
         <CalculatorControls

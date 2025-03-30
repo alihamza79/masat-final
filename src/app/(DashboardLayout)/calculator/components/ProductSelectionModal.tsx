@@ -49,6 +49,7 @@ interface ProductSelectionModalProps {
   savedCalculations: SavedCalculation[];
   loading: boolean;
   error: string | null;
+  products: any[];
   integrationsData?: Record<string, any>;
 }
 
@@ -194,7 +195,8 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   savedCalculations,
   loading,
   error,
-  integrationsData = {}
+  products,
+  integrationsData
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -211,25 +213,19 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
 
   // Extract and format eMAG product offers from integrations data
   useEffect(() => {
-    if (Object.keys(integrationsData).length > 0) {
+    if (products.length > 0) {
       setLoadingEmagProducts(true);
       
       try {
-        const allProducts = Object.values(integrationsData).flatMap(integration => {
-          if (!integration.productOffers || !Array.isArray(integration.productOffers)) {
-            return [];
-          }
-          
-          return integration.productOffers.map((product: any) => ({
-            id: `emag-${product.integrationId}-${product.id}`,
-            name: product.name || `Product ${product.id}`,
-            category: `Category ${product.category_id || 'Unknown'}`,
-            price: product.sale_price?.toString() || '0',
-            brand: product.brand_name || product.brand || 'Unknown',
-            image: product.images && product.images[0]?.url || '',
-            originalData: product
-          }));
-        });
+        const allProducts = products.map((product: any) => ({
+          id: `emag-${product.integrationId}-${product.id}`,
+          name: product.name || `Product ${product.id}`,
+          category: `Category ${product.category_id || 'Unknown'}`,
+          price: product.sale_price?.toString() || '0',
+          brand: product.brand_name || product.brand || 'Unknown',
+          image: product.images && product.images[0]?.url || '',
+          originalData: product
+        }));
         
         setEmagProducts(allProducts);
         setFilteredEmagProducts(allProducts);
@@ -239,7 +235,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
         setLoadingEmagProducts(false);
       }
     }
-  }, [integrationsData]);
+  }, [products]);
 
   // Initialize filtered saved calculations
   useEffect(() => {

@@ -3,6 +3,7 @@ import { Button, Stack, Typography } from '@mui/material';
 import { IconPackage, IconChevronRight } from '@tabler/icons-react';
 import ProductSelectionModal from '../ProductSelectionModal';
 import { SavedCalculation } from '../../hooks/useSavedCalculations';
+import useProducts from '@/lib/hooks/useProducts';
 
 interface ProductSelectorProps {
   selectedProduct: string;
@@ -24,6 +25,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   integrationsData
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
+  const { products } = useProducts();
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
   const handleProductSelect = (value: string) => {
@@ -91,6 +93,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         loading={loadingSavedCalculations}
         error={savedCalculationsError}
         integrationsData={integrationsData}
+        products={products}
       />
     </Stack>
   );

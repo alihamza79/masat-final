@@ -3,6 +3,7 @@ import { Button, Stack, Typography } from '@mui/material';
 import { IconPackage, IconChevronRight } from '@tabler/icons-react';
 import ProductSelectionModal from './ProductSelectionModal';
 import { SavedCalculation } from '../hooks/useSavedCalculations';
+import useProducts from '@/lib/hooks/useProducts';
 
 interface ProductSelectorProps {
   selectedProduct: string;
@@ -11,7 +12,6 @@ interface ProductSelectorProps {
   savedCalculations: SavedCalculation[];
   loadingSavedCalculations: boolean;
   savedCalculationsError: string | null;
-  integrationsData?: Record<string, any>;
 }
 
 const ProductSelector: React.FC<ProductSelectorProps> = ({
@@ -20,10 +20,10 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   getProductNameByValue,
   savedCalculations,
   loadingSavedCalculations,
-  savedCalculationsError,
-  integrationsData
+  savedCalculationsError
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
+  const { products, isLoading: productsLoading } = useProducts();
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
   const handleProductSelect = (value: string) => {
@@ -88,9 +88,9 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         selectedProduct={selectedProduct}
         onSelectProduct={handleProductSelect}
         savedCalculations={savedCalculations}
-        loading={loadingSavedCalculations}
+        loading={loadingSavedCalculations || productsLoading}
         error={savedCalculationsError}
-        integrationsData={integrationsData}
+        products={products}
       />
     </Stack>
   );
