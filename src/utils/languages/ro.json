@@ -226,6 +226,7 @@
                 "importing": "Se importă",
                 "completed": "Finalizat",
                 "failed": "Eșuat",
+                "failedGeneric": "Integrarea nu s-a putut sincroniza. Vă rugăm să încercați din nou mai târziu.",
                 "pending": "În așteptare"
             },
             "menu": {

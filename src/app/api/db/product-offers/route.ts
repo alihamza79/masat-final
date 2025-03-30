@@ -79,7 +79,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        insertedCount: insertedDocs.length,
+        results: {
+          insertedCount: insertedDocs.length
+        },
         totalProcessed: productOffers.length
       }
     });

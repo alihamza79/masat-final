@@ -226,6 +226,7 @@
                 "importing": "Importing",
                 "completed": "Completed",
                 "failed": "Failed",
+                "failedGeneric": "The integration failed to sync. Please try again later.",
                 "pending": "Pending"
             },
             "menu": {

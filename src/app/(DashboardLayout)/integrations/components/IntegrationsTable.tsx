@@ -14,9 +14,11 @@ import {
   IconButton,
   ListItemIcon,
   Paper,
-  CircularProgress
+  CircularProgress,
+  Box,
+  Stack,
+  Tooltip
 } from '@mui/material';
-import { Box, Stack } from '@mui/system';
 import { IconDotsVertical, IconEdit, IconTrash, IconCheck, IconX } from '@tabler/icons-react';
 import IntegrationFormDialog, { IntegrationFormData } from './IntegrationFormDialog';
 import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
@@ -25,6 +27,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { INTEGRATIONS_STATUS_QUERY_KEY } from '@/lib/hooks/useIntegrationSync';
+import { useIntegrationSyncStore } from '../store/integrationSyncStore';
 
 interface IntegrationsTableProps {
   integrations: Integration[];
@@ -47,6 +50,98 @@ interface IntegrationStatus {
   productOffersCount: number;
 }
 
+// Function to render import status chip with optional progress
+const renderImportStatusChip = (
+  importStatus: ImportStatus, 
+  t: any,
+  progress?: number,
+  errorMessage?: string
+) => {
+  switch (importStatus) {
+    case 'loading':
+      return (
+        <Tooltip 
+          title={progress !== undefined ? 
+            `Orders: ${Math.round(progress)}%, Product Offers: ${Math.round(progress)}%` : 
+            t('integrations.table.status.importing')
+          }
+        >
+          <Chip
+            icon={<CircularProgress size={14} />}
+            label={progress !== undefined ? 
+              `${t('integrations.table.status.importing')} ${Math.round(progress)}%` : 
+              t('integrations.table.status.importing')
+            }
+            size="small"
+            sx={{
+              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+              color: 'info.main',
+              fontWeight: 500,
+              borderRadius: '4px',
+              '& .MuiChip-icon': {
+                color: 'inherit'
+              }
+            }}
+          />
+        </Tooltip>
+      );
+    case 'success':
+      return (
+        <Chip
+          icon={<IconCheck size={14} />}
+          label={t('integrations.table.status.completed')}
+          size="small"
+          sx={{
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            color: 'success.main',
+            fontWeight: 500,
+            borderRadius: '4px',
+            '& .MuiChip-icon': {
+              color: 'inherit'
+            }
+          }}
+        />
+      );
+    case 'error':
+      return (
+        <Tooltip 
+          title={errorMessage || t('integrations.table.status.failedGeneric')}
+          arrow
+          placement="top"
+        >
+          <Chip
+            icon={<IconX size={14} />}
+            label={t('integrations.table.status.failed')}
+            size="small"
+            sx={{
+              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+              color: 'error.main',
+              fontWeight: 500,
+              borderRadius: '4px',
+              '& .MuiChip-icon': {
+                color: 'inherit'
+              },
+              cursor: errorMessage ? 'help' : 'default'
+            }}
+          />
+        </Tooltip>
+      );
+    default:
+      return (
+        <Chip
+          label={t('integrations.table.status.pending')}
+          size="small"
+          sx={{
+            backgroundColor: 'rgba(158, 158, 158, 0.1)',
+            color: 'text.secondary',
+            fontWeight: 500,
+            borderRadius: '4px'
+          }}
+        />
+      );
+  }
+};
+
 const IntegrationsTableRow = memo(({ 
   integration,
   index,
@@ -61,6 +156,10 @@ const IntegrationsTableRow = memo(({
   onMenuClick: (event: React.MouseEvent<HTMLButtonElement>, index: number) => void;
 }) => {
   const { t } = useTranslation();
+  
+  // Get sync progress from store
+  const { isSyncing, getSyncProgress } = useIntegrationSyncStore();
+  const syncProgress = integration._id ? getSyncProgress(integration._id) : null;
   
   // Fetch integration status directly from API
   const { data: integrationStatus, isLoading: isLoadingStatus } = useQuery({
@@ -79,87 +178,49 @@ const IntegrationsTableRow = memo(({
     refetchInterval: 30000 // Refetch every 30 seconds
   });
 
-  const importStatus: ImportStatus = integrationStatus?.importStatus || 'idle';
+  // Use loading state from store or DB depending on what's available
+  let importStatus: ImportStatus = integrationStatus?.importStatus || 'idle';
+  const isCurrentlySyncing = integration._id ? isSyncing(integration._id) : false;
+  
+  // If syncing in the store, override status to loading
+  if (isCurrentlySyncing) {
+    importStatus = 'loading';
+  }
+  
   const ordersCount = integrationStatus?.ordersCount || 0;
   const productOffersCount = integrationStatus?.productOffersCount || 0;
   const ordersFetched = !!integrationStatus?.lastOrdersImport;
   const productOffersFetched = !!integrationStatus?.lastProductOffersImport;
   
-  const renderImportStatusChip = () => {
-    switch (importStatus) {
-      case 'loading':
-        return (
-          <Chip
-            icon={<CircularProgress size={14} />}
-            label={t('integrations.table.status.importing')}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(33, 150, 243, 0.1)',
-              color: 'info.main',
-              fontWeight: 500,
-              borderRadius: '4px',
-              '& .MuiChip-icon': {
-                color: 'inherit'
-              }
-            }}
-          />
-        );
-      case 'success':
-        return (
-          <Chip
-            icon={<IconCheck size={14} />}
-            label={t('integrations.table.status.completed')}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(76, 175, 80, 0.1)',
-              color: 'success.main',
-              fontWeight: 500,
-              borderRadius: '4px',
-              '& .MuiChip-icon': {
-                color: 'inherit'
-              }
-            }}
-          />
-        );
-      case 'error':
-        return (
-          <Chip
-            icon={<IconX size={14} />}
-            label={t('integrations.table.status.failed')}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(244, 67, 54, 0.1)',
-              color: 'error.main',
-              fontWeight: 500,
-              borderRadius: '4px',
-              '& .MuiChip-icon': {
-                color: 'inherit'
-              }
-            }}
-          />
-        );
-      default:
-        return (
-          <Chip
-            label={t('integrations.table.status.pending')}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(158, 158, 158, 0.1)',
-              color: 'text.secondary',
-              fontWeight: 500,
-              borderRadius: '4px'
-            }}
-          />
-        );
-    }
-  };
+  // Get sync progress percentage if available
+  let progressPercentage: number | undefined = undefined;
+  if (syncProgress) {
+    progressPercentage = syncProgress.totalProgress;
+  }
 
   return (
     <TableRow>
       <TableCell>
-        <Typography sx={{ fontWeight: 500 }}>
-          {integration.accountName}
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography sx={{ fontWeight: 500 }}>
+            {integration.accountName}
+          </Typography>
+          {integrationStatus?.importError && (
+            <Tooltip 
+              title={integrationStatus.importError}
+              arrow
+              placement="right"
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                cursor: 'help',
+                '&:hover': { opacity: 0.8 }
+              }}>
+                <IconX size={16} style={{ color: 'rgba(244, 67, 54, 0.9)' }} />
+              </Box>
+            </Tooltip>
+          )}
+        </Stack>
       </TableCell>
       <TableCell>
         <Typography sx={{ fontWeight: 500 }}>
@@ -213,18 +274,18 @@ const IntegrationsTableRow = memo(({
           {isLoadingStatus ? (
             <CircularProgress size={20} />
           ) : (
-            renderImportStatusChip()
+            renderImportStatusChip(importStatus, t, progressPercentage, integrationStatus?.importError)
           )}
         </Box>
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Typography sx={{ fontWeight: 500 }}>
-          {productOffersFetched ? productOffersCount : 'N/A'}
+          {integrationStatus?.productOffersCount !== undefined ? integrationStatus.productOffersCount : 'N/A'}
         </Typography>
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
         <Typography sx={{ fontWeight: 500 }}>
-          {ordersFetched ? ordersCount : 'N/A'}
+          {integrationStatus?.ordersCount !== undefined ? integrationStatus.ordersCount : 'N/A'}
         </Typography>
       </TableCell>
       <TableCell sx={{ textAlign: 'center' }}>
@@ -246,6 +307,30 @@ const IntegrationsTableRow = memo(({
 
 IntegrationsTableRow.displayName = 'IntegrationsTableRow';
 
+/**
+ * IntegrationsTable Component
+ * 
+ * This component handles displaying integrations with their sync status.
+ * The status system works as follows:
+ * 
+ * 1. Database Status: 
+ *    - Stores 'success' or 'error' as permanent states
+ *    - Stores actual counts of orders and product offers
+ *    - All count values displayed in the table come directly from the database
+ * 
+ * 2. Frontend Status: 
+ *    - Uses Zustand store to track 'loading'/'importing' temporary states
+ *    - Tracks sync progress but does NOT affect displayed counts
+ * 
+ * 3. Progress Tracking: 
+ *    - Shows percentage of sync progress during active imports
+ *    - Only affects the status indicator, not the count values
+ * 
+ * When a user refreshes the page:
+ * - If status in DB is 'error': Will attempt to sync again
+ * - If status in DB is 'success': Will only sync if time threshold has passed
+ * - The loading indicators will reset (as they are stored in-memory only)
+ */
 const IntegrationsTable: React.FC<IntegrationsTableProps> = ({
   integrations,
   isLoading,

@@ -1,6 +1,5 @@
 'use client';
 import { useIntegrationsStore } from '@/app/(DashboardLayout)/integrations/store/integrations';
-import { useEmagData } from '@/lib/hooks/useEmagData';
 import categoryCommissions from '@/utils/categoryCommissions.json';
 import {
   Box,

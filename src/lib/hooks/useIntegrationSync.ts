@@ -10,6 +10,7 @@ import { IIntegration as Integration } from '@/models/Integration';
 import { decrypt } from '@/lib/utils/encryption';
 import { decryptResponse } from '@/lib/utils/responseEncryption';
 import { INTEGRATION_DETAILS_KEY, INTEGRATION_ORDERS_KEY, INTEGRATION_PRODUCT_OFFERS_KEY } from './useIntegrationData';
+import { useIntegrationSyncStore } from '@/app/(DashboardLayout)/integrations/store/integrationSyncStore';
 
 // Constants
 export const INTEGRATIONS_STATUS_QUERY_KEY = 'integrations-status';
@@ -25,6 +26,14 @@ export type ImportStatus = 'idle' | 'loading' | 'importing' | 'completed' | 'suc
  */
 export const useIntegrationSync = () => {
   const queryClient = useQueryClient();
+  
+  // Get access to the integration sync store
+  const { 
+    startSyncing, 
+    updateProgress, 
+    stopSyncing, 
+    isSyncing 
+  } = useIntegrationSyncStore();
 
   /**
    * Updates the import status of an integration
@@ -39,16 +48,41 @@ export const useIntegrationSync = () => {
     lastProductOffersImport?: Date
   ) => {
     try {
-      // Map our ImportStatus to match the schema's importStatus enum
-      let dbStatus: ImportStatus = status;
-      if (status === 'completed') {
-        // Map 'completed' to 'success' to match schema expectations
-        dbStatus = 'success' as ImportStatus;
+      // Start syncing in the store if status is loading/importing
+      if (status === 'loading' || status === 'importing') {
+        if (!isSyncing(integrationId)) {
+          startSyncing(integrationId);
+        }
+        
+        // For loading state, don't update DB counts - only update the store
+        if (ordersCount !== undefined || productOffersCount !== undefined) {
+          // Update the store with progress info
+          updateProgress(integrationId, {
+            ordersCount: ordersCount || 0,
+            productOffersCount: productOffersCount || 0
+          });
+        }
+        
+        return;
+      }
+      
+      // Only store 'success' or 'error' states in the database
+      let dbStatus: 'success' | 'error';
+      if (status === 'success' || status === 'completed') {
+        dbStatus = 'success';
+        stopSyncing(integrationId); // Stop syncing in the store
+      } else if (status === 'error') {
+        dbStatus = 'error';
+        stopSyncing(integrationId); // Stop syncing in the store
+      } else {
+        return; // Don't update for other states
       }
       
       const payload: any = { status: dbStatus };
       
       if (error !== undefined) payload.error = error;
+      
+      // Only update order and product offer counts in the database after sync is complete
       if (ordersCount !== undefined) payload.ordersCount = ordersCount;
       if (productOffersCount !== undefined) payload.productOffersCount = productOffersCount;
       if (lastOrdersImport !== undefined) payload.lastOrdersImport = lastOrdersImport;
@@ -59,17 +93,14 @@ export const useIntegrationSync = () => {
       if (response.data.success) {
         console.log(`Successfully updated integration ${integrationId} status to ${status}`);
         
-        // Only invalidate the query for major changes
-        if (status === 'completed' || status === 'success' || status === 'error' || 
-            ordersCount !== undefined || productOffersCount !== undefined) {
-          queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
-          queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
-        }
+        // Invalidate the query for any status change
+        queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
+        queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
       }
     } catch (error) {
       console.error(`Error updating integration status for ${integrationId}:`, error);
     }
-  }, [queryClient]);
+  }, [queryClient, startSyncing, updateProgress, stopSyncing, isSyncing]);
 
   /**
    * Fetches orders from eMAG API with pagination
@@ -87,6 +118,11 @@ export const useIntegrationSync = () => {
     const integrationId = String(integration._id);
     
     try {
+      // Start syncing in the store if not already syncing
+      if (!isSyncing(integrationId)) {
+        startSyncing(integrationId);
+      }
+      
       // Instead of calling eMAG API directly, use our server-side API endpoint
       // Get the order count first
       const orderCountResponse = await axios.get(`/api/integrations/${integrationId}/order-count`);
@@ -133,24 +169,37 @@ export const useIntegrationSync = () => {
           console.log(`No orders found on page ${page}/${totalPages}`);
         }
         
-        // Update status with progress
+        // Calculate progress percentage
         const progress = Math.round((page / totalPages) * 100);
         console.log(`Orders import progress: ${progress}% (${allOrders.length} orders so far)`);
+        
+        // Update progress in the store ONLY - don't update DB count until fully saved
+        updateProgress(integrationId, {
+          ordersProgress: progress,
+          ordersCount: allOrders.length
+        });
+        
+        // Update status in DB but don't update counts
         await updateIntegrationStatus(
           integrationId, 
-          'loading', 
-          undefined, 
-          allOrders.length
+          'loading'
         );
       }
       
       console.log(`Completed fetching all ${allOrders.length} orders for integration ${integrationId}`);
+      
+      // Update final progress in store only
+      updateProgress(integrationId, {
+        ordersProgress: 100,
+        ordersCount: allOrders.length
+      });
+      
       return allOrders;
     } catch (error) {
       console.error(`Error fetching orders for integration ${integrationId}:`, error);
       throw error;
     }
-  }, [updateIntegrationStatus]);
+  }, [updateIntegrationStatus, startSyncing, isSyncing, updateProgress]);
 
   /**
    * Fetches product offers from eMAG API with pagination
@@ -168,6 +217,11 @@ export const useIntegrationSync = () => {
     const integrationId = String(integration._id);
     
     try {
+      // Start syncing in the store if not already syncing
+      if (!isSyncing(integrationId)) {
+        startSyncing(integrationId);
+      }
+      
       // Instead of calling eMAG API directly, use our server-side API endpoint
       // Get the product offers count first
       const productOffersCountResponse = await axios.get(`/api/integrations/${integrationId}/product-offers?countOnly=true`);
@@ -211,25 +265,37 @@ export const useIntegrationSync = () => {
           console.log(`No product offers found on page ${page}/${totalPages}`);
         }
         
-        // Update status with progress
+        // Calculate progress percentage
         const progress = Math.round((page / totalPages) * 100);
         console.log(`Product offers import progress: ${progress}% (${allProductOffers.length} product offers so far)`);
+        
+        // Update progress in the store ONLY - don't update DB count until fully saved
+        updateProgress(integrationId, {
+          productOffersProgress: progress,
+          productOffersCount: allProductOffers.length
+        });
+        
+        // Update status in DB but don't update counts
         await updateIntegrationStatus(
           integrationId, 
-          'loading', 
-          undefined,
-          undefined, 
-          allProductOffers.length
+          'loading'
         );
       }
       
       console.log(`Completed fetching all ${allProductOffers.length} product offers for integration ${integrationId}`);
+      
+      // Update final progress in store only
+      updateProgress(integrationId, {
+        productOffersProgress: 100,
+        productOffersCount: allProductOffers.length
+      });
+      
       return allProductOffers;
     } catch (error) {
       console.error(`Error fetching product offers for integration ${integrationId}:`, error);
       throw error;
     }
-  }, [updateIntegrationStatus]);
+  }, [updateIntegrationStatus, startSyncing, isSyncing, updateProgress]);
 
   /**
    * Save orders to MongoDB
@@ -238,7 +304,7 @@ export const useIntegrationSync = () => {
     try {
       if (!orders.length) {
         console.log(`No orders to save for integration ${integrationId}`);
-        return;
+        return 0; // Return 0 since no orders were saved
       }
       
       console.log(`Saving ${orders.length} orders to database for integration ${integrationId}...`);
@@ -250,21 +316,19 @@ export const useIntegrationSync = () => {
       
       if (response.data.success) {
         console.log(`Successfully saved ${orders.length} orders to database`);
+        // Get the actual count of orders saved from the API response
+        const insertedCount = response.data.data?.results?.insertedCount || orders.length;
+        console.log(`Successfully saved ${insertedCount} orders to database`);
         
-        // Get the actual count of orders saved in DB
-        const countResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
-        const actualOrderCount = countResponse.data.success ? countResponse.data.data.totalCount : orders.length;
-        
-        // Update the integration with the actual count from DB
-        await updateIntegrationStatus(
-          integrationId, 
-          'loading', 
-          undefined, 
-          actualOrderCount
-        );
+        // Update the store with the accurate count
+        updateProgress(integrationId, {
+          ordersCount: insertedCount
+        });
         
         // Invalidate orders query to refresh data
         queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
+        
+        return insertedCount;
       } else {
         throw new Error(response.data.error || 'Failed to save orders');
       }
@@ -272,7 +336,7 @@ export const useIntegrationSync = () => {
       console.error(`Error saving orders to DB for integration ${integrationId}:`, error);
       throw error;
     }
-  }, [queryClient, updateIntegrationStatus]);
+  }, [queryClient, updateProgress]);
 
   /**
    * Save product offers to MongoDB
@@ -281,7 +345,7 @@ export const useIntegrationSync = () => {
     try {
       if (!productOffers.length) {
         console.log(`No product offers to save for integration ${integrationId}`);
-        return;
+        return 0; // Return 0 since no product offers were saved
       }
       
       console.log(`Saving ${productOffers.length} product offers to database for integration ${integrationId}...`);
@@ -293,22 +357,19 @@ export const useIntegrationSync = () => {
       
       if (response.data.success) {
         console.log(`Successfully saved ${productOffers.length} product offers to database`);
+        // Get the actual count of product offers saved from the API response
+        const insertedCount = response.data.data?.results?.insertedCount || productOffers.length;
+        console.log(`Successfully saved ${insertedCount} product offers to database`);
         
-        // Get the actual count of product offers saved in DB
-        const countResponse = await axios.get(`/api/db/product-offers/count?integrationId=${integrationId}`);
-        const actualProductOffersCount = countResponse.data.success ? countResponse.data.data.totalCount : productOffers.length;
-        
-        // Update the integration with the actual count from DB
-        await updateIntegrationStatus(
-          integrationId, 
-          'loading', 
-          undefined, 
-          undefined,
-          actualProductOffersCount
-        );
+        // Update the store with the accurate count
+        updateProgress(integrationId, {
+          productOffersCount: insertedCount
+        });
         
         // Invalidate product offers query to refresh data
         queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+        
+        return insertedCount;
       } else {
         throw new Error(response.data.error || 'Failed to save product offers');
       }
@@ -316,7 +377,7 @@ export const useIntegrationSync = () => {
       console.error(`Error saving product offers to DB for integration ${integrationId}:`, error);
       throw error;
     }
-  }, [queryClient, updateIntegrationStatus]);
+  }, [queryClient, updateProgress]);
 
   /**
    * Synchronize data for a specific integration
@@ -337,13 +398,14 @@ export const useIntegrationSync = () => {
       
       // Fetch orders from eMAG API
       let orders: EmagOrder[] = [];
+      let ordersCount = 0;
       try {
         console.log(`Fetching orders for integration ${integrationId}...`);
         orders = await fetchOrdersFromEmagApi(integration);
         
-        // Save orders to DB
-        await saveOrdersToDb(integrationId, orders);
-        console.log(`Successfully imported ${orders.length} orders for integration ${integrationId}`);
+        // Save orders to DB and get the actual count
+        ordersCount = await saveOrdersToDb(integrationId, orders);
+        console.log(`Successfully imported ${ordersCount} orders for integration ${integrationId}`);
       } catch (error) {
         console.error(`Error importing orders for integration ${integrationId}:`, error);
         await updateIntegrationStatus(
@@ -356,13 +418,14 @@ export const useIntegrationSync = () => {
       
       // Fetch product offers from eMAG API
       let productOffers: EmagProductOffer[] = [];
+      let productOffersCount = 0;
       try {
         console.log(`Fetching product offers for integration ${integrationId}...`);
         productOffers = await fetchProductOffersFromEmagApi(integration);
         
-        // Save product offers to DB
-        await saveProductOffersToDb(integrationId, productOffers);
-        console.log(`Successfully imported ${productOffers.length} product offers for integration ${integrationId}`);
+        // Save product offers to DB and get the actual count
+        productOffersCount = await saveProductOffersToDb(integrationId, productOffers);
+        console.log(`Successfully imported ${productOffersCount} product offers for integration ${integrationId}`);
       } catch (error) {
         console.error(`Error importing product offers for integration ${integrationId}:`, error);
         await updateIntegrationStatus(
@@ -373,13 +436,13 @@ export const useIntegrationSync = () => {
         return;
       }
       
-      // Update integration status to success
+      // Update integration status to success with actual counts from DB insertion
       await updateIntegrationStatus(
         integrationId, 
         'success', 
         '', // Clear any previous errors
-        orders.length,
-        productOffers.length,
+        ordersCount,
+        productOffersCount,
         new Date(),
         new Date()
       );
@@ -407,23 +470,41 @@ export const useIntegrationSync = () => {
   ]);
 
   /**
-   * Determine if an integration needs to be synced based on last import time
+   * Determine if an integration needs to be synced based on last import time and status
    */
   const shouldSyncIntegration = useCallback((integration: Integration, refetchIntervalMs: number = 3600000) => {
+    // Check if the integration is already being synced in the store - don't start another sync
+    if (isSyncing(String(integration._id))) {
+      console.log(`Integration ${integration._id} is already being synced in this session, skipping duplicate sync`);
+      return false;
+    }
+    
+    // If status is error, always sync regardless of time threshold
+    if (integration.importStatus === 'error') {
+      console.log(`Integration ${integration._id} has error status, will attempt to sync`);
+      return true;
+    }
+    
     // If no last import time, it should be synced
     if (!integration.lastOrdersImport && !integration.lastProductOffersImport) {
       return true;
     }
     
-    const now = new Date().getTime();
-    const lastImport = Math.max(
-      integration.lastOrdersImport ? new Date(integration.lastOrdersImport).getTime() : 0,
-      integration.lastProductOffersImport ? new Date(integration.lastProductOffersImport).getTime() : 0
-    );
+    // Only check time threshold if status is success
+    if (integration.importStatus === 'success') {
+      const now = new Date().getTime();
+      const lastImport = Math.max(
+        integration.lastOrdersImport ? new Date(integration.lastOrdersImport).getTime() : 0,
+        integration.lastProductOffersImport ? new Date(integration.lastProductOffersImport).getTime() : 0
+      );
+      
+      // Sync if more than refetchInterval has passed since last import
+      return (now - lastImport) > refetchIntervalMs;
+    }
     
-    // Sync if more than refetchInterval has passed since last import
-    return (now - lastImport) > refetchIntervalMs;
-  }, []);
+    // Default: sync if not success and not already syncing
+    return true;
+  }, [isSyncing]);
 
   /**
    * Sync data for a specific integration by ID
@@ -447,6 +528,7 @@ export const useIntegrationSync = () => {
       console.log(`Fetching orders for integration: ${integrationId}`);
       
       let orders: EmagOrder[] = [];
+      let ordersCount = 0;
       try {
         orders = await fetchOrdersFromEmagApi(integration);
         console.log(`Fetched ${orders.length} orders for integration: ${integrationId}`);
@@ -457,11 +539,9 @@ export const useIntegrationSync = () => {
       
       // Always store orders (even empty array) to clean up previous ones
       try {
-        await axios.post('/api/db/orders', {
-          integrationId,
-          orders
-        });
-        console.log(`Stored ${orders.length} orders for integration: ${integrationId}`);
+        // Store orders and get the actual saved count
+        ordersCount = await saveOrdersToDb(integrationId, orders);
+        console.log(`Stored ${ordersCount} orders for integration: ${integrationId}`);
       } catch (error: any) {
         console.error(`Error storing orders for integration ${integrationId}:`, error);
         throw error;
@@ -471,6 +551,7 @@ export const useIntegrationSync = () => {
       console.log(`Fetching product offers for integration: ${integrationId}`);
       
       let productOffers: EmagProductOffer[] = [];
+      let productOffersCount = 0;
       try {
         productOffers = await fetchProductOffersFromEmagApi(integration);
         console.log(`Fetched ${productOffers.length} product offers for integration: ${integrationId}`);
@@ -481,23 +562,21 @@ export const useIntegrationSync = () => {
       
       // Always store product offers (even empty array) to clean up previous ones
       try {
-        await axios.post('/api/db/product-offers', {
-          integrationId,
-          productOffers
-        });
-        console.log(`Stored ${productOffers.length} product offers for integration: ${integrationId}`);
+        // Store product offers and get the actual saved count
+        productOffersCount = await saveProductOffersToDb(integrationId, productOffers);
+        console.log(`Stored ${productOffersCount} product offers for integration: ${integrationId}`);
       } catch (error: any) {
         console.error(`Error storing product offers for integration ${integrationId}:`, error);
         throw error;
       }
       
-      // Update status to success
+      // Update status to success with actual counts from DB insertion
       await updateIntegrationStatus(
         integrationId, 
         'success', 
         '', // Empty string to clear any previous errors
-        orders.length,
-        productOffers.length,
+        ordersCount,
+        productOffersCount,
         new Date(),
         new Date()
       );
@@ -522,7 +601,7 @@ export const useIntegrationSync = () => {
       
       return { success: false, error: error.message || 'Failed to sync integration' };
     }
-  }, [updateIntegrationStatus, queryClient, fetchOrdersFromEmagApi, fetchProductOffersFromEmagApi]);
+  }, [updateIntegrationStatus, queryClient, fetchOrdersFromEmagApi, fetchProductOffersFromEmagApi, saveOrdersToDb, saveProductOffersToDb]);
 
   /**
    * Sync all integrations that need refreshing
