@@ -48,6 +48,7 @@
             "vatProfile": "VAT Profile",
             "commission": "Commission + VAT",
             "commissionTooltip": "eMAG commission including VAT",
+            "commissionLockedTooltip": "Commission rate is locked because it's calculated based on the selected eMAG product",
             "vatRateFromSale": "VAT Rate From Sale",
             "vatRateFromSaleTooltip": "VAT rate applied to your sales",
             "taxRate": "Tax Rate",
