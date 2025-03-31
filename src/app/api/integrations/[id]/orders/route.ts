@@ -60,30 +60,31 @@ export async function GET(
       region: integration.region
     });
 
-    // Get the total order count
-    const orderCountResults = await emagApi.getOrderCount();
-    
-    // Check if there was an error getting the order count
-    if (!orderCountResults) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch order count from eMAG API' 
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Extract the count
-    const totalOrderCount = orderCountResults.noOfItems 
-      ? parseInt(orderCountResults.noOfItems, 10) 
-      : 0;
-    
-    // Calculate total pages
-    const totalPages = Math.ceil(totalOrderCount / pageSize);
-    
-    // If count-only request, return just the count info
+    // For count-only requests, make just the count API call and return
     if (countOnly) {
+      // Get the total order count
+      const orderCountResults = await emagApi.getOrderCount();
+      
+      // Check if there was an error getting the order count
+      if (!orderCountResults) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Failed to fetch order count from eMAG API' 
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Extract the count
+      const totalOrderCount = orderCountResults.noOfItems 
+        ? parseInt(orderCountResults.noOfItems, 10) 
+        : 0;
+      
+      // Calculate total pages
+      const totalPages = Math.ceil(totalOrderCount / pageSize);
+      
+      // Return just the count info
       return NextResponse.json({
         success: true,
         data: {
@@ -94,35 +95,7 @@ export async function GET(
       });
     }
     
-    // If there are no orders, return an empty array (not an error)
-    if (totalOrderCount === 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          integrationId: id,
-          orderData: encryptResponse(JSON.stringify({
-            orders: [],
-            ordersCount: 0,
-            currentPage: page,
-            totalPages: 0,
-            totalCount: 0
-          })),
-          lastUpdated: new Date().toISOString()
-        }
-      });
-    }
-    
-    // Validate page parameter
-    if (page < 1 || page > totalPages) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Invalid page number. Valid range is 1-${totalPages}` 
-        },
-        { status: 400 }
-      );
-    }
-
+    // For regular data requests, fetch the orders directly
     // Fetch orders for the specified page with retry logic
     let retryCount = 0;
     const maxRetries = 3;
@@ -239,6 +212,14 @@ export async function GET(
         { status: 500 }
       );
     }
+    
+    // Get count information from the response if available
+    // The noOfItems property is available in the response even though TypeScript doesn't see it
+    // We'll use bracket notation to access it as a dynamic property
+    const totalOrderCount = ordersResponse && (ordersResponse as any)['noOfItems'] 
+      ? parseInt((ordersResponse as any)['noOfItems'], 10) 
+      : ordersResponse.results.length;
+    const totalPages = Math.ceil(totalOrderCount / pageSize);
     
     // Return success response with data for this page
     return NextResponse.json({

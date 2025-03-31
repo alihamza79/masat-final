@@ -60,30 +60,31 @@ export async function GET(
       region: integration.region
     });
 
-    // Get the total product offers count
-    const productOffersCountResults = await emagApi.getProductOffersCount();
-    
-    // Check if there was an error getting the product offers count
-    if (!productOffersCountResults) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch product offers count from eMAG API' 
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Extract the count
-    const totalProductOffersCount = productOffersCountResults.noOfItems 
-      ? parseInt(productOffersCountResults.noOfItems, 10) 
-      : 0;
-    
-    // Calculate total pages
-    const totalPages = Math.ceil(totalProductOffersCount / pageSize);
-    
-    // If count-only request, return just the count info
+    // For count-only requests, make just the count API call and return
     if (countOnly) {
+      // Get the total product offers count
+      const productOffersCountResults = await emagApi.getProductOffersCount();
+      
+      // Check if there was an error getting the product offers count
+      if (!productOffersCountResults) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Failed to fetch product offers count from eMAG API' 
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Extract the count
+      const totalProductOffersCount = productOffersCountResults.noOfItems 
+        ? parseInt(productOffersCountResults.noOfItems, 10) 
+        : 0;
+      
+      // Calculate total pages
+      const totalPages = Math.ceil(totalProductOffersCount / pageSize);
+      
+      // Return just the count info
       return NextResponse.json({
         success: true,
         data: {
@@ -94,35 +95,7 @@ export async function GET(
       });
     }
     
-    // If there are no product offers, return an empty array (not an error)
-    if (totalProductOffersCount === 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          integrationId: id,
-          productOffersData: encryptResponse(JSON.stringify({
-            productOffers: [],
-            productOffersCount: 0,
-            currentPage: page,
-            totalPages: 0,
-            totalCount: 0
-          })),
-          lastUpdated: new Date().toISOString()
-        }
-      });
-    }
-    
-    // Validate page parameter
-    if (page < 1 || page > totalPages) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Invalid page number. Valid range is 1-${totalPages}` 
-        },
-        { status: 400 }
-      );
-    }
-
+    // For regular data requests, fetch the product offers directly
     // Fetch product offers for the specified page with retry logic
     let retryCount = 0;
     const maxRetries = 3;
@@ -243,6 +216,14 @@ export async function GET(
         { status: 500 }
       );
     }
+
+    // Get count information from the response if available
+    // The noOfItems property is available in the response even though TypeScript doesn't see it
+    // We'll use bracket notation to access it as a dynamic property
+    const totalProductOffersCount = productOffersResponse && (productOffersResponse as any)['noOfItems'] 
+      ? parseInt((productOffersResponse as any)['noOfItems'], 10) 
+      : productOffersResponse.results.length;
+    const totalPages = Math.ceil(totalProductOffersCount / pageSize);
 
     // Return success response with data for this page
     return NextResponse.json({
