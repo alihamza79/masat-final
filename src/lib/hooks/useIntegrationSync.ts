@@ -14,7 +14,7 @@ import { useIntegrationSyncStore } from '@/app/(DashboardLayout)/integrations/st
 
 // Constants
 export const INTEGRATIONS_STATUS_QUERY_KEY = 'integrations-status';
-const ORDERS_PAGE_SIZE = 700;
+const ORDERS_PAGE_SIZE = 400;
 const PRODUCT_OFFERS_PAGE_SIZE = 100;
 
 // Types
