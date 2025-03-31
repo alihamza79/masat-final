@@ -42,13 +42,12 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
     }
   }, [syncErrors]);
 
-  // Use React Query for periodic sync checks - enabled to run in the background
+  // Use React Query for periodic sync checks
   useQuery({
     queryKey: [INTEGRATION_SYNC_QUERY_KEY],
     queryFn: async () => {
       // Don't run if there are no integrations or they're still loading
       if (integrations.length === 0 || isLoadingIntegrations) {
-        console.log('No integrations to sync or still loading integrations data');
         return null;
       }
       
@@ -56,8 +55,7 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
       if (!initialSyncDone.current) {
         console.log('Performing initial data sync for all integrations...');
         try {
-          // For initial sync, ensure we sync everything
-          await syncAllIntegrations(integrations as any);
+          await syncAllIntegrations(integrations as any, 3600000);
           initialSyncDone.current = true;
         } catch (error: any) {
           // Handle network errors gracefully
@@ -72,11 +70,10 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
       } 
       // For periodic checks, check based on the sync intervals
       else {
-        console.log('Running periodic sync check for integrations...');
+        console.log('Checking for integrations that need periodic sync...');
         try {
-          // Let the shouldSyncIntegration function determine what needs syncing
-          // based on ORDERS_REFETCH_INTERVAL (5 minutes) and PRODUCT_OFFERS_REFETCH_INTERVAL (12 hours)
-          await syncAllIntegrations(integrations as any);
+          // Use a smaller interval for periodic checks (5 minutes for orders)
+          await syncAllIntegrations(integrations as any, 300000); // 5 minutes
         } catch (error: any) {
           console.error('Error during periodic integration sync:', error);
           setSyncErrors(prev => [...prev, `Error in periodic sync: ${error.message}`]);
@@ -91,7 +88,7 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchInterval: SYNC_CHECK_INTERVAL,
-    refetchIntervalInBackground: true, // This is the key setting to ensure syncing continues in background tabs
+    refetchIntervalInBackground: true,
     // Don't retry on error
     retry: false
   });
