@@ -14,7 +14,7 @@ import { useIntegrationSyncStore } from '@/app/(DashboardLayout)/integrations/st
 
 // Constants
 export const INTEGRATIONS_STATUS_QUERY_KEY = 'integrations-status';
-const ORDERS_PAGE_SIZE = 1000;
+const ORDERS_PAGE_SIZE = 700;
 const PRODUCT_OFFERS_PAGE_SIZE = 100;
 
 // Types
@@ -107,7 +107,7 @@ export const useIntegrationSync = () => {
    */
   const fetchOrdersFromEmagApi = useCallback(async (integration: Integration): Promise<EmagOrder[]> => {
     const allOrders: EmagOrder[] = [];
-    const BATCH_SIZE = 5; // Process 5 pages concurrently
+    const BATCH_SIZE = 10; // Process 5 pages concurrently
     
     // Ensure integration has a valid ID
     if (!integration._id) {
