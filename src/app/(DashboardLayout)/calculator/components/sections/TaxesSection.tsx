@@ -173,7 +173,7 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
                     flex: '0 0 140px'
                   }}
                 >
-                  Income tax {calculations.taxRate}%
+                  {t('calculator.sections.taxes.incomeTax')} {calculations.taxRate}%
                 </Typography>
                 <Typography
                   sx={{

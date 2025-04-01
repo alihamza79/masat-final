@@ -1,5 +1,6 @@
 import { useTheme } from '@mui/material';
 import { ApexOptions } from 'apexcharts';
+import { useTranslation } from 'react-i18next';
 
 export const useSalesEstimatorCharts = (
   totalRevenue: number,
@@ -9,6 +10,7 @@ export const useSalesEstimatorCharts = (
   totalNetProfit: number
 ) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Bar chart options
   const barOptions: ApexOptions = {
@@ -66,7 +68,13 @@ export const useSalesEstimatorCharts = (
       },
       height: 350
     },
-    labels: ['Total Revenue', 'Total Expense', 'Total Taxes', 'Total VAT', 'Total Net Profit'],
+    labels: [
+      t('calculator.salesEstimator.totalRevenue'), 
+      t('calculator.salesEstimator.totalExpense'), 
+      t('calculator.salesEstimator.totalTaxes'), 
+      t('calculator.salesEstimator.totalVAT'), 
+      t('calculator.salesEstimator.totalProfit')
+    ],
     colors: ['#2CD9C5', '#FA896B', '#FFAE1F', '#5D87FF', '#49BEFF'],
     plotOptions: {
       pie: {
@@ -84,7 +92,7 @@ export const useSalesEstimatorCharts = (
               fontSize: '20px',
               fontWeight: 600,
               formatter: function(val: string) {
-                return parseFloat(val).toFixed(2) + ' LEI';
+                return parseFloat(val).toFixed(2) + ' ' + t('analytics.header.currency');
               }
             },
             total: {
@@ -92,9 +100,9 @@ export const useSalesEstimatorCharts = (
               color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.8)' : '#2A3547',
               fontSize: '20px',
               fontWeight: 600,
-              label: 'Total',
+              label: t('calculator.salesEstimator.total'),
               formatter: function(w) {
-                return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toFixed(2) + ' LEI';
+                return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toFixed(2) + ' ' + t('analytics.header.currency');
               }
             }
           }
@@ -137,11 +145,11 @@ export const useSalesEstimatorCharts = (
       formatter: function(legendName, opts) {
         // Format labels to be more consistent
         const simpleNames: Record<string, string> = {
-          'Total Revenue': 'Total Revenue',
-          'Total Expense': 'Total Expense',
-          'Total Taxes': 'Total Taxes',
-          'Total VAT': 'Total VAT',
-          'Total Net Profit': 'Total Net Profit'
+          [t('calculator.salesEstimator.totalRevenue')]: t('calculator.salesEstimator.totalRevenue'),
+          [t('calculator.salesEstimator.totalExpense')]: t('calculator.salesEstimator.totalExpense'),
+          [t('calculator.salesEstimator.totalTaxes')]: t('calculator.salesEstimator.totalTaxes'),
+          [t('calculator.salesEstimator.totalVAT')]: t('calculator.salesEstimator.totalVAT'),
+          [t('calculator.salesEstimator.totalProfit')]: t('calculator.salesEstimator.totalProfit')
         };
         
         return `<span style="font-weight: 500;">${simpleNames[legendName] || legendName}</span>`;
@@ -152,7 +160,7 @@ export const useSalesEstimatorCharts = (
       fillSeriesColor: false,
       y: {
         formatter: function(val: number) {
-          return val.toFixed(2) + ' LEI';
+          return val.toFixed(2) + ' ' + t('analytics.header.currency');
         }
       }
     }
@@ -246,7 +254,7 @@ export const useSalesEstimatorCharts = (
       lineCap: 'round',
       width: 3
     },
-    labels: ['Performance'],
+    labels: [t('calculator.salesEstimator.performance')],
     grid: {
       padding: {
         top: 25,

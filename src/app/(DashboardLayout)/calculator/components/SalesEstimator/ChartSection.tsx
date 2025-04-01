@@ -25,11 +25,11 @@ const ChartSection: React.FC<ChartSectionProps> = ({
 
   // Define custom legend colors that match the chart
   const legendItems = [
-    { name: 'Total Revenue', color: '#2CD9C5' },
-    { name: 'Total Expense', color: '#FA896B' },
-    { name: 'Total Taxes', color: '#FFAE1F' },
-    { name: 'Total VAT', color: '#5D87FF' },
-    { name: 'Total Net Profit', color: '#49BEFF' }
+    { name: t('calculator.salesEstimator.totalRevenue'), color: '#2CD9C5' },
+    { name: t('calculator.salesEstimator.totalExpense'), color: '#FA896B' },
+    { name: t('calculator.salesEstimator.totalTaxes'), color: '#FFAE1F' },
+    { name: t('calculator.salesEstimator.totalVAT'), color: '#5D87FF' },
+    { name: t('calculator.salesEstimator.totalProfit'), color: '#49BEFF' }
   ];
 
   return (
@@ -151,7 +151,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
               fontSize: { xs: '13px', sm: '14px' }
             }}
           >
-            Overall Performance
+            {t('calculator.salesEstimator.overallPerformance')}
           </Typography>
           <Box sx={{ 
             flex: 1,
@@ -252,7 +252,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
                   fontSize: '11px'
                 }}
               >
-                Poor
+                {t('calculator.salesEstimator.poor')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -273,7 +273,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
                   fontSize: '11px'
                 }}
               >
-                Average
+                {t('calculator.salesEstimator.average')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -294,7 +294,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
                   fontSize: '11px'
                 }}
               >
-                Good
+                {t('calculator.salesEstimator.good')}
               </Typography>
             </Box>
           </Stack>

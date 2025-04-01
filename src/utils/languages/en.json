@@ -116,7 +116,17 @@
             "totalProfit": "Total Net Profit",
             "profitMargin": "Profit Margin",
             "distribution": "Revenue Distribution",
-            "numberOfSales": "Number of sales (PCS)"
+            "numberOfSales": "Number of sales (PCS)",
+            "pcs": "PCS",
+            "overallPerformance": "Overall Performance",
+            "poor": "Poor",
+            "average": "Average",
+            "good": "Good",
+            "totalExpense": "Total Expense",
+            "totalTaxes": "Total Taxes",
+            "totalVAT": "Total VAT",
+            "total": "Total",
+            "performance": "Performance"
         },
         "sections": {
             "sales": {

@@ -125,7 +125,7 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                   right: { xs: 8, sm: 12 }
                 }}
               >
-                PCS
+                {t('calculator.salesEstimator.pcs')}
               </Typography>
             </Box>
           </Stack>

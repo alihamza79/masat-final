@@ -116,7 +116,17 @@
             "totalProfit": "Profit Net Total",
             "profitMargin": "Marjă de Profit",
             "distribution": "Distribuție Venituri",
-            "numberOfSales": "Număr de vânzări (BUC)"
+            "numberOfSales": "Număr de vânzări (BUC)",
+            "pcs": "BUC",
+            "overallPerformance": "Performanță Generală",
+            "poor": "Slab",
+            "average": "Mediu",
+            "good": "Bun",
+            "totalExpense": "Cheltuieli Totale",
+            "totalTaxes": "Taxe Totale",
+            "totalVAT": "TVA Total",
+            "total": "Total",
+            "performance": "Performanță"
         },
         "sections": {
             "sales": {
