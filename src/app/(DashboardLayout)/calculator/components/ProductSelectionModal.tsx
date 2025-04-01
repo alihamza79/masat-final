@@ -17,7 +17,8 @@ import {
   CircularProgress,
   TextField,
   InputAdornment,
-  Skeleton
+  Skeleton,
+  Tooltip
 } from '@mui/material';
 import { 
   IconX, 
@@ -143,15 +144,20 @@ const ProductSkeleton = () => {
       }}
     >
       <Stack spacing={1.5} height="100%">
-        <Skeleton 
-          variant="rectangular" 
-          width="100%" 
-          height={80} 
-          sx={{ 
-            borderRadius: '8px',
-            bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
-          }} 
-        />
+        <Box sx={{ position: 'relative', width: '100%', paddingBottom: '100%' }}>
+          <Skeleton 
+            variant="rectangular" 
+            sx={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              borderRadius: '8px',
+              bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
+            }} 
+          />
+        </Box>
         <Stack spacing={1} flex={1}>
           <Box>
             <Skeleton 
@@ -399,69 +405,92 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
         <Box
           sx={{
             width: '100%',
-            height: '80px',
+            height: '0',
+            paddingBottom: '100%', // Make it square with 1:1 aspect ratio
+            position: 'relative',
             bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
             borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             overflow: 'hidden'
           }}
         >
           {product.image ? (
-            <img 
+            <Box
+              component="img"
               src={product.image} 
               alt={product.name}
-              style={{ 
-                maxWidth: '100%', 
-                maxHeight: '100%', 
-                objectFit: 'contain' 
+              sx={{ 
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
               }}
             />
           ) : (
-            <Typography 
-              variant="h3" 
-              color="text.secondary"
-              sx={{ opacity: 0.7 }}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
             >
-              {(() => {
-                // Select appropriate icon based on product category or brand
-                const category = product.category?.toLowerCase() || '';
-                const name = product.name?.toLowerCase() || '';
-                
-                if (product.brand === 'Apple' || name.includes('iphone') || name.includes('macbook') || name.includes('ipad')) {
-                  return <IconBrandApple size={32} />;
-                } else if (category.includes('laptop') || name.includes('laptop')) {
-                  return <IconDeviceLaptop size={32} />;
-                } else if (category.includes('audio') || name.includes('headphone') || name.includes('airpod') || name.includes('headset')) {
-                  return <IconHeadphones size={32} />;
-                } else if (category.includes('smartphone') || category.includes('phone') || name.includes('phone')) {
-                  return <IconDeviceMobile size={32} />;
-                } else if (category.includes('monitor') || category.includes('display') || name.includes('monitor')) {
-                  return <IconDeviceDesktop size={32} />;
-                } else if (category.includes('clothing') || category.includes('apparel') || name.includes('shirt') || name.includes('clothing')) {
-                  return <IconShirt size={32} />;
-                } else {
-                  // Default icon for other products
-                  return <IconPackage size={32} />;
-                }
-              })()}
-            </Typography>
+              <Typography 
+                variant="h3" 
+                color="text.secondary"
+                sx={{ opacity: 0.7 }}
+              >
+                {(() => {
+                  // Select appropriate icon based on product category or brand
+                  const category = product.category?.toLowerCase() || '';
+                  const name = product.name?.toLowerCase() || '';
+                  
+                  if (product.brand === 'Apple' || name.includes('iphone') || name.includes('macbook') || name.includes('ipad')) {
+                    return <IconBrandApple size={32} />;
+                  } else if (category.includes('laptop') || name.includes('laptop')) {
+                    return <IconDeviceLaptop size={32} />;
+                  } else if (category.includes('audio') || name.includes('headphone') || name.includes('airpod') || name.includes('headset')) {
+                    return <IconHeadphones size={32} />;
+                  } else if (category.includes('smartphone') || category.includes('phone') || name.includes('phone')) {
+                    return <IconDeviceMobile size={32} />;
+                  } else if (category.includes('monitor') || category.includes('display') || name.includes('monitor')) {
+                    return <IconDeviceDesktop size={32} />;
+                  } else if (category.includes('clothing') || category.includes('apparel') || name.includes('shirt') || name.includes('clothing')) {
+                    return <IconShirt size={32} />;
+                  } else {
+                    // Default icon for other products
+                    return <IconPackage size={32} />;
+                  }
+                })()}
+              </Typography>
+            </Box>
           )}
         </Box>
         <Stack spacing={1} flex={1}>
           <Box>
-            <Typography 
-              variant="subtitle1"
-              sx={{ 
-                fontSize: '13px',
-                fontWeight: 600,
-                mb: 0.5,
-                color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
-              }}
-            >
-              {product.name}
-            </Typography>
+            <Tooltip title={product.name.length > 50 ? product.name : ""} enterDelay={500} arrow>
+              <Typography 
+                variant="subtitle1"
+                sx={{ 
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  mb: 0.5,
+                  color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}
+              >
+                {product.name.length > 50 ? `${product.name.substring(0, 50)}...` : product.name}
+              </Typography>
+            </Tooltip>
             <Stack 
               direction="row" 
               spacing={1} 
@@ -725,12 +754,11 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
           <Box
             sx={{
               width: '100%',
-              height: '80px',
+              height: '0',
+              paddingBottom: '100%', // Make it square with 1:1 aspect ratio
+              position: 'relative',
               bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
               borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               overflow: 'hidden'
             }}
           >
@@ -740,6 +768,9 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                 src={calculation.image}
                 alt={calculation.title}
                 sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
@@ -754,44 +785,66 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                 }}
               />
             ) : (
-              <Typography 
-                className="fallback-icon"
-                variant="h3" 
-                color="success.main"
-                sx={{ opacity: 0.7, display: 'block' }}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
               >
-                <IconBuildingStore size={32} />
-              </Typography>
+                <Typography 
+                  className="fallback-icon"
+                  variant="h3" 
+                  color="success.main"
+                  sx={{ opacity: 0.7, display: 'block' }}
+                >
+                  <IconBuildingStore size={32} />
+                </Typography>
+              </Box>
             )}
           </Box>
           <Stack spacing={1} flex={1}>
             <Box>
-              <Typography 
-                variant="subtitle1"
-                sx={{ 
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  mb: 0.5,
-                  color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900'
-                }}
-              >
-                {calculation.title}
-              </Typography>
-              {calculation.description && (
+              <Tooltip title={calculation.title.length > 50 ? calculation.title : ""} enterDelay={500} arrow>
                 <Typography 
-                  variant="caption" 
-                  color="text.secondary"
+                  variant="subtitle1"
                   sx={{ 
-                    fontSize: '11px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    mb: 0.5,
+                    color: theme.palette.mode === 'dark' ? 'grey.300' : 'grey.900',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                    WebkitBoxOrient: 'vertical'
                   }}
                 >
-                  {calculation.description}
+                  {calculation.title.length > 50 ? `${calculation.title.substring(0, 50)}...` : calculation.title}
                 </Typography>
+              </Tooltip>
+              {calculation.description && (
+                <Tooltip title={calculation.description} enterDelay={500} arrow>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: '11px',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {calculation.description}
+                  </Typography>
+                </Tooltip>
               )}
             </Box>
             <Typography 
