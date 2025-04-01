@@ -275,6 +275,8 @@
             "updateError": "Failed to update integration: ",
             "deleteSuccess": "Integration deleted successfully!",
             "deleteError": "Failed to delete integration: ",
+            "refreshSuccess": "Data refresh and sync initiated successfully!",
+            "refreshError": "Failed to refresh and sync data",
             "missingId": "Cannot update integration: Missing ID",
             "fillFields": "Please fill in all required fields",
             "invalidCredentials": "Invalid credentials",

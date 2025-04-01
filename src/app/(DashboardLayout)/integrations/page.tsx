@@ -4,13 +4,13 @@ import { Grid, Box, Typography, Button } from '@mui/material';
 import PageHeader from '@/app/components/analytics-header/PageHeader';
 import IntegrationsTable from './components/IntegrationsTable';
 import PageContainer from '@/app/components/container/PageContainer';
-import { IconPlus, IconRefresh } from '@tabler/icons-react';
+import { IconPlus, IconRefresh, IconDownload } from '@tabler/icons-react';
 import IntegrationFormDialog, { IntegrationFormData } from './components/IntegrationFormDialog';
 import { useIntegrations } from '@/lib/hooks/useIntegrations';
 import Toast from '@/app/components/common/Toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { INTEGRATIONS_STATUS_QUERY_KEY } from '@/lib/hooks/useIntegrationSync';
+import { INTEGRATIONS_STATUS_QUERY_KEY, useIntegrationSync } from '@/lib/hooks/useIntegrationSync';
 
 const IntegrationsPage = () => {
   const { t } = useTranslation();
@@ -23,6 +23,7 @@ const IntegrationsPage = () => {
   });
 
   const queryClient = useQueryClient();
+  const { syncAllIntegrations } = useIntegrationSync();
 
   const { 
     integrations,
@@ -59,9 +60,18 @@ const IntegrationsPage = () => {
     try {
       // Invalidate queries to force refresh
       queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
+      
+      // Trigger data sync for all integrations
+      if (integrations && integrations.length > 0) {
+        // Use a smaller interval for the manual refresh (5 minutes for orders)
+        await syncAllIntegrations(integrations as any, 300000);
+      }
+      
+      // Refresh integration list
       await refetchIntegrations();
     } catch (error) {
-      console.error('Failed to refresh data:', error);
+      console.error('Failed to refresh and sync data:', error);
+      showToast(t('integrations.toast.refreshError', 'Failed to refresh and sync data'), 'error');
     } finally {
       setIsRefetching(false);
     }

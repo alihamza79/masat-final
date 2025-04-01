@@ -275,6 +275,8 @@
             "updateError": "Eroare la actualizarea integrării: ",
             "deleteSuccess": "Integrare ștearsă cu succes!",
             "deleteError": "Eroare la ștergerea integrării: ",
+            "refreshSuccess": "Reîmprospătarea și sincronizarea datelor inițiate cu succes!",
+            "refreshError": "Eroare la reîmprospătarea și sincronizarea datelor",
             "missingId": "Nu se poate actualiza integrarea: ID lipsă",
             "fillFields": "Vă rugăm să completați toate câmpurile obligatorii",
             "invalidCredentials": "Date de autentificare invalide",
