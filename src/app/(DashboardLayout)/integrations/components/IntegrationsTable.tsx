@@ -197,7 +197,7 @@ const IntegrationsTableRow = memo(({
     queryFn: async () => {
       if (!integration._id) return null;
       try {
-        const response = await axios.get(`/api/db/integrations/status?integrationId=${integration._id}`);
+        const response = await axios.get(`/api/db/integrations?integrationId=${integration._id}`);
         return response.data.success ? response.data.data : null;
       } catch (error) {
         console.error(`Error fetching status for integration ${integration._id}:`, error);

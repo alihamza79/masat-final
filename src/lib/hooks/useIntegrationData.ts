@@ -23,7 +23,7 @@ export const useIntegrationData = (integrationId: string | undefined, options = 
       if (!integrationId) return null;
       
       try {
-        const response = await axios.get(`/api/db/integrations/status?integrationId=${integrationId}`);
+        const response = await axios.get(`/api/db/integrations?integrationId=${integrationId}`);
         return response.data.success ? response.data.data : null;
       } catch (error) {
         console.error(`Error fetching integration details for ${integrationId}:`, error);
