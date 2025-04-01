@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST endpoint to store orders
  * Required body: integrationId, orders
- * This endpoint completely replaces existing orders for the integration with the newly fetched data.
+ * This endpoint appends new orders to the existing orders for the integration.
  * Uses MongoDB transactions for atomicity - either all operations succeed or none do.
  */
 export async function POST(request: NextRequest) {
@@ -96,23 +96,15 @@ export async function POST(request: NextRequest) {
     session.startTransaction();
     
     try {
-      // Delete all existing orders for this integration within the transaction
-      console.log(`Deleting all existing orders for integration ${integrationId} in transaction...`);
-      const deleteResult = await Order.deleteMany(
-        { integrationId }, 
-        { session }
-      );
-      console.log(`Deleted ${deleteResult.deletedCount || 0} existing orders`);
-      
-      // Insert all new orders in one go within the same transaction
+      // Insert all new orders in one go within the transaction
       const insertedDocs = await Order.insertMany(
         formattedOrders,
         { session }
       );
       
-      console.log(`Inserted ${insertedDocs.length} orders for integration ${integrationId}`);
+      console.log(`Inserted ${insertedDocs.length} new orders for integration ${integrationId}`);
       
-      // Commit the transaction if both operations succeeded
+      // Commit the transaction if operation succeeded
       await session.commitTransaction();
       console.log(`Transaction committed successfully for integration ${integrationId}`);
       
@@ -120,7 +112,6 @@ export async function POST(request: NextRequest) {
         success: true,
         data: {
           results: {
-            deletedCount: deleteResult.deletedCount,
             insertedCount: insertedDocs.length
           },
           totalProcessed: orders.length

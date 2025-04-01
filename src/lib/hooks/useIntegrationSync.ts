@@ -107,7 +107,7 @@ export const useIntegrationSync = () => {
    */
   const fetchOrdersFromEmagApi = useCallback(async (integration: Integration): Promise<EmagOrder[]> => {
     const allOrders: EmagOrder[] = [];
-    const BATCH_SIZE = 10; // Process 5 pages concurrently
+    const BATCH_SIZE = 10; // Process 10 pages concurrently
     
     // Ensure integration has a valid ID
     if (!integration._id) {
@@ -131,17 +131,22 @@ export const useIntegrationSync = () => {
       
       const orderCountResults = orderCountResponse.data.data.orderCount;
       const totalOrderCount = parseInt(orderCountResults?.noOfItems || '0', 10);
+      const currentOrdersCount = integration.ordersCount || 0;
+      
+      // Calculate which pages we need to fetch
+      const startPage = Math.floor(currentOrdersCount / ORDERS_PAGE_SIZE) + 1;
       const totalPages = Math.ceil(totalOrderCount / ORDERS_PAGE_SIZE);
       
       console.log(`Found ${totalOrderCount} orders (${totalPages} pages) for integration ${integrationId}`);
+      console.log(`Current orders count: ${currentOrdersCount}, starting from page ${startPage}`);
       
-      if (totalPages === 0) {
-        console.log(`No orders found for integration ${integrationId}`);
+      if (totalPages === 0 || startPage > totalPages) {
+        console.log(`No new orders to fetch for integration ${integrationId}`);
         return [];
       }
       
       // Process pages in parallel batches
-      for (let batchStart = 1; batchStart <= totalPages; batchStart += BATCH_SIZE) {
+      for (let batchStart = startPage; batchStart <= totalPages; batchStart += BATCH_SIZE) {
         const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, totalPages);
         console.log(`Processing orders batch: pages ${batchStart}-${batchEnd} of ${totalPages}`);
         
@@ -177,6 +182,14 @@ export const useIntegrationSync = () => {
                   integrationId
                 }));
                 
+                // For the first page, filter out orders that are already in the database
+                if (page === startPage) {
+                  const startIndex = currentOrdersCount % ORDERS_PAGE_SIZE;
+                  const filteredOrders = ordersWithId.slice(startIndex);
+                  console.log(`Filtered ${ordersWithId.length - filteredOrders.length} existing orders from page ${page}`);
+                  return filteredOrders;
+                }
+                
                 console.log(`Fetched ${ordersWithId.length} orders from page ${page}/${totalPages}`);
                 return ordersWithId;
               } else {
@@ -195,13 +208,13 @@ export const useIntegrationSync = () => {
         allOrders.push(...batchOrders);
         
         // Calculate progress percentage
-        const progress = Math.round((batchEnd / totalPages) * 100);
-        console.log(`Orders import progress: ${progress}% (${allOrders.length} orders so far)`);
+        const progress = Math.round(((batchEnd - startPage + 1) / (totalPages - startPage + 1)) * 100);
+        console.log(`Orders import progress: ${progress}% (${allOrders.length} new orders so far)`);
         
         // Update progress in the store ONLY - don't update DB count until fully saved
         updateProgress(integrationId, {
           ordersProgress: progress,
-          ordersCount: allOrders.length
+          ordersCount: currentOrdersCount + allOrders.length
         });
         
         // Update status in DB after each batch
@@ -211,12 +224,12 @@ export const useIntegrationSync = () => {
         );
       }
       
-      console.log(`Completed fetching all ${allOrders.length} orders for integration ${integrationId}`);
+      console.log(`Completed fetching ${allOrders.length} new orders for integration ${integrationId}`);
       
       // Update final progress in store only
       updateProgress(integrationId, {
         ordersProgress: 100,
-        ordersCount: allOrders.length
+        ordersCount: currentOrdersCount + allOrders.length
       });
       
       return allOrders;
