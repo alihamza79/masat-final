@@ -88,7 +88,7 @@ export const useIntegrationSync = () => {
       if (lastOrdersImport !== undefined) payload.lastOrdersImport = lastOrdersImport;
       if (lastProductOffersImport !== undefined) payload.lastProductOffersImport = lastProductOffersImport;
       
-      const response = await axios.put(`/api/db/integrations/status?integrationId=${integrationId}`, payload);
+      const response = await axios.put(`/api/db/integrations?integrationId=${integrationId}`, payload);
       
       if (response.data.success) {
         console.log(`Successfully updated integration ${integrationId} status to ${status}`);
@@ -122,7 +122,7 @@ export const useIntegrationSync = () => {
         startSyncing(integrationId);
       }
       
-      // Get the order count first
+      // Get the order count from eMAG API first
       const orderCountResponse = await axios.get(`/api/integrations/${integrationId}/order-count`);
       
       if (!orderCountResponse.data.success) {
@@ -131,14 +131,20 @@ export const useIntegrationSync = () => {
       
       const orderCountResults = orderCountResponse.data.data.orderCount;
       const totalOrderCount = parseInt(orderCountResults?.noOfItems || '0', 10);
-      const currentOrdersCount = integration.ordersCount || 0;
+      
+      // Get the actual count of orders in the database
+      const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
+      if (!dbOrdersCountResponse.data.success) {
+        throw new Error(dbOrdersCountResponse.data.error || 'Failed to fetch database orders count');
+      }
+      const dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
       
       // Calculate which pages we need to fetch
-      const startPage = Math.floor(currentOrdersCount / ORDERS_PAGE_SIZE) + 1;
+      const startPage = Math.floor(dbOrdersCount / ORDERS_PAGE_SIZE) + 1;
       const totalPages = Math.ceil(totalOrderCount / ORDERS_PAGE_SIZE);
       
       console.log(`Found ${totalOrderCount} orders (${totalPages} pages) for integration ${integrationId}`);
-      console.log(`Current orders count: ${currentOrdersCount}, starting from page ${startPage}`);
+      console.log(`Current orders count in DB: ${dbOrdersCount}, starting from page ${startPage}`);
       
       if (totalPages === 0 || startPage > totalPages) {
         console.log(`No new orders to fetch for integration ${integrationId}`);
@@ -184,7 +190,7 @@ export const useIntegrationSync = () => {
                 
                 // For the first page, filter out orders that are already in the database
                 if (page === startPage) {
-                  const startIndex = currentOrdersCount % ORDERS_PAGE_SIZE;
+                  const startIndex = dbOrdersCount % ORDERS_PAGE_SIZE;
                   const filteredOrders = ordersWithId.slice(startIndex);
                   console.log(`Filtered ${ordersWithId.length - filteredOrders.length} existing orders from page ${page}`);
                   return filteredOrders;
@@ -214,7 +220,7 @@ export const useIntegrationSync = () => {
         // Update progress in the store ONLY - don't update DB count until fully saved
         updateProgress(integrationId, {
           ordersProgress: progress,
-          ordersCount: currentOrdersCount + allOrders.length
+          ordersCount: dbOrdersCount + allOrders.length
         });
         
         // Update status in DB after each batch
@@ -229,7 +235,7 @@ export const useIntegrationSync = () => {
       // Update final progress in store only
       updateProgress(integrationId, {
         ordersProgress: 100,
-        ordersCount: currentOrdersCount + allOrders.length
+        ordersCount: dbOrdersCount + allOrders.length
       });
       
       return allOrders;
@@ -373,8 +379,9 @@ export const useIntegrationSync = () => {
         return 0; // Return 0 since no orders were saved
       }
       
-      console.log(`Saving ${orders.length} orders to database for integration ${integrationId}...`);
+      console.log(`Saving ${orders.length} new orders to database for integration ${integrationId}...`);
       
+      // Save the new orders
       const response = await axios.post('/api/db/orders', {
         integrationId,
         orders
@@ -382,9 +389,10 @@ export const useIntegrationSync = () => {
       
       if (response.data.success) {
         console.log(`Successfully saved ${orders.length} orders to database`);
-        // Get the actual count of orders saved from the API response
+
+        // Get the number of newly inserted orders from the API response
         const insertedCount = response.data.data?.results?.insertedCount || orders.length;
-        console.log(`Successfully saved ${insertedCount} orders to database`);
+        console.log(`Successfully saved ${insertedCount} new orders to database`);
         
         // Update the store with the accurate count
         updateProgress(integrationId, {

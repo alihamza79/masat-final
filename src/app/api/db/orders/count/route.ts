@@ -3,6 +3,10 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import Order from '@/models/Order';
 import mongoose from 'mongoose';
 
+/**
+ * GET endpoint to count orders for a specific integration
+ * Required query parameter: integrationId
+ */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -25,13 +29,13 @@ export async function GET(request: NextRequest) {
     
     await connectToDatabase();
     
-    // Get total count
-    const totalCount = await Order.countDocuments({ integrationId });
+    // Count orders for the specified integration
+    const count = await Order.countDocuments({ integrationId });
     
     return NextResponse.json({
       success: true,
       data: {
-        totalCount
+        count
       }
     });
   } catch (error: any) {
