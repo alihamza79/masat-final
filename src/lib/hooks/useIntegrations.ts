@@ -87,18 +87,7 @@ export const useIntegrations = () => {
         // Invalidate and refetch integrations immediately
         await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
         
-        // Start data sync in the background - don't await this
-        setTimeout(() => {
-          syncIntegrationById(integrationId)
-            .then(() => {
-              console.log(`Background sync completed for integration ${integrationId}`);
-              // Refresh integration data after sync completes
-              queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-            })
-            .catch(error => {
-              console.error(`Background sync failed for integration ${integrationId}:`, error);
-            });
-        }, 100);
+        // No need to sync after update since username and region can't change
       }
     }
   });

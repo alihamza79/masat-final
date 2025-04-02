@@ -8,7 +8,8 @@ import {
   MenuItem,
   Grid,
   IconButton,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Typography
 } from '@mui/material';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -84,6 +85,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
             label={t('integrations.form.fields.region')}
             onChange={handleSelectChange}
             required
+            disabled={isEdit}
             sx={{
               borderRadius: '8px',
               '& .MuiSelect-select': {
@@ -108,6 +110,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
           variant="outlined"
           size="small"
           required
+          disabled={isEdit}
           InputLabelProps={{
             sx: { 
               mt: 0.2,

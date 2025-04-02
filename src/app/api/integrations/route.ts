@@ -126,7 +126,7 @@ export async function PUT(request: NextRequest) {
     const { _id, accountName, username, password, region, accountType } = body;
 
     // Validate required fields
-    if (!_id || !accountName || !username || !region || !accountType) {
+    if (!_id || !accountName || !accountType) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -157,27 +157,18 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    // Check for duplicate username AND region combination (excluding current integration)
-    const duplicateUsernameAndRegion = await Integration.findOne({
-      _id: { $ne: _id },
-      username,
-      region
-    });
-    
-    if (duplicateUsernameAndRegion) {
-      return NextResponse.json(
-        { success: false, error: `An integration with this username and region already exists` },
-        { status: 409 }
-      );
-    }
-
     // If password is provided, validate and encrypt
     let encryptedPassword = existingIntegration.password;
     if (password) {
+      // Use existing username and region for validation
       const decodedPassword = Buffer.from(password, 'base64').toString();
       
-      // Validate credentials with eMAG API
-      const emagApi = new EmagApiService({ username, password: decodedPassword, region });
+      // Validate credentials with eMAG API using existing username and region
+      const emagApi = new EmagApiService({ 
+        username: existingIntegration.username, 
+        password: decodedPassword, 
+        region: existingIntegration.region 
+      });
       const validationResult = await emagApi.validateCredentials();
 
       if (!validationResult.valid) {
@@ -190,14 +181,13 @@ export async function PUT(request: NextRequest) {
       encryptedPassword = encrypt(decodedPassword);
     }
 
-    // Update integration
+    // Update integration - always keep original username and region
     const updatedIntegration = await Integration.findByIdAndUpdate(
       _id,
       {
         accountName,
-        username,
+        // username and region are not updated
         password: encryptedPassword,
-        region,
         accountType
       },
       { new: true, select: '-password' }
