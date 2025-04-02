@@ -4,8 +4,8 @@ import { useState } from 'react';
  * Hook to fetch the commission rate from eMAG API
  */
 export const useCommission = () => {
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCached, setIsCached] = useState<boolean>(false);
 
   /**
    * Fetch commission rate from eMAG API based on product offer ID
@@ -18,12 +18,17 @@ export const useCommission = () => {
       return null;
     }
 
-    setLoading(true);
     setError(null);
+    setIsCached(false);
     
     try {
       const response = await fetch(`/api/v1/commission/estimate/${productOfferId}`);
       const data = await response.json();
+      
+      // Check if we're using a cached value
+      if (data.fromCache) {
+        setIsCached(true);
+      }
       
       // Check if we have a valid response
       if (data.emagResponse?.code === 200 && data.emagResponse?.data?.value) {
@@ -59,15 +64,13 @@ export const useCommission = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch commission rate';
       setError(errorMessage);
       return 0; // Default to 0% on errors
-    } finally {
-      setLoading(false);
     }
   };
 
   return {
     fetchCommission,
-    loading,
-    error
+    error,
+    isCached
   };
 };
 

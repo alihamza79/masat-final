@@ -16,6 +16,7 @@ export interface IProductOffer extends Document {
   name?: string;
   brand?: string;
   part_number?: string;
+  commission?: number; // Cached commission value from eMAG API
   // Any other fields from the eMAG API
   [key: string]: any;
 }
@@ -48,6 +49,7 @@ const ProductOfferSchema = new Schema<IProductOffer>({
   name: String,
   brand: String,
   part_number: String,
+  commission: Number, // Store cached commission value to avoid repeated API calls
   // Store the entire eMAG product offer object as it comes from the API
 }, {
   timestamps: true, // Automatically manage createdAt and updatedAt fields

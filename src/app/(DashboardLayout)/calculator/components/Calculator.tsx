@@ -32,13 +32,15 @@ import ProfitSection from './sections/ProfitSection';
 import SalesSection from './sections/SalesSection';
 import TaxesSection from './sections/TaxesSection';
 import { toast } from 'react-hot-toast';
+import { useCommissionLoading } from '../context/CommissionLoadingContext';
 
 const Calculator = () => {
   const { t } = useTranslation();
   // integrationsData removed since it's no longer used
   const { integrations } = useIntegrationsStore();
   const { products, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
-  const { fetchCommission } = useCommission();
+  const { fetchCommission, error: commissionError, isCached } = useCommission();
+  const { isLoading: commissionLoading, setIsLoading: setCommissionLoading } = useCommissionLoading();
   
   // Move selectedProduct state declaration before the hooks that use it
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -324,13 +326,21 @@ const Calculator = () => {
         
         if (productOfferId) {
           try {
+            // Set commission source to emag before fetching to show loading state immediately
+            dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+            
+            // Set loading state to true before fetching
+            setCommissionLoading(true);
+            
             // Fetch commission from API using product offer ID
             commission = await fetchCommission(productOfferId);
+            
+            // Set loading state to false after fetching
+            setCommissionLoading(false);
             
             if (commission !== null) {
               // Set commission in the global state
               dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
               
               // Update commission for all categories
               Object.keys(state.categories).forEach((category) => {
@@ -364,6 +374,9 @@ const Calculator = () => {
               });
             }
           } catch (error) {
+            // Set loading state to false in case of error
+            setCommissionLoading(false);
+            
             console.error('Error fetching commission:', error);
             
             // Fallback to static JSON
@@ -430,13 +443,21 @@ const Calculator = () => {
         
         if (productOfferId) {
           try {
+            // Set commission source to emag before fetching to show loading state immediately
+            dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+            
+            // Set loading state to true before fetching
+            setCommissionLoading(true);
+            
             // Fetch commission from API using product offer ID
             commission = await fetchCommission(productOfferId);
+            
+            // Set loading state to false after fetching
+            setCommissionLoading(false);
             
             if (commission !== null) {
               // Set commission in the global state
               dispatch({ type: 'SET_EMAG_COMMISSION', payload: commission.toString() });
-              dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
               
               // Update commission for all categories
               Object.keys(state.categories).forEach((category) => {
@@ -470,6 +491,9 @@ const Calculator = () => {
               });
             }
           } catch (error) {
+            // Set loading state to false in case of error
+            setCommissionLoading(false);
+            
             console.error('Error fetching commission:', error);
             
             // Fallback to static JSON

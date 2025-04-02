@@ -18,12 +18,12 @@ import CustomTextField from '@/app/components/forms/theme-elements/CustomTextFie
 import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { useTranslation } from 'react-i18next';
-import useCommission from '@/lib/hooks/useCommission';
+import { useCommissionLoading } from '../context/CommissionLoadingContext';
 
 const TradeProfiles = () => {
   const { t } = useTranslation();
   const { state, dispatch } = useCalculator();
-  const { loading: commissionLoading } = useCommission();
+  const { isLoading: commissionLoading } = useCommissionLoading();
 
   // State for form values
   const [profileType, setProfileType] = React.useState(state.profileType);

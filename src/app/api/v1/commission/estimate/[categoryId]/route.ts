@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import Integration from '@/models/Integration';
+import ProductOffer from '@/models/ProductOffer';
 import { decrypt } from '@/lib/utils/encryption';
 import axios from 'axios';
 
@@ -37,6 +38,28 @@ export async function GET(
 
     // Connect to the database
     await connectToDatabase();
+
+    // First, check if we already have the commission saved in the database
+    const existingProduct = await ProductOffer.findOne({ emagProductOfferId: parseInt(productOfferId) });
+    
+    // If the product already has a commission value, return it without making an API call
+    if (existingProduct && existingProduct.commission !== undefined && existingProduct.commission !== null) {
+      return NextResponse.json({
+        emagResponse: {
+          code: 200,
+          data: {
+            value: existingProduct.commission
+          }
+        },
+        status: 200,
+        statusText: "OK",
+        productOfferId: productOfferId,
+        fromCache: true
+      }, { 
+        status: 200, 
+        headers: corsHeaders 
+      });
+    }
 
     // Find the first active integration to use for authentication
     const integration = await Integration.findOne({});
@@ -75,12 +98,40 @@ export async function GET(
         validateStatus: () => true // Accept any status code to pass through
       });
       
+      // If the API call was successful and returned a commission value, save it to the database
+      if (response.status === 200 && 
+          response.data && 
+          response.data.code === 200 && 
+          response.data.data && 
+          response.data.data.value !== undefined) {
+        
+        // Extract commission value
+        let commissionValue;
+        if (typeof response.data.data.value === 'string') {
+          commissionValue = parseFloat(response.data.data.value);
+        } else {
+          commissionValue = Number(response.data.data.value);
+        }
+        
+        // Convert to percentage if needed
+        const commissionPercentage = commissionValue > 1 ? commissionValue : commissionValue * 100;
+        
+        // Find and update the product in the database with the commission value
+        if (existingProduct) {
+          await ProductOffer.updateOne(
+            { emagProductOfferId: parseInt(productOfferId) },
+            { $set: { commission: commissionPercentage } }
+          );
+        }
+      }
+      
       // Return the raw response from eMAG with the same status code
       return NextResponse.json({
         emagResponse: response.data,
         status: response.status,
         statusText: response.statusText,
-        productOfferId: productOfferId
+        productOfferId: productOfferId,
+        fromCache: false
       }, { 
         status: response.status, 
         headers: corsHeaders 
