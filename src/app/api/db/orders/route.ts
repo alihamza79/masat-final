@@ -46,12 +46,8 @@ export async function GET(request: NextRequest) {
  * POST endpoint to store orders
  * Required body: integrationId, orders
  * This endpoint appends new orders to the existing orders for the integration.
- * Uses MongoDB transactions for atomicity - either all operations succeed or none do.
  */
 export async function POST(request: NextRequest) {
-  // We'll need this to track the session for cleanup in finally block
-  let session = null;
-  
   try {
     const body = await request.json();
     const { integrationId, orders } = body;
@@ -91,48 +87,25 @@ export async function POST(request: NextRequest) {
       };
     });
     
-    // Start a MongoDB session and transaction
-    session = await mongoose.startSession();
-    session.startTransaction();
+    // Insert all new orders directly without using a session
+    const insertedDocs = await Order.insertMany(formattedOrders);
     
-    try {
-      // Insert all new orders in one go within the transaction
-      const insertedDocs = await Order.insertMany(
-        formattedOrders,
-        { session }
-      );
-      
-      console.log(`Inserted ${insertedDocs.length} new orders for integration ${integrationId}`);
-      
-      // Commit the transaction if operation succeeded
-      await session.commitTransaction();
-      console.log(`Transaction committed successfully for integration ${integrationId}`);
-      
-      return NextResponse.json({
-        success: true,
-        data: {
-          results: {
-            insertedCount: insertedDocs.length
-          },
-          totalProcessed: orders.length
-        }
-      });
-    } catch (transactionError) {
-      // If any operation fails, abort the transaction to roll back all changes
-      await session.abortTransaction();
-      console.error(`Transaction aborted for integration ${integrationId}:`, transactionError);
-      throw transactionError; // Re-throw to be caught by outer catch block
-    }
+    console.log(`Inserted ${insertedDocs.length} new orders for integration ${integrationId}`);
+    
+    return NextResponse.json({
+      success: true,
+      data: {
+        results: {
+          insertedCount: insertedDocs.length
+        },
+        totalProcessed: orders.length
+      }
+    });
   } catch (error: any) {
     console.error('Error storing orders:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to store orders' },
       { status: 500 }
     );
-  } finally {
-    // Always end the session, even if there was an error
-    if (session) {
-      session.endSession();
-    }
   }
 } 
