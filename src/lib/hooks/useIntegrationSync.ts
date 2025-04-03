@@ -37,6 +37,40 @@ export const useIntegrationSync = () => {
   } = useIntegrationSyncStore();
 
   /**
+   * Utility function to invalidate and refetch all relevant queries
+   * @param mode 'specific' for a single integration, 'all' for all integrations
+   * @param integrationId Optional integration ID for specific invalidation
+   */
+  const invalidateAndRefetchQueries = useCallback(async (mode: 'specific' | 'all' = 'specific', integrationId?: string) => {
+    console.log(`Invalidating and refetching queries in ${mode} mode${integrationId ? ` for integration ${integrationId}` : ''}`);
+    
+    // Always invalidate and refetch main integrations list
+    await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+    await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+    
+    // Always invalidate integrations status
+    await queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
+    
+    if (mode === 'specific' && integrationId) {
+      // Invalidate and refetch specific integration data
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+    } else if (mode === 'all') {
+      // Invalidate and refetch all integration details, orders, and product offers
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY] });
+    }
+  }, [queryClient]);
+
+  /**
    * Updates the import status of an integration
    */
   const updateIntegrationStatus = useCallback(async (
@@ -94,14 +128,13 @@ export const useIntegrationSync = () => {
       if (response.data.success) {
         console.log(`Successfully updated integration ${integrationId} status to ${status}`);
         
-        // Invalidate the query for any status change
-        queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
-        queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
+        // Use the utility function to invalidate and refetch queries
+        await invalidateAndRefetchQueries('specific', integrationId);
       }
     } catch (error) {
       console.error(`Error updating integration status for ${integrationId}:`, error);
     }
-  }, [queryClient, startSyncing, updateProgress, stopSyncing, isSyncing]);
+  }, [queryClient, startSyncing, updateProgress, stopSyncing, isSyncing, invalidateAndRefetchQueries]);
 
   /**
    * Fetches orders from eMAG API with parallel pagination
@@ -391,8 +424,8 @@ export const useIntegrationSync = () => {
           ordersProgress: 100
         });
         
-        // Invalidate orders query to refresh data
-        queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
+        // Use the utility function to invalidate and refetch queries
+        await invalidateAndRefetchQueries('specific', integrationId);
         
         return insertedCount; // Return only the count of newly inserted orders
       } else {
@@ -402,7 +435,7 @@ export const useIntegrationSync = () => {
       console.error(`Error saving orders to DB for integration ${integrationId}:`, error);
       throw error;
     }
-  }, [queryClient, updateProgress]);
+  }, [queryClient, updateProgress, invalidateAndRefetchQueries]);
 
   /**
    * Save product offers to MongoDB
@@ -432,8 +465,8 @@ export const useIntegrationSync = () => {
           productOffersCount: insertedCount
         });
         
-        // Invalidate product offers query to refresh data
-        queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+        // Use the utility function to invalidate and refetch queries
+        await invalidateAndRefetchQueries('specific', integrationId);
         
         return insertedCount;
       } else {
@@ -443,7 +476,7 @@ export const useIntegrationSync = () => {
       console.error(`Error saving product offers to DB for integration ${integrationId}:`, error);
       throw error;
     }
-  }, [queryClient, updateProgress]);
+  }, [queryClient, updateProgress, invalidateAndRefetchQueries]);
 
   /**
    * Synchronize data for a specific integration
@@ -552,19 +585,8 @@ export const useIntegrationSync = () => {
       
       console.log(`Successfully completed import for integration ${integrationId} - status updated to success`);
       
-      // Invalidate and refetch all related queries
-      await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-      await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-      
-      // Also invalidate and refetch specific integration data
-      if (integration._id) {
-        await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integration._id] });
-        await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integration._id] });
-        await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integration._id] });
-        await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integration._id] });
-        await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integration._id] });
-        await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integration._id] });
-      }
+      // Use the utility function to invalidate and refetch queries
+      await invalidateAndRefetchQueries('specific', integrationId);
       
     } catch (error) {
       console.error(`Error syncing data for integration ${integrationId}:`, error);
@@ -580,7 +602,7 @@ export const useIntegrationSync = () => {
     saveOrdersToDb,
     saveProductOffersToDb,
     updateIntegrationStatus,
-    queryClient
+    invalidateAndRefetchQueries
   ]);
 
   /**
@@ -736,17 +758,8 @@ export const useIntegrationSync = () => {
         lastProductOffersImport
       );
       
-      // Invalidate and refetch all related queries
-      await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-      await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-      
-      // Also invalidate and refetch specific integration data
-      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
-      await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
-      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
-      await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
-      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
-      await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+      // Use the utility function to invalidate and refetch queries
+      await invalidateAndRefetchQueries('specific', integrationId);
       
       console.log(`Completed sync for integration: ${integrationId}`);
       
@@ -763,7 +776,7 @@ export const useIntegrationSync = () => {
       
       return { success: false, error: error.message || 'Failed to sync integration' };
     }
-  }, [updateIntegrationStatus, queryClient, fetchOrdersFromEmagApi, fetchProductOffersFromEmagApi, saveOrdersToDb, saveProductOffersToDb, shouldSyncIntegration]);
+  }, [updateIntegrationStatus, queryClient, fetchOrdersFromEmagApi, fetchProductOffersFromEmagApi, saveOrdersToDb, saveProductOffersToDb, shouldSyncIntegration, invalidateAndRefetchQueries]);
 
   /**
    * Sync all integrations that need refreshing
@@ -798,18 +811,8 @@ export const useIntegrationSync = () => {
     
     // If any integrations were synced, invalidate and refetch all queries
     if (anySynced) {
-      // Invalidate and refetch the main integrations list
-      await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-      await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-      
-      // Invalidate and refetch all integration details, orders, and product offers
-      // Use broader patterns to catch all related queries
-      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY] });
-      await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY] });
-      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY] });
-      await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY] });
-      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY] });
-      await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY] });
+      // Use the utility function to invalidate and refetch all queries
+      await invalidateAndRefetchQueries('all');
     }
     
     return { 
@@ -817,7 +820,7 @@ export const useIntegrationSync = () => {
       skippedCount,
       syncedCount: integrations.length - skippedCount
     };
-  }, [queryClient, shouldSyncIntegration, syncIntegrationData]);
+  }, [queryClient, shouldSyncIntegration, syncIntegrationData, invalidateAndRefetchQueries]);
 
   return {
     syncIntegrationData,
