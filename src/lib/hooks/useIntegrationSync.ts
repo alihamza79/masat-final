@@ -11,6 +11,7 @@ import { decrypt } from '@/lib/utils/encryption';
 import { decryptResponse } from '@/lib/utils/responseEncryption';
 import { INTEGRATION_DETAILS_KEY, INTEGRATION_ORDERS_KEY, INTEGRATION_PRODUCT_OFFERS_KEY } from './useIntegrationData';
 import { useIntegrationSyncStore } from '@/app/(DashboardLayout)/integrations/store/integrationSyncStore';
+import { INTEGRATIONS_QUERY_KEY } from './useIntegrations';
 
 // Constants
 export const INTEGRATIONS_STATUS_QUERY_KEY = 'integrations-status';
@@ -551,9 +552,20 @@ export const useIntegrationSync = () => {
       
       console.log(`Successfully completed import for integration ${integrationId} - status updated to success`);
       
-      // Invalidate relevant queries to refresh UI data
-      queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
-      queryClient.invalidateQueries({ queryKey: [INTEGRATIONS_STATUS_QUERY_KEY] });
+      // Invalidate and refetch all related queries
+      await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+      await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+      
+      // Also invalidate and refetch specific integration data
+      if (integration._id) {
+        await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integration._id] });
+        await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integration._id] });
+        await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integration._id] });
+        await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integration._id] });
+        await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integration._id] });
+        await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integration._id] });
+      }
+      
     } catch (error) {
       console.error(`Error syncing data for integration ${integrationId}:`, error);
       await updateIntegrationStatus(
@@ -724,10 +736,17 @@ export const useIntegrationSync = () => {
         lastProductOffersImport
       );
       
-      // Invalidate queries for this integration to ensure fresh data is displayed
-      queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
-      queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
-      queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+      // Invalidate and refetch all related queries
+      await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+      await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+      
+      // Also invalidate and refetch specific integration data
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY, integrationId] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY, integrationId] });
       
       console.log(`Completed sync for integration: ${integrationId}`);
       
@@ -757,19 +776,48 @@ export const useIntegrationSync = () => {
     
     console.log(`Checking ${integrations.length} integrations for sync...`);
     
+    let anySynced = false;
+    let skippedCount = 0;
+    
     for (const integration of integrations) {
       try {
         const syncInfo = shouldSyncIntegration(integration, refetchIntervalMs);
         if (syncInfo.shouldSync) {
           await syncIntegrationData(integration, syncInfo.syncOrders, syncInfo.syncProductOffers);
+          anySynced = true;
         } else {
           console.log(`Integration ${integration._id} is up to date, skipping sync`);
+          skippedCount++;
         }
       } catch (error) {
         console.error(`Error syncing integration ${integration._id}:`, error);
       }
     }
-  }, [shouldSyncIntegration, syncIntegrationData]);
+    
+    console.log(`Checked ${integrations.length} integrations. Skipped ${skippedCount}, synced ${integrations.length - skippedCount}`);
+    
+    // If any integrations were synced, invalidate and refetch all queries
+    if (anySynced) {
+      // Invalidate and refetch the main integrations list
+      await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+      await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+      
+      // Invalidate and refetch all integration details, orders, and product offers
+      // Use broader patterns to catch all related queries
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_DETAILS_KEY] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_DETAILS_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_ORDERS_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY] });
+      await queryClient.refetchQueries({ queryKey: [INTEGRATION_PRODUCT_OFFERS_KEY] });
+    }
+    
+    return { 
+      totalChecked: integrations.length,
+      skippedCount,
+      syncedCount: integrations.length - skippedCount
+    };
+  }, [queryClient, shouldSyncIntegration, syncIntegrationData]);
 
   return {
     syncIntegrationData,
