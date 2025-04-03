@@ -210,10 +210,10 @@ export const useIntegrationSync = () => {
         const progress = Math.round(((batchEnd - startPage + 1) / (totalPages - startPage + 1)) * 100);
         console.log(`Orders import progress: ${progress}% (${allOrders.length} new orders so far)`);
         
-        // Update progress in the store with cumulative count (existing + new)
+        // Update progress in the store showing only the new orders being fetched
         updateProgress(integrationId, {
           ordersProgress: progress,
-          ordersCount: dbOrdersCount + allOrders.length // Show cumulative count
+          ordersCount: allOrders.length // Show only new orders during progress
         });
         
         // Update status in DB after each batch
@@ -225,10 +225,10 @@ export const useIntegrationSync = () => {
       
       console.log(`Completed fetching ${allOrders.length} new orders for integration ${integrationId}`);
       
-      // Update final progress in store with cumulative count
+      // Update final progress in store showing only new orders count
       updateProgress(integrationId, {
         ordersProgress: 100,
-        ordersCount: dbOrdersCount + allOrders.length // Show cumulative count
+        ordersCount: allOrders.length // Show only new orders in the progress display
       });
       
       return allOrders;
