@@ -105,7 +105,7 @@ export const useIntegrationSync = () => {
   /**
    * Fetches orders from eMAG API with parallel pagination
    */
-  const fetchOrdersFromEmagApi = useCallback(async (integration: Integration): Promise<EmagOrder[]> => {
+  const fetchOrdersFromEmagApi = useCallback(async (integration: Integration, dbOrdersCount: number = 0): Promise<EmagOrder[]> => {
     const allOrders: EmagOrder[] = [];
     const BATCH_SIZE = 10; // Process 10 pages concurrently
     
@@ -132,19 +132,12 @@ export const useIntegrationSync = () => {
       const orderCountResults = orderCountResponse.data.data.orderCount;
       const totalOrderCount = parseInt(orderCountResults?.noOfItems || '0', 10);
       
-      // Get the actual count of orders in the database
-      const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
-      if (!dbOrdersCountResponse.data.success) {
-        throw new Error(dbOrdersCountResponse.data.error || 'Failed to fetch database orders count');
-      }
-      const dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
-      
       // Calculate which pages we need to fetch
       const startPage = Math.floor(dbOrdersCount / ORDERS_PAGE_SIZE) + 1;
       const totalPages = Math.ceil(totalOrderCount / ORDERS_PAGE_SIZE);
       
       console.log(`Found ${totalOrderCount} orders (${totalPages} pages) for integration ${integrationId}`);
-      console.log(`Current orders count in DB: ${dbOrdersCount}, starting from page ${startPage}`);
+      console.log(`  orders count in DB: ${dbOrdersCount}, starting from page ${startPage}`);
       
       if (totalPages === 0 || startPage > totalPages) {
         console.log(`No new orders to fetch for integration ${integrationId}`);
@@ -217,10 +210,10 @@ export const useIntegrationSync = () => {
         const progress = Math.round(((batchEnd - startPage + 1) / (totalPages - startPage + 1)) * 100);
         console.log(`Orders import progress: ${progress}% (${allOrders.length} new orders so far)`);
         
-        // Update progress in the store ONLY - don't update DB count until fully saved
+        // Update progress in the store with cumulative count (existing + new)
         updateProgress(integrationId, {
           ordersProgress: progress,
-          ordersCount: dbOrdersCount + allOrders.length
+          ordersCount: dbOrdersCount + allOrders.length // Show cumulative count
         });
         
         // Update status in DB after each batch
@@ -232,10 +225,10 @@ export const useIntegrationSync = () => {
       
       console.log(`Completed fetching ${allOrders.length} new orders for integration ${integrationId}`);
       
-      // Update final progress in store only
+      // Update final progress in store with cumulative count
       updateProgress(integrationId, {
         ordersProgress: 100,
-        ordersCount: dbOrdersCount + allOrders.length
+        ordersCount: dbOrdersCount + allOrders.length // Show cumulative count
       });
       
       return allOrders;
@@ -388,21 +381,19 @@ export const useIntegrationSync = () => {
       });
       
       if (response.data.success) {
-        console.log(`Successfully saved ${orders.length} orders to database`);
-
         // Get the number of newly inserted orders from the API response
         const insertedCount = response.data.data?.results?.insertedCount || orders.length;
         console.log(`Successfully saved ${insertedCount} new orders to database`);
         
-        // Update the store with the accurate count
+        // Update the store with the newly inserted count (not the total)
         updateProgress(integrationId, {
-          ordersCount: insertedCount
+          ordersProgress: 100
         });
         
         // Invalidate orders query to refresh data
         queryClient.invalidateQueries({ queryKey: [INTEGRATION_ORDERS_KEY, integrationId] });
         
-        return insertedCount;
+        return insertedCount; // Return only the count of newly inserted orders
       } else {
         throw new Error(response.data.error || 'Failed to save orders');
       }
@@ -484,11 +475,25 @@ export const useIntegrationSync = () => {
       if (syncOrders) {
         try {
           console.log(`Fetching orders for integration ${integrationId}...`);
-          const orders = await fetchOrdersFromEmagApi(integration);
           
-          // Save orders to DB and get the actual count
-          ordersCount = await saveOrdersToDb(integrationId, orders);
-          console.log(`Successfully imported ${ordersCount} orders for integration ${integrationId}`);
+          // Get the current orders count from the database
+          const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
+          if (!dbOrdersCountResponse.data.success) {
+            throw new Error(dbOrdersCountResponse.data.error || 'Failed to fetch database orders count');
+          }
+          const dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
+          console.log(`Current orders count in database: ${dbOrdersCount}`);
+          
+          // Fetch new orders, passing in the current DB count
+          const orders = await fetchOrdersFromEmagApi(integration, dbOrdersCount);
+          
+          // Save orders to DB and get the count of newly added orders
+          const newOrdersCount = await saveOrdersToDb(integrationId, orders);
+          
+          // Calculate the total orders count (existing + newly added)
+          ordersCount = dbOrdersCount + newOrdersCount;
+          console.log(`Total orders count after import: ${ordersCount} (${dbOrdersCount} existing + ${newOrdersCount} new)`);
+          
           // Set the timestamp at the moment of success
           lastOrdersImport = new Date();
         } catch (error) {
@@ -652,22 +657,29 @@ export const useIntegrationSync = () => {
       if (syncOrders) {
         console.log(`Fetching orders for integration: ${integrationId}`);
         try {
-          const orders = await fetchOrdersFromEmagApi(integration);
-          console.log(`Fetched ${orders.length} orders for integration: ${integrationId}`);
-          
-          // Always store orders (even empty array) to clean up previous ones
-          try {
-            // Store orders and get the actual saved count
-            ordersCount = await saveOrdersToDb(integrationId, orders);
-            console.log(`Stored ${ordersCount} orders for integration: ${integrationId}`);
-            // Create timestamp at the moment of successful save
-            lastOrdersImport = new Date();
-          } catch (error: any) {
-            console.error(`Error storing orders for integration ${integrationId}:`, error);
-            throw error;
+          // Get the current orders count from the database
+          const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
+          if (!dbOrdersCountResponse.data.success) {
+            throw new Error(dbOrdersCountResponse.data.error || 'Failed to fetch database orders count');
           }
+          const dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
+          console.log(`Current orders count in database: ${dbOrdersCount}`);
+          
+          // Fetch new orders, passing in the current DB count
+          const orders = await fetchOrdersFromEmagApi(integration, dbOrdersCount);
+          console.log(`Fetched ${orders.length} new orders for integration: ${integrationId}`);
+          
+          // Store orders and get the count of newly added orders
+          const newOrdersCount = await saveOrdersToDb(integrationId, orders);
+          
+          // Calculate the total orders count (existing + newly added)
+          ordersCount = dbOrdersCount + newOrdersCount;
+          console.log(`Total orders count after import: ${ordersCount} (${dbOrdersCount} existing + ${newOrdersCount} new)`);
+          
+          // Create timestamp at the moment of successful save
+          lastOrdersImport = new Date();
         } catch (error: any) {
-          console.error(`Error fetching orders for integration ${integrationId}:`, error);
+          console.error(`Error fetching or storing orders for integration ${integrationId}:`, error);
           throw error;
         }
       } else {

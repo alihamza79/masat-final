@@ -156,7 +156,7 @@ export async function PUT(request: NextRequest) {
         { status: 409 }
       );
     }
-    
+
     // If password is provided, validate and encrypt
     let encryptedPassword = existingIntegration.password;
     if (password) {
