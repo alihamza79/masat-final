@@ -416,8 +416,10 @@ export const useIntegrationSync = () => {
       
       if (response.data.success) {
         // Get the number of newly inserted orders from the API response
-        const insertedCount = response.data.data?.results?.insertedCount || orders.length;
-        console.log(`Successfully saved ${insertedCount} new orders to database`);
+        const insertedCount = response.data.data?.results?.insertedCount || 0;
+        const skippedCount = response.data.data?.results?.skippedCount || 0;
+        
+        console.log(`Successfully saved ${insertedCount} new orders to database for integration ${integrationId}${skippedCount > 0 ? `, skipped ${skippedCount} duplicates` : ''}`);
         
         // Update the store with the newly inserted count (not the total)
         updateProgress(integrationId, {

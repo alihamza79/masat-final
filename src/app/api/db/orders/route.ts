@@ -87,16 +87,35 @@ export async function POST(request: NextRequest) {
       };
     });
     
-    // Insert all new orders directly without using a session
-    const insertedDocs = await Order.insertMany(formattedOrders);
+    let insertedCount = 0;
     
-    console.log(`Inserted ${insertedDocs.length} new orders for integration ${integrationId}`);
+    try {
+      // Use ordered: false to continue processing even if some documents cause duplicate key errors
+      // This allows the operation to skip duplicates instead of failing completely
+      const insertResult = await Order.insertMany(formattedOrders, { 
+        ordered: false 
+      });
+      
+      insertedCount = insertResult.length;
+      console.log(`Successfully inserted ${insertedCount} new orders for integration ${integrationId}`);
+    } catch (error: any) {
+      // If there's a write error, extract the number of successfully inserted documents
+      if (error.code === 11000 && error.writeErrors && Array.isArray(error.writeErrors)) {
+        // Count orders that were inserted before the first duplicate
+        insertedCount = formattedOrders.length - error.writeErrors.length;
+        console.log(`Inserted ${insertedCount} new orders for integration ${integrationId}, skipped ${error.writeErrors.length} duplicates`);
+      } else {
+        // Rethrow other errors
+        throw error;
+      }
+    }
     
     return NextResponse.json({
       success: true,
       data: {
         results: {
-          insertedCount: insertedDocs.length
+          insertedCount,
+          skippedCount: formattedOrders.length - insertedCount
         },
         totalProcessed: orders.length
       }
