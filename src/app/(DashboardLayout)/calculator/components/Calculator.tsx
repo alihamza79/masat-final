@@ -9,7 +9,7 @@ import {
   Typography
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CategoryData, useCalculations, useCalculator } from '../context/CalculatorContext';
 import useCalculatorReset, { CardKey, VisibleCards } from '../hooks/useCalculatorReset';
@@ -33,6 +33,7 @@ import SalesSection from './sections/SalesSection';
 import TaxesSection from './sections/TaxesSection';
 import { toast } from 'react-hot-toast';
 import { useCommissionLoading } from '../context/CommissionLoadingContext';
+import axios from 'axios';
 
 const Calculator = () => {
   const { t } = useTranslation();
@@ -92,7 +93,7 @@ const Calculator = () => {
     return undefined;
   };
 
-  // Add a new function to handle the save calculation button click
+  // Update the handleSaveCalculation function to include visibleCards
   const handleSaveCalculation = async () => {
     // Check if an eMAG product is selected
     if (selectedProduct && selectedProduct.startsWith('emag-') && selectedProduct.split('-').length > 2) {
@@ -109,8 +110,12 @@ const Calculator = () => {
           selectedProduct // Store the full product identifier
         }));
         
-        // Add calculator state as JSON string
-        formData.append('calculatorState', JSON.stringify(state));
+        // Add calculator state as JSON string, including visibleCards state
+        const calculatorStateWithVisibleCards = {
+          ...state,
+          visibleCards // Include visibleCards state
+        };
+        formData.append('calculatorState', JSON.stringify(calculatorStateWithVisibleCards));
         
         // Create a direct API request to save the calculation
         const response = await fetch('/api/calculations', {
@@ -238,9 +243,32 @@ const Calculator = () => {
  
   const { netProfitValues, profitMarginValues } = useProfitStore();
 
+  // Add this function inside the Calculator component before handleSelectProduct
+  const fetchIntegrationDetails = async (integrationId: string) => {
+    try {
+      const response = await axios.get(`/api/integrations/${integrationId}`);
+      if (response.data && response.data.success) {
+        return response.data.integration;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching integration details:', error);
+      return null;
+    }
+  };
+
   // Handle product selection
   const handleSelectProduct = async (value: string) => {
     console.log('handleSelectProduct called with value:', value);
+    console.log('Available integrations:', integrations.map(i => ({
+      _id: i._id,
+      accountName: i.accountName,
+      accountType: i.accountType
+    })));
+    
+    // Count FBE integrations
+    const fbeIntegrations = integrations.filter(i => i.accountType === 'FBE');
+    console.log('FBE integrations count:', fbeIntegrations.length);
     
     // Skip processing if value contains "undefined"
     if (value && value.includes('undefined')) {
@@ -401,10 +429,21 @@ const Calculator = () => {
           }
         }
         
-        const integration = integrations.find(integration => integration._id === integrationId);
-        if (integration && integration.accountType === 'FBE') {
+        // Get integration details
+        let integrationDetails = integrations.find(integration => integration._id === integrationId);
+        
+        if (!integrationDetails) {
+          // If not found in store, fetch it directly
+          integrationDetails = await fetchIntegrationDetails(integrationId);
+        }
+
+        console.log('Integration details:', integrationDetails);
+
+        if (integrationDetails && integrationDetails.accountType === 'FBE') {
+          console.log('Setting visible cards for FBE only');
           setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
         } else {
+          console.log('Setting visible cards for all calculator types');
           setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
         return;
@@ -518,10 +557,21 @@ const Calculator = () => {
           }
         }
         
-        const integration = integrations.find(integration => integration._id === integrationId);
-        if (integration && integration.accountType === 'FBE') {
+        // Get integration details
+        let integrationDetails = integrations.find(integration => integration._id === integrationId);
+        
+        if (!integrationDetails) {
+          // If not found in store, fetch it directly
+          integrationDetails = await fetchIntegrationDetails(integrationId);
+        }
+
+        console.log('Integration details (colon notation):', integrationDetails);
+
+        if (integrationDetails && integrationDetails.accountType === 'FBE') {
+          console.log('Setting visible cards for FBE only (colon notation)');
           setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
         } else {
+          console.log('Setting visible cards for all calculator types (colon notation)');
           setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
       }
@@ -570,6 +620,24 @@ const Calculator = () => {
   // Add a helper to check if we're dealing with a saved calculation
   const isSavedCalculation: boolean = !!currentSavedCalculationId || 
     !!(selectedProduct && selectedProduct.startsWith('saved-'));
+
+  // Listen for getVisibleCards event from SaveCalculationModal
+  useEffect(() => {
+    const handleGetVisibleCards = (event: CustomEvent) => {
+      if (event.detail && typeof event.detail.callback === 'function') {
+        // Send the current visibleCards state back via callback
+        event.detail.callback(visibleCards);
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener('getVisibleCards', handleGetVisibleCards as EventListener);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('getVisibleCards', handleGetVisibleCards as EventListener);
+    };
+  }, [visibleCards]);
 
   return (
     <Box>

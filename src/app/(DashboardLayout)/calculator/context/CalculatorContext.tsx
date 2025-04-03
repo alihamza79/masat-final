@@ -55,58 +55,62 @@ type Action =
   | { type: 'SET_EMAG_COMMISSION'; payload: string }
   | { type: 'SET_COMMISSION_SOURCE'; payload: 'default' | 'emag' | 'manual' }
   | { type: 'UPDATE_SALES_ESTIMATOR'; payload: Partial<CalculatorState['salesEstimator']> }
+  | { type: 'RESET_CATEGORIES'; payload: Record<string, CategoryData> }
+  | { type: 'RESET_SALES_ESTIMATOR' }
   | { type: 'RESET' };
+
+export const initialCategoryData = {
+  'FBM-NonGenius': {
+    pieces: 0,
+    percentage: 33.33,
+    salePrice: 0,
+    shippingPrice: 0,
+    commission: 0,
+    fulfillmentCost: 0,
+    productCost: 0,
+    shippingCost: 0,
+    fulfillmentShippingCost: 0,
+    customsDuty: 0,
+    otherExpenses: 0,
+  },
+  'FBM-Genius': {
+    pieces: 0,
+    percentage: 33.33,
+    salePrice: 0,
+    shippingPrice: 0,
+    commission: 0,
+    fulfillmentCost: 0,
+    productCost: 0,
+    shippingCost: 0,
+    fulfillmentShippingCost: 0,
+    customsDuty: 0,
+    otherExpenses: 0,
+  },
+  'FBE': {
+    pieces: 0,
+    percentage: 33.34,
+    salePrice: 0,
+    shippingPrice: 0,
+    commission: 0,
+    fulfillmentCost: 0,
+    productCost: 0,
+    shippingCost: 0,
+    fulfillmentShippingCost: 0,
+    customsDuty: 0,
+    otherExpenses: 0,
+  },
+};
 
 const initialState: CalculatorState = {
   totalPieces: 0,
-  categories: {
-    'FBM-NonGenius': {
-      pieces: 0,
-      percentage: 33.33,
-      salePrice: 0,
-      shippingPrice: 0,
-      commission: 20,
-      fulfillmentCost: 0,
-      productCost: 0,
-      shippingCost: 0,
-      fulfillmentShippingCost: 0,
-      customsDuty: 0,
-      otherExpenses: 0,
-    },
-    'FBM-Genius': {
-      pieces: 0,
-      percentage: 33.33,
-      salePrice: 0,
-      shippingPrice: 0,
-      commission: 20,
-      fulfillmentCost: 0,
-      productCost: 0,
-      shippingCost: 0,
-      fulfillmentShippingCost: 0,
-      customsDuty: 0,
-      otherExpenses: 0,
-    },
-    'FBE': {
-      pieces: 0,
-      percentage: 33.34,
-      salePrice: 0,
-      shippingPrice: 0,
-      commission: 20,
-      fulfillmentCost: 0,
-      productCost: 0,
-      shippingCost: 0,
-      fulfillmentShippingCost: 0,
-      customsDuty: 0,
-      otherExpenses: 0,
-    },
-  },
+  categories: initialCategoryData,
   vatRate: 19,
   taxRate: 3,
   profileType: 'profile',
   purchaseType: 'romania',
   vatRateOfPurchase: '19',
   syncValues: true,
-  emagCommission: '20',
+  emagCommission: '0',
   commissionSource: 'default', // Default source for the commission value
   salesEstimator: {
     totalPieces: 1,
@@ -312,6 +316,18 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
       return {
         ...state,
         salesEstimator: newSalesEstimator
+      };
+
+    case 'RESET_CATEGORIES':
+      return {
+        ...state,
+        categories: action.payload
+      };
+      
+    case 'RESET_SALES_ESTIMATOR':
+      return {
+        ...state,
+        salesEstimator: initialState.salesEstimator
       };
 
     case 'RESET':

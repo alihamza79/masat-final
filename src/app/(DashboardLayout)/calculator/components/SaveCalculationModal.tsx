@@ -225,8 +225,35 @@ const SaveCalculationModal: React.FC<SaveCalculationModalProps> = ({
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('calculatorState', JSON.stringify(calculatorState));
       
+      // Get visibleCards state from DOM event
+      const visibleCardsEvent = new CustomEvent('getVisibleCards', {
+        detail: { callback: (visibleCards: any) => {
+          // Include visibleCards in calculatorState
+          const calculatorStateWithVisibleCards = {
+            ...calculatorState,
+            visibleCards
+          };
+          
+          formData.append('calculatorState', JSON.stringify(calculatorStateWithVisibleCards));
+          
+          // Continue with the save process
+          continueWithSave(formData);
+        }}
+      });
+      
+      // Dispatch the event to get the current visibleCards state
+      document.dispatchEvent(visibleCardsEvent);
+    } catch (error) {
+      console.error('Error saving calculation:', error);
+      setError(t('calculator.saveCalculation.errors.saveFailed', 'Failed to save calculation'));
+      setLoading(false);
+    }
+  };
+  
+  // Separate function to continue with save after getting visibleCards
+  const continueWithSave = async (formData: FormData) => {
+    try {
       // Only append the image if a new one is selected
       if (image) {
         formData.append('image', image);

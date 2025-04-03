@@ -122,6 +122,13 @@ export const useSavedCalculations = () => {
               dispatch({ type: 'SET_COMMISSION_SOURCE', payload: value as 'default' | 'emag' | 'manual' });
             } else if (key === 'salesEstimator') {
               dispatch({ type: 'UPDATE_SALES_ESTIMATOR', payload: value as any });
+            } else if (key === 'visibleCards') {
+              // Dispatch an event to handle visibleCards outside calculator state
+              // We need to use an event here because visibleCards is managed by useCalculatorReset
+              const event = new CustomEvent('calculatorVisibleCardsUpdated', { 
+                detail: value 
+              });
+              document.dispatchEvent(event);
             }
           });
           
@@ -183,6 +190,13 @@ export const useSavedCalculations = () => {
               dispatch({ type: 'SET_COMMISSION_SOURCE', payload: value as 'default' | 'emag' | 'manual' });
             } else if (key === 'salesEstimator') {
               dispatch({ type: 'UPDATE_SALES_ESTIMATOR', payload: value as any });
+            } else if (key === 'visibleCards') {
+              // Dispatch an event to handle visibleCards outside calculator state
+              // We need to use an event here because visibleCards is managed by useCalculatorReset
+              const event = new CustomEvent('calculatorVisibleCardsUpdated', { 
+                detail: value 
+              });
+              document.dispatchEvent(event);
             }
           });
           
