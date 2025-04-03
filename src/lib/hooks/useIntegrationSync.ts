@@ -622,11 +622,7 @@ export const useIntegrationSync = () => {
       return { shouldSync: false };
     }
     
-    // If status is error, always sync everything regardless of time threshold
-    if (integration.importStatus === 'error') {
-      console.log(`Integration ${integrationId} has error status, will attempt to sync both orders and product offers`);
-      return { shouldSync: true, syncOrders: true, syncProductOffers: true };
-    }
+
     
     // If no import times at all, sync everything
     if (!integration.lastOrdersImport && !integration.lastProductOffersImport) {
