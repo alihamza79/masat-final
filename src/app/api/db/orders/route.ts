@@ -25,6 +25,13 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
+    // If latest parameter is true, return the latest order date
+    if (searchParams.get('latest') === 'true') {
+      const latestOrder = await Order.findOne({ integrationId }).sort({ date: -1 });
+      const latestOrderDate = latestOrder && latestOrder.date ? latestOrder.date : "1970-01-01 00:00:00";
+      return NextResponse.json({ success: true, data: { latestOrderDate } });
+    }
+
     const query: any = { integrationId };
     if (search) {
       query.$or = [

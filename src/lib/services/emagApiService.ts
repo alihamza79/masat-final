@@ -140,19 +140,24 @@ export class EmagApiService {
   async getOrders(params: {
     currentPage?: number;
     itemsPerPage?: number;
+    createdAfter?: string;
   } = {}): Promise<EmagOrdersResponse> {
     try {
       // Set default parameters if not provided
-      const requestParams = {
+      const requestParams: any = {
         currentPage: params.currentPage || 1,
         itemsPerPage: params.itemsPerPage || 100, // Maximum allowed by the API is 100
       };
-      
+
+      // If createdAfter is provided, include it in the request
+      if (params.createdAfter) {
+        requestParams.createdAfter = params.createdAfter;
+      }
+
       const response = await this.axiosInstance.post('/order/read', requestParams);
-      
+
       return response.data;
     } catch (error: any) {
-      // Handle eMAG API specific error format
       if (error.response?.data?.isError) {
         return {
           isError: true,
@@ -163,8 +168,6 @@ export class EmagApiService {
           totalResults: 0
         };
       }
-      
-      // Handle other types of errors
       return {
         isError: true,
         messages: [error.response?.data?.message || error.message || 'Failed to fetch orders'],

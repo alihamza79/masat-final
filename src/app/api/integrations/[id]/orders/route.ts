@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { decrypt } from '@/lib/utils/encryption';
 import { encryptResponse } from '@/lib/utils/responseEncryption';
 import { EmagApiService, EmagOrder, EmagOrdersResponse } from '@/lib/services/emagApiService';
+import Order from '@/models/Order';
 
 export async function GET(
   request: NextRequest,
@@ -18,9 +19,16 @@ export async function GET(
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '100', 10);
     
-    // For count-only requests (used to determine total count/pages)
-    const countOnly = searchParams.get('countOnly') === 'true';
-    
+    // After connecting to the database, extract filtering parameters
+    const createdAfter = searchParams.get('createdAfter');
+
+    // If latest parameter is true, return the latest order date
+    if (searchParams.get('latest') === 'true') {
+      const latestOrder = await Order.findOne({ integrationId: id }).sort({ date: -1 });
+      const latestOrderDate = latestOrder && latestOrder.date ? latestOrder.date : "1970-01-01 00:00:00";
+      return NextResponse.json({ success: true, data: { latestOrderDate } });
+    }
+
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -60,12 +68,10 @@ export async function GET(
       region: integration.region
     });
 
-    // For count-only requests, make just the count API call and return
-    if (countOnly) {
-      // Get the total order count
-      const orderCountResults = await emagApi.getOrderCount();
-      
-      // Check if there was an error getting the order count
+    // For count-only requests (used to determine total count/pages)
+    if (searchParams.get('countOnly') === 'true') {
+      // Pass createdAfter parameter if provided
+      const orderCountResults = await emagApi.getOrderCount(createdAfter ? { createdAfter } : {});
       if (!orderCountResults) {
         return NextResponse.json(
           { 
@@ -75,16 +81,8 @@ export async function GET(
           { status: 500 }
         );
       }
-      
-      // Extract the count
-      const totalOrderCount = orderCountResults.noOfItems 
-        ? parseInt(orderCountResults.noOfItems, 10) 
-        : 0;
-      
-      // Calculate total pages
+      const totalOrderCount = orderCountResults.noOfItems ? parseInt(orderCountResults.noOfItems, 10) : 0;
       const totalPages = Math.ceil(totalOrderCount / pageSize);
-      
-      // Return just the count info
       return NextResponse.json({
         success: true,
         data: {
@@ -96,6 +94,21 @@ export async function GET(
     }
     
     // For regular data requests, fetch the orders directly
+    const query: any = { integrationId: id };
+    if (searchParams.get('search')) {
+      query.$or = [
+        { 'details.name': { $regex: searchParams.get('search'), $options: 'i' } },
+        { 'details.code': { $regex: searchParams.get('search'), $options: 'i' } }
+      ];
+    }
+
+    // Update the API request to use createdAfter 
+    const apiRequestPromise = emagApi.getOrders({ 
+      currentPage: page, 
+      itemsPerPage: pageSize,
+      createdAfter: createdAfter ? createdAfter : undefined
+    });
+    
     // Fetch orders for the specified page with retry logic
     let retryCount = 0;
     const maxRetries = 3;
@@ -117,12 +130,6 @@ export async function GET(
         // Set a timeout for this specific request
         const timeoutPromise = new Promise<never>((_, reject) => {
           timeoutId = setTimeout(() => reject(new Error('Request timed out after 180 seconds')), 180000);
-        });
-        
-        // Create the actual API request
-        const apiRequestPromise = emagApi.getOrders({
-          currentPage: page,
-          itemsPerPage: pageSize
         });
         
         // Race the API request against the timeout

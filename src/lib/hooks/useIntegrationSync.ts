@@ -139,137 +139,111 @@ export const useIntegrationSync = () => {
   /**
    * Fetches orders from eMAG API with parallel pagination
    */
-  const fetchOrdersFromEmagApi = useCallback(async (integration: Integration, dbOrdersCount: number = 0): Promise<EmagOrder[]> => {
+  const fetchOrdersFromEmagApi = useCallback(async (integration: Integration): Promise<EmagOrder[]> => {
     const allOrders: EmagOrder[] = [];
     const BATCH_SIZE = 10; // Process 10 pages concurrently
     
-    // Ensure integration has a valid ID
     if (!integration._id) {
       throw new Error('Integration ID is required');
     }
-    
     const integrationId = String(integration._id);
     
+    if (!isSyncing(integrationId)) {
+      startSyncing(integrationId);
+    }
+
+    // New: Get the latest order creation date from DB; use default if none exists
+    let latestOrderDate = "1970-01-01 00:00:00";
     try {
-      // Start syncing in the store if not already syncing
-      if (!isSyncing(integrationId)) {
-        startSyncing(integrationId);
+      const latestResponse = await axios.get(`/api/db/orders?latest=true&integrationId=${integrationId}`);
+      if (latestResponse.data.success) {
+        latestOrderDate = latestResponse.data.data.latestOrderDate;
       }
+    } catch (error) {
+      console.error("Error fetching latest order date; using default.", error);
+    }
+    console.log(`Latest order date for integration ${integrationId}: ${latestOrderDate}`);
+
+    // Get the count of new orders from eMAG API using createdAfter filter
+    const orderCountResponse = await axios.get(`/api/integrations/${integrationId}/order-count?createdAfter=${encodeURIComponent(latestOrderDate)}`);
+    if (!orderCountResponse.data.success) {
+      throw new Error(orderCountResponse.data.error || 'Failed to fetch order count');
+    }
+    const orderCountResults = orderCountResponse.data.data.orderCount;
+    const totalOrderCount = parseInt(orderCountResults?.noOfItems || '0', 10);
+    const totalPages = Math.ceil(totalOrderCount / ORDERS_PAGE_SIZE);
+    
+    console.log(`Found ${totalOrderCount} new orders (${totalPages} pages) for integration ${integrationId} with createdAfter filter`);
+    
+    if (totalPages === 0) {
+      console.log(`No new orders to fetch for integration ${integrationId}`);
+      return [];
+    }
+    
+    // Process pages in parallel batches from page 1 since filtering is handled by date
+    for (let batchStart = 1; batchStart <= totalPages; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, totalPages);
+      console.log(`Processing orders batch: pages ${batchStart}-${batchEnd} of ${totalPages}`);
       
-      // Get the order count from eMAG API first
-      const orderCountResponse = await axios.get(`/api/integrations/${integrationId}/order-count`);
+      const pageNumbers = Array.from({ length: batchEnd - batchStart + 1 }, (_, i) => batchStart + i);
       
-      if (!orderCountResponse.data.success) {
-        throw new Error(orderCountResponse.data.error || 'Failed to fetch order count');
-      }
-      
-      const orderCountResults = orderCountResponse.data.data.orderCount;
-      const totalOrderCount = parseInt(orderCountResults?.noOfItems || '0', 10);
-      
-      // Calculate which pages we need to fetch
-      const startPage = Math.floor(dbOrdersCount / ORDERS_PAGE_SIZE) + 1;
-      const totalPages = Math.ceil(totalOrderCount / ORDERS_PAGE_SIZE);
-      
-      console.log(`Found ${totalOrderCount} orders (${totalPages} pages) for integration ${integrationId}`);
-      console.log(`  orders count in DB: ${dbOrdersCount}, starting from page ${startPage}`);
-      
-      if (totalPages === 0 || startPage > totalPages) {
-        console.log(`No new orders to fetch for integration ${integrationId}`);
-        return [];
-      }
-      
-      // Process pages in parallel batches
-      for (let batchStart = startPage; batchStart <= totalPages; batchStart += BATCH_SIZE) {
-        const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, totalPages);
-        console.log(`Processing orders batch: pages ${batchStart}-${batchEnd} of ${totalPages}`);
-        
-        // Create an array of page numbers for this batch
-        const pageNumbers = Array.from(
-          { length: batchEnd - batchStart + 1 }, 
-          (_, i) => batchStart + i
-        );
-        
-        // Fetch all pages in this batch concurrently
-        const batchResults = await Promise.all(
-          pageNumbers.map(async (page) => {
-            console.log(`Fetching orders page ${page}/${totalPages} for integration ${integrationId}...`);
-            
-            try {
-              const response = await axios.get(
-                `/api/integrations/${integrationId}/orders?page=${page}&pageSize=${ORDERS_PAGE_SIZE}`
-              );
-              
-              if (!response.data.success) {
-                throw new Error(response.data.error || 'Failed to fetch orders');
-              }
-              
-              const responseData = response.data.data;
-              // Decrypt the response data before parsing
-              const decryptedData = decryptResponse(responseData.orderData);
-              const ordersData = JSON.parse(decryptedData);
-              
-              if (ordersData.orders && ordersData.orders.length > 0) {
-                // Add integrationId to each order (should already be there, but ensuring it)
-                const ordersWithId = ordersData.orders.map((order: any) => ({
-                  ...order,
-                  integrationId
-                }));
-                
-                // For the first page, filter out orders that are already in the database
-                if (page === startPage) {
-                  const startIndex = dbOrdersCount % ORDERS_PAGE_SIZE;
-                  const filteredOrders = ordersWithId.slice(startIndex);
-                  console.log(`Filtered ${ordersWithId.length - filteredOrders.length} existing orders from page ${page}`);
-                  return filteredOrders;
-                }
-                
-                console.log(`Fetched ${ordersWithId.length} orders from page ${page}/${totalPages}`);
-                return ordersWithId;
-              } else {
-                console.log(`No orders found on page ${page}/${totalPages}`);
-                return [];
-              }
-            } catch (error) {
-              console.error(`Error fetching orders page ${page}:`, error);
-              throw error;
+      // Fetch all pages in this batch concurrently using createdAfter filter
+      const batchResults = await Promise.all(
+        pageNumbers.map(async (page) => {
+          console.log(`Fetching orders page ${page}/${totalPages} for integration ${integrationId} with createdAfter=${latestOrderDate}...`);
+          try {
+            const response = await axios.get(`/api/integrations/${integrationId}/orders?createdAfter=${encodeURIComponent(latestOrderDate)}&page=${page}&pageSize=${ORDERS_PAGE_SIZE}`);
+            if (!response.data.success) {
+              throw new Error(response.data.error || 'Failed to fetch orders');
             }
-          })
-        );
-        
-        // Flatten the batch results and add to the allOrders array
-        const batchOrders = batchResults.flat();
-        allOrders.push(...batchOrders);
-        
-        // Calculate progress percentage
-        const progress = Math.round(((batchEnd - startPage + 1) / (totalPages - startPage + 1)) * 100);
-        console.log(`Orders import progress: ${progress}% (${allOrders.length} new orders so far)`);
-        
-        // Update progress in the store showing only the new orders being fetched
-        updateProgress(integrationId, {
-          ordersProgress: progress,
-          ordersCount: allOrders.length // Show only new orders during progress
-        });
-        
-        // Update status in DB after each batch
-        await updateIntegrationStatus(
-          integrationId, 
-          'loading'
-        );
-      }
+            const responseData = response.data.data;
+            // Decrypt the response data before parsing
+            const decryptedData = decryptResponse(responseData.orderData);
+            const ordersData = JSON.parse(decryptedData);
+            if (ordersData.orders && ordersData.orders.length > 0) {
+              // Add integrationId to each order
+              const ordersWithId = ordersData.orders.map((order: any) => ({
+                ...order,
+                integrationId
+              }));
+              console.log(`Fetched ${ordersWithId.length} orders from page ${page}/${totalPages}`);
+              return ordersWithId;
+            } else {
+              console.log(`No orders found on page ${page}/${totalPages}`);
+              return [];
+            }
+          } catch (error) {
+            console.error(`Error fetching orders page ${page}:`, error);
+            throw error;
+          }
+        })
+      );
       
-      console.log(`Completed fetching ${allOrders.length} new orders for integration ${integrationId}`);
+      // Flatten the batch results and add to allOrders
+      const batchOrders = batchResults.flat();
+      allOrders.push(...batchOrders);
       
-      // Update final progress in store showing only new orders count
+      console.log('batchOrders', batchOrders);
+
+      // Calculate progress as percentage of pages processed
+      const progress = Math.round((batchEnd / totalPages) * 100);
+      console.log(`Orders import progress: ${progress}% (${allOrders.length} new orders so far)`);
       updateProgress(integrationId, {
-        ordersProgress: 100,
-        ordersCount: allOrders.length // Show only new orders in the progress display
+        ordersProgress: progress,
+        ordersCount: allOrders.length
       });
       
-      return allOrders;
-    } catch (error) {
-      console.error(`Error fetching orders for integration ${integrationId}:`, error);
-      throw error;
+      // Update status in DB after each batch
+      await updateIntegrationStatus(integrationId, 'loading');
     }
+    
+    console.log(`Completed fetching ${allOrders.length} new orders for integration ${integrationId}`);
+    updateProgress(integrationId, {
+      ordersProgress: 100,
+      ordersCount: allOrders.length
+    });
+    
+    return allOrders;
   }, [updateIntegrationStatus, startSyncing, isSyncing, updateProgress]);
 
   /**
@@ -512,16 +486,17 @@ export const useIntegrationSync = () => {
         try {
           console.log(`Fetching orders for integration ${integrationId}...`);
           
-          // Get the current orders count from the database
-          const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
-          if (!dbOrdersCountResponse.data.success) {
-            throw new Error(dbOrdersCountResponse.data.error || 'Failed to fetch database orders count');
-          }
-          const dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
-          console.log(`Current orders count in database: ${dbOrdersCount}`);
+          // Fetch new orders using date filtering
+          const orders = await fetchOrdersFromEmagApi(integration);
+          console.log(`Fetched ${orders.length} new orders for integration: ${integrationId}`);
           
-          // Fetch new orders, passing in the current DB count
-          const orders = await fetchOrdersFromEmagApi(integration, dbOrdersCount);
+          // Optionally, fetch current DB orders count to compute cumulative total
+          const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
+          let dbOrdersCount = 0;
+          if (dbOrdersCountResponse.data.success) {
+            dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
+            console.log(`Current orders count in database: ${dbOrdersCount}`);
+          }
           
           // Save orders to DB and get the count of newly added orders
           const newOrdersCount = await saveOrdersToDb(integrationId, orders);
@@ -689,19 +664,19 @@ export const useIntegrationSync = () => {
       if (syncOrders) {
         console.log(`Fetching orders for integration: ${integrationId}`);
         try {
-          // Get the current orders count from the database
-          const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
-          if (!dbOrdersCountResponse.data.success) {
-            throw new Error(dbOrdersCountResponse.data.error || 'Failed to fetch database orders count');
-          }
-          const dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
-          console.log(`Current orders count in database: ${dbOrdersCount}`);
-          
-          // Fetch new orders, passing in the current DB count
-          const orders = await fetchOrdersFromEmagApi(integration, dbOrdersCount);
+          // Fetch new orders using date filtering
+          const orders = await fetchOrdersFromEmagApi(integration);
           console.log(`Fetched ${orders.length} new orders for integration: ${integrationId}`);
           
-          // Store orders and get the count of newly added orders
+          // Optionally, fetch current DB orders count to compute cumulative total
+          const dbOrdersCountResponse = await axios.get(`/api/db/orders/count?integrationId=${integrationId}`);
+          let dbOrdersCount = 0;
+          if (dbOrdersCountResponse.data.success) {
+            dbOrdersCount = dbOrdersCountResponse.data.data.count || 0;
+            console.log(`Current orders count in database: ${dbOrdersCount}`);
+          }
+          
+          // Save orders to DB and get the count of newly added orders
           const newOrdersCount = await saveOrdersToDb(integrationId, orders);
           
           // Calculate the total orders count (existing + newly added)

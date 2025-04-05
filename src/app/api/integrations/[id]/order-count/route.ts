@@ -51,8 +51,12 @@ export async function GET(
       region: integration.region
     });
 
-    // Get order count - no parameters to get all orders count
-    const orderCount = await emagApi.getOrderCount();
+    // Extract filtering parameters
+    const searchParams = request.nextUrl.searchParams;
+    const createdAfter = searchParams.get('createdAfter');
+
+    // Get order count - pass createdAfter parameter if provided
+    const orderCount = await emagApi.getOrderCount(createdAfter ? { createdAfter } : {});
 
     // Return success response with data
     return NextResponse.json({
