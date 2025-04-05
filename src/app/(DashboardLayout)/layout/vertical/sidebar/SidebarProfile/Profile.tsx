@@ -1,13 +1,25 @@
+'use client';
+
 import { Box, Avatar, Typography, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { useSelector } from '@/store/hooks';
 import { IconPower } from '@tabler/icons-react';
 import { AppState } from '@/store/store';
-import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 
 export const Profile = () => {
   const customizer = useSelector((state: AppState) => state.customizer);
   const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
+  const { data: session } = useSession();
+
+  // Use user data from session or fallback to defaults
+  const userImage = session?.user?.image || "/images/profile/user-1.jpg";
+  const userName = session?.user?.name || "User";
+  const userRole = "User"; // Default role, can be expanded later
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/auth/auth1/login' });
+  };
 
   return (
     <Box
@@ -18,18 +30,17 @@ export const Profile = () => {
     >
       {!hideMenu ? (
         <>
-          <Avatar alt="Remy Sharp" src={"/images/profile/user-1.jpg"} sx={{height: 40, width: 40}} />
+          <Avatar alt={userName} src={userImage} sx={{height: 40, width: 40}} />
 
           <Box>
-            <Typography variant="h6">Mathew</Typography>
-            <Typography variant="caption">Designer</Typography>
+            <Typography variant="h6">{userName}</Typography>
+            <Typography variant="caption">{userRole}</Typography>
           </Box>
           <Box sx={{ ml: 'auto' }}>
             <Tooltip title="Logout" placement="top">
               <IconButton
                 color="primary"
-                component={Link}
-                href="/auth/auth1/login"
+                onClick={handleLogout}
                 aria-label="logout"
                 size="small"
               >

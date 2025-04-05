@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
@@ -10,25 +12,37 @@ import {
   IconButton,
 } from '@mui/material';
 import * as dropdownData from './data';
-
+import { useSession, signOut } from 'next-auth/react';
 import { IconMail } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import Image from 'next/image';
 
-
 const Profile = () => {
+  const { data: session } = useSession();
   const [anchorEl2, setAnchorEl2] = useState(null);
+  
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
+  
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
 
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/auth/auth1/login' });
+  };
+
+  // Use user data from session or fallback to defaults
+  const userImage = session?.user?.image || "/images/profile/user-1.jpg";
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "user@example.com";
+  const userRole = "User"; // Default role, can be expanded later
+
   return (
     <Box>
       <IconButton
-        aria-label="show 11 new notifications"
+        aria-label="user profile"
         color="inherit"
         aria-controls="msgs-menu"
         aria-haspopup="true"
@@ -40,7 +54,7 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src={"/images/profile/user-1.jpg"}
+          src={userImage}
           alt={'ProfileImg'}
           sx={{
             width: 35,
@@ -68,13 +82,13 @@ const Profile = () => {
       >
         <Typography variant="h5">User Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
-        <Avatar src={"/images/profile/user-1.jpg"} alt={"ProfileImg"} sx={{ width: 95, height: 95 }} />
+          <Avatar src={userImage} alt={"ProfileImg"} sx={{ width: 95, height: 95 }} />
           <Box>
             <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
-              Ali Hamza
+              {userName}
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              Programmer
+              {userRole}
             </Typography>
             <Typography
               variant="subtitle2"
@@ -84,7 +98,7 @@ const Profile = () => {
               gap={1}
             >
               <IconMail width={15} height={15} />
-              info@alihamza.com
+              {userEmail}
             </Typography>
           </Box>
         </Stack>
@@ -156,7 +170,7 @@ const Profile = () => {
               <Image src={"/images/backgrounds/unlimited-bg.png"} width={150} height={183} style={{ height: 'auto', width: 'auto' }} alt="unlimited" className="signup-bg" />
             </Box>
           </Box>
-          <Button href="/auth" variant="outlined" color="primary" component={Link} fullWidth>
+          <Button onClick={handleLogout} variant="outlined" color="primary" fullWidth>
             Logout
           </Button>
         </Box>

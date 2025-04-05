@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from '@/store/store';
 import { GlobalDataProvider } from './GlobalDataProvider';
+import AuthProvider from './AuthProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,9 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ReduxProvider store={store}>
-        <GlobalDataProvider>
-          {children}
-        </GlobalDataProvider>
+        <AuthProvider>
+          <GlobalDataProvider>
+            {children}
+          </GlobalDataProvider>
+        </AuthProvider>
       </ReduxProvider>
     </QueryClientProvider>
   );
