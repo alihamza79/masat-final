@@ -71,7 +71,7 @@ resource "aws_ecs_task_definition" "this" {
           },
           {
             "name" : "NEXTAUTH_URL",
-            "value" : "https://${aws_route53_record.this.fqdn}"
+            "value" : "https://${local.url}"
           },
           {
             "name" : "GOOGLE_CLIENT_ID",
