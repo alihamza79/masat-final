@@ -64,6 +64,22 @@ resource "aws_ecs_task_definition" "this" {
           {
             "name" : "S3_BUCKET_NAME",
             "value" : "${aws_s3_bucket.this.bucket}"
+          },
+          {
+            "name" : "NEXTAUTH_SECRET",
+            "value" : "${var.nextauth_secret}"
+          },
+          {
+            "name" : "NEXTAUTH_URL",
+            "value" : "https://${aws_route53_record.this.fqdn}"
+          },
+          {
+            "name" : "GOOGLE_CLIENT_ID",
+            "value" : "${var.google_client_id}"
+          },
+          {
+            "name" : "GOOGLE_CLIENT_SECRET",
+            "value" : "${var.google_client_secret}"
           }
         ]
         "portMappings" : [

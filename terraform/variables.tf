@@ -42,3 +42,22 @@ variable "atlas_org_id" {
   type = string
 }
 
+variable "google_client_id" {
+  description = "Google OAuth Client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth Client Secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "nextauth_secret" {
+  description = "NextAuth Secret key for JWT encryption"
+  type        = string
+  sensitive   = true
+  default     = "Vu4HyE/xL43CrDXUZelE/jzNsb0fVz8BZmmWmleRXGY="
+}
+
