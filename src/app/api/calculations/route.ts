@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/app/lib/mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import SavedCalculation from '@/app/models/SavedCalculation';
 import { uploadFileToS3, generatePresignedUrl } from '@/utils/s3';
 
@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 // GET handler to retrieve all saved calculations
 export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
     const calculations = await SavedCalculation.find({}).sort({ createdAt: -1 });
     
     // Generate fresh presigned URLs for images
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await connectDB();
+    await connectToDatabase();
 
     // Handle image upload if an image file was provided
     let imagePath = '/products/default.jpg'; // Default image path

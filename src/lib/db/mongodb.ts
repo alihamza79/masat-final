@@ -5,9 +5,14 @@
 import mongoose from 'mongoose';
 
 // Connection URI
-
-
 const MONGODB_URI=process.env.MONGODB_URI || ''
+
+// Add error handling for missing connection string
+if (!MONGODB_URI) {
+  console.error('MONGODB_URI environment variable is not set');
+  throw new Error('Please define the MONGODB_URI environment variable');
+}
+
 // Connection options
 const options = {
   bufferCommands: false,

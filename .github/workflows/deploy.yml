@@ -70,3 +70,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}"
         working-directory: terraform
+        
+      - name: Force ECS Service Update
+        run: |
+          aws ecs update-service --cluster masat-dev-cluster --service masat-dev-ecs-service --force-new-deployment

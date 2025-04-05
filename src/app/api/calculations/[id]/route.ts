@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/app/lib/mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import SavedCalculation from '@/app/models/SavedCalculation';
 import { uploadFileToS3, generatePresignedUrl, deleteFileFromS3 } from '@/utils/s3';
 
@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const { id } = params;
-    await connectDB();
+    await connectToDatabase();
     
     const calculation = await SavedCalculation.findById(id);
     
@@ -75,7 +75,7 @@ export async function PUT(
       );
     }
 
-    await connectDB();
+    await connectToDatabase();
     
     const calculation = await SavedCalculation.findById(id);
     
@@ -157,7 +157,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
-    await connectDB();
+    await connectToDatabase();
     
     // First, find the calculation to get its image path
     const calculation = await SavedCalculation.findById(id);
