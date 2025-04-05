@@ -44,6 +44,10 @@ jobs:
             --build-arg ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
             --build-arg NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY="${{ secrets.NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY }}" \
             --build-arg ENCRYPTION_IV="${{ secrets.ENCRYPTION_IV }}" \
+            --build-arg NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
+            --build-arg NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
+            --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
@@ -56,7 +60,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
-        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}"
+        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}"
         working-directory: terraform
 
       - name: Terraform Apply
@@ -64,5 +68,5 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: masat-dev
           IMAGE_TAG: ${{ github.sha }}
-        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}"
+        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}"
         working-directory: terraform
