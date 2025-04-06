@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, TextField, styled } from '@mui/material';
+import { Box, TextField, styled, Theme, SxProps, useTheme } from '@mui/material';
 
 interface OTPInputProps {
   length: number;
@@ -41,16 +41,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-// Indicate when OTP is filled completely
-const getFilledStyle = (isCodeComplete: boolean, theme: any) => {
-  if (isCodeComplete) {
-    return {
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.success.main,
-      },
-    };
-  }
-  return {};
+// Define a type for the filled style
+type FilledStyleType = {
+  '& .MuiOutlinedInput-notchedOutline'?: {
+    borderColor: string;
+  };
 };
 
 const OTPInput: React.FC<OTPInputProps> = ({ 
@@ -59,6 +54,7 @@ const OTPInput: React.FC<OTPInputProps> = ({
   onChange, 
   disabled = false 
 }) => {
+  const theme = useTheme();
   const [inputValues, setInputValues] = useState<string[]>(Array(length).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -151,6 +147,13 @@ const OTPInput: React.FC<OTPInputProps> = ({
   // Check if code is complete
   const isCodeComplete = value.length === length;
 
+  // Get filled style based on whether code is complete
+  const filledStyle: FilledStyleType = isCodeComplete ? {
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.success.main,
+    }
+  } : {};
+
   return (
     <Box 
       sx={{
@@ -167,7 +170,7 @@ const OTPInput: React.FC<OTPInputProps> = ({
           inputRef={(el) => (inputRefs.current[index] = el)}
           value={inputValues[index]}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(index, e)}
-          onKeyDown={(e) => handleKeyDown(index, e)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(index, e)}
           disabled={disabled}
           variant="outlined"
           autoComplete="off"
@@ -177,9 +180,7 @@ const OTPInput: React.FC<OTPInputProps> = ({
             pattern: '[0-9]*',
             style: { textAlign: 'center' }
           }}
-          sx={(theme) => ({
-            ...getFilledStyle(isCodeComplete, theme)
-          })}
+          sx={filledStyle}
         />
       ))}
     </Box>
