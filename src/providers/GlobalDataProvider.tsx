@@ -1,24 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useIntegrations } from '@/lib/hooks/useIntegrations';
+import { useIntegrations, INTEGRATION_SYNC_QUERY_KEY } from '@/lib/hooks/useIntegrations';
 import { useIntegrationSync } from '@/lib/hooks/useIntegrationSync';
 import { useQuery } from '@tanstack/react-query';
+import useAuth from '@/lib/hooks/useAuth';
 
 interface GlobalDataProviderProps {
   children: React.ReactNode;
 }
 
-// Define a query key for integration sync
-const INTEGRATION_SYNC_QUERY_KEY = 'integration-sync';
-
 // Sync check interval (every 1 minute)
 const SYNC_CHECK_INTERVAL = 60 * 1000;
 
 export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children }) => {
+  // Get authentication state
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  
+  // Only use these hooks if authenticated
   const {
     integrations,
     isLoading: isLoadingIntegrations,
     error: integrationsError,
-  } = useIntegrations();
+  } = useIntegrations({ enabled: isAuthenticated });
 
   const {
     syncAllIntegrations
@@ -82,8 +84,8 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
       
       return null; // Return value is not used, but required by React Query
     },
-    // Only run this query if we have integrations and they're not loading
-    enabled: integrations.length > 0 && !isLoadingIntegrations,
+    // Only run this query if user is authenticated and we have integrations and they're not loading
+    enabled: isAuthenticated && integrations.length > 0 && !isLoadingIntegrations,
     // Configure automatic refetching
     refetchOnMount: false,
     refetchOnWindowFocus: false,

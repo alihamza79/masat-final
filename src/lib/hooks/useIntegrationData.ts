@@ -1,6 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { EmagOrder, EmagProductOffer } from '@/lib/services/emagApiService';
+import { signOut } from 'next-auth/react';
+
+// Create an HTTP client with response interceptor for auth errors
+const apiClient = axios.create();
+
+// Add a response interceptor to handle auth errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Log authentication errors, but don't redirect
+    if (error.response && error.response.status === 401) {
+      console.error('Authentication error:', error.response.data);
+      // We don't redirect automatically - let the component handle it
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Query keys
 export const INTEGRATION_DETAILS_KEY = 'integration-details';
@@ -23,7 +40,7 @@ export const useIntegrationData = (integrationId: string | undefined, options = 
       if (!integrationId) return null;
       
       try {
-        const response = await axios.get(`/api/db/integrations?integrationId=${integrationId}`);
+        const response = await apiClient.get(`/api/db/integrations?integrationId=${integrationId}`);
         return response.data.success ? response.data.data : null;
       } catch (error) {
         console.error(`Error fetching integration details for ${integrationId}:`, error);
@@ -46,7 +63,7 @@ export const useIntegrationData = (integrationId: string | undefined, options = 
       if (!integrationId) return { orders: [], totalCount: 0, totalPages: 0 };
       
       try {
-        const response = await axios.get(`/api/db/orders?integrationId=${integrationId}&page=1&pageSize=100`);
+        const response = await apiClient.get(`/api/db/orders?integrationId=${integrationId}&page=1&pageSize=100`);
         return response.data.success ? response.data.data : { orders: [], totalCount: 0, totalPages: 0 };
       } catch (error) {
         console.error(`Error fetching orders for integration ${integrationId}:`, error);
@@ -69,7 +86,7 @@ export const useIntegrationData = (integrationId: string | undefined, options = 
       if (!integrationId) return { productOffers: [], totalCount: 0, totalPages: 0 };
       
       try {
-        const response = await axios.get(`/api/db/product-offers?integrationId=${integrationId}&page=1&pageSize=100`);
+        const response = await apiClient.get(`/api/db/product-offers?integrationId=${integrationId}&page=1&pageSize=100`);
         return response.data.success ? response.data.data : { productOffers: [], totalCount: 0, totalPages: 0 };
       } catch (error) {
         console.error(`Error fetching product offers for integration ${integrationId}:`, error);
@@ -85,7 +102,7 @@ export const useIntegrationData = (integrationId: string | undefined, options = 
     if (!integrationId) return { orders: [], totalCount: 0, totalPages: 0 };
     
     try {
-      const response = await axios.get(`/api/db/orders?integrationId=${integrationId}&page=${page}&pageSize=${pageSize}`);
+      const response = await apiClient.get(`/api/db/orders?integrationId=${integrationId}&page=${page}&pageSize=${pageSize}`);
       return response.data.success ? response.data.data : { orders: [], totalCount: 0, totalPages: 0 };
     } catch (error) {
       console.error(`Error fetching orders page ${page} for integration ${integrationId}:`, error);
@@ -101,7 +118,7 @@ export const useIntegrationData = (integrationId: string | undefined, options = 
     if (search) url += `&search=${encodeURIComponent(search)}`;
     
     try {
-      const response = await axios.get(url);
+      const response = await apiClient.get(url);
       return response.data.success ? response.data.data : { productOffers: [], totalCount: 0, totalPages: 0 };
     } catch (error) {
       console.error(`Error fetching product offers page ${page} for integration ${integrationId}:`, error);

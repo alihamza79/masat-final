@@ -1,7 +1,8 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
 // Interface for Integration document
 export interface IIntegration extends Document {
+  userId: Types.ObjectId | string; // Link to the user who owns this integration
   accountName: string;
   username: string;
   password: string;
@@ -20,10 +21,14 @@ export interface IIntegration extends Document {
 
 // Integration schema
 const IntegrationSchema = new Schema<IIntegration>({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User ID is required']
+  },
   accountName: {
     type: String,
     required: [true, 'Account name is required'],
-    unique: true,
     trim: true
   },
   username: {
@@ -76,8 +81,11 @@ const IntegrationSchema = new Schema<IIntegration>({
   timestamps: true // Automatically manage createdAt and updatedAt fields
 });
 
-// Add compound index for username and region
-IntegrationSchema.index({ username: 1, region: 1 }, { unique: true });
+// Update the compound index to include userId, making it unique per user
+IntegrationSchema.index({ userId: 1, username: 1, region: 1 }, { unique: true });
+
+// Add a compound index for accountName to make it unique per user
+IntegrationSchema.index({ userId: 1, accountName: 1 }, { unique: true });
 
 // Create and export the model
 export default mongoose.models.Integration || mongoose.model<IIntegration>('Integration', IntegrationSchema); 

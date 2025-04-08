@@ -5,9 +5,27 @@
 import axios from 'axios';
 import { IntegrationFormData } from '@/app/(DashboardLayout)/integrations/components/IntegrationFormDialog';
 import { decryptResponse } from '@/lib/utils/responseEncryption';
+import { signOut } from 'next-auth/react';
+
+// Create an HTTP client with response interceptor for auth errors
+const apiClient = axios.create();
+
+// Add a response interceptor to handle auth errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Log authentication errors, but don't redirect
+    if (error.response && error.response.status === 401) {
+      console.error('Authentication error:', error.response.data);
+      // We don't redirect automatically - let the component handle it
+    }
+    return Promise.reject(error);
+  }
+);
 
 export interface Integration {
   _id?: string;
+  userId?: string;
   accountName: string;
   username: string;
   password?: string;
@@ -47,7 +65,7 @@ export async function validateIntegration(data: IntegrationFormData & { integrat
       });
     }
     
-    const response = await axios.post('/api/integrations/validate', payload);
+    const response = await apiClient.post('/api/integrations/validate', payload);
     
     return {
       success: response.data.success,
@@ -79,7 +97,7 @@ export async function createIntegration(data: IntegrationFormData): Promise<{
       password: data.password ? Buffer.from(data.password).toString('base64') : undefined
     };
     
-    const response = await axios.post('/api/integrations', payload);
+    const response = await apiClient.post('/api/integrations', payload);
     
     return {
       success: response.data.success,
@@ -113,7 +131,7 @@ export async function updateIntegration(id: string, data: IntegrationFormData): 
       password: data.password ? Buffer.from(data.password).toString('base64') : undefined
     };
     
-    const response = await axios.put('/api/integrations', payload);
+    const response = await apiClient.put('/api/integrations', payload);
     
     return {
       success: response.data.success,
@@ -138,7 +156,7 @@ export async function deleteIntegration(id: string): Promise<{
   error?: string;
 }> {
   try {
-    const response = await axios.delete(`/api/integrations?id=${id}`);
+    const response = await apiClient.delete(`/api/integrations?id=${id}`);
     
     return {
       success: response.data.success
@@ -162,7 +180,7 @@ export async function getIntegrations(): Promise<{
   error?: string;
 }> {
   try {
-    const response = await axios.get('/api/integrations');
+    const response = await apiClient.get('/api/integrations');
     
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to fetch integrations');
@@ -177,6 +195,17 @@ export async function getIntegrations(): Promise<{
     };
   } catch (error: any) {
     console.error('Error fetching integrations:', error);
+    
+    // For auth errors, just return empty array
+    if (error.response?.status === 401) {
+      console.log('Auth error while fetching integrations, returning empty array');
+      return { 
+        success: true, 
+        integrations: [] 
+      };
+    }
+    
+    // For other errors, return error info
     return {
       success: false,
       error: error.response?.data?.error || error.message || 'Failed to fetch integrations'

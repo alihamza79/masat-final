@@ -12,12 +12,18 @@ import { useIntegrationSync } from './useIntegrationSync';
 // Query key for integrations
 export const INTEGRATIONS_QUERY_KEY = ['integrations'];
 
+// Query key for syncing - needs to match the key in GlobalDataProvider
+export const INTEGRATION_SYNC_QUERY_KEY = 'integration-sync';
+
 // Fetch interval for integrations
 const INTEGRATIONS_FETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-export const useIntegrations = () => {
+export const useIntegrations = (options?: { enabled?: boolean }) => {
   const queryClient = useQueryClient();
   const { syncIntegrationById } = useIntegrationSync();
+  
+  // Default enabled to true if not provided
+  const isEnabled = options?.enabled !== undefined ? options.enabled : true;
 
   // Fetch integrations
   const { data: integrations = [], isLoading, error, refetch } = useQuery({
@@ -31,6 +37,7 @@ export const useIntegrations = () => {
       }
       throw new Error(result.error || 'Failed to fetch integrations');
     },
+    enabled: isEnabled,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchInterval: INTEGRATIONS_FETCH_INTERVAL,
@@ -51,21 +58,26 @@ export const useIntegrations = () => {
       const integrationId = result.success && result.integration ? result.integration._id : undefined;
       
       if (integrationId) {
-        // Invalidate and refetch integrations immediately
+        console.log(`Integration ${integrationId} created successfully.`);
+        
+        // First invalidate the integrations query to refresh the UI immediately
         await queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
         
-        // Start data sync in the background - don't await this
-        setTimeout(() => {
-          syncIntegrationById(integrationId)
-            .then(() => {
-              console.log(`Background sync completed for integration ${integrationId}`);
-              // Refresh integration data after sync completes
-              queryClient.invalidateQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
-            })
-            .catch(error => {
-              console.error(`Background sync failed for integration ${integrationId}:`, error);
-            });
-        }, 100);
+        // Handle the sync process in the background after returning control
+        // This allows the dialog to close immediately
+        setTimeout(async () => {
+          try {
+            // Then explicitly refetch to ensure the list is updated
+            await queryClient.refetchQueries({ queryKey: INTEGRATIONS_QUERY_KEY });
+            
+            // Now that integrations list is updated, trigger the sync check
+            console.log(`Integration list updated. Triggering sync check for ${integrationId}...`);
+            await queryClient.invalidateQueries({ queryKey: [INTEGRATION_SYNC_QUERY_KEY] });
+            await queryClient.refetchQueries({ queryKey: [INTEGRATION_SYNC_QUERY_KEY] });
+          } catch (error) {
+            console.error('Error in background sync process:', error);
+          }
+        }, 100); // Small delay to ensure UI updates first
       }
     }
   });

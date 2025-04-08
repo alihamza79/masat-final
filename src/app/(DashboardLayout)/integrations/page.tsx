@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Grid, Box, Typography, Button } from '@mui/material';
+import { Grid, Box, Typography, Button, CircularProgress } from '@mui/material';
 import PageHeader from '@/app/components/analytics-header/PageHeader';
 import IntegrationsTable from './components/IntegrationsTable';
 import PageContainer from '@/app/components/container/PageContainer';
@@ -11,6 +11,7 @@ import Toast from '@/app/components/common/Toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { INTEGRATIONS_STATUS_QUERY_KEY, useIntegrationSync } from '@/lib/hooks/useIntegrationSync';
+import useAuth from '@/lib/hooks/useAuth';
 
 const IntegrationsPage = () => {
   const { t } = useTranslation();
@@ -34,6 +35,8 @@ const IntegrationsPage = () => {
     isCreating,
     refetch: refetchIntegrations
   } = useIntegrations();
+
+  const { isAuthenticated, loading } = useAuth();
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -139,6 +142,16 @@ const IntegrationsPage = () => {
       showToast(`Error: ${error.message || t('integrations.toast.processingError')}`, 'error');
     }
   };
+
+  if (loading) {
+    return (
+      <PageContainer title="Integrations" description="Manage eMAG integrations">
+        <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 1, boxShadow: 1 }} display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer title={t('integrations.title')} description={t('integrations.title')}>

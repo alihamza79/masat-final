@@ -6,9 +6,23 @@ import { EmagApiService } from '@/lib/services/emagApiService';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { decrypt } from '@/lib/utils/encryption';
 import Integration from '@/models/Integration';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Get the user's session
+    const session = await getServerSession(authOptions);
+    
+    // Check if the user is authenticated
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.user.id;
     const { username, password, region, integrationId, accountName, accountType } = await request.json();
     
     if (!username || !region) {
@@ -24,12 +38,12 @@ export async function POST(request: NextRequest) {
     if (integrationId) {
       await connectToDatabase();
       
-      // Find the integration using Mongoose
-      const integration = await Integration.findById(integrationId);
+      // Find the integration using Mongoose, ensuring it belongs to the current user
+      const integration = await Integration.findOne({ _id: integrationId, userId });
       
       if (!integration) {
         return NextResponse.json(
-          { success: false, error: 'Integration not found' },
+          { success: false, error: 'Integration not found or you do not have permission to access it' },
           { status: 404 }
         );
       }
@@ -44,24 +58,29 @@ export async function POST(request: NextRequest) {
     if (accountName && !integrationId) {
       await connectToDatabase();
       
-      // Check for existing account name (must be unique regardless of region)
-      const existingAccountName = await Integration.findOne({ accountName });
+      // Check for existing account name for this user (must be unique per user)
+      const existingAccountName = await Integration.findOne({ 
+        userId,
+        accountName 
+      });
+      
       if (existingAccountName) {
         return NextResponse.json(
-          { success: false, error: `An integration with this account name already exists` },
+          { success: false, error: 'An integration with this account name already exists.' },
           { status: 409 }
         );
       }
       
-      // Check for existing username AND region combination
+      // Check for existing username AND region combination for this user
       const existingUsernameAndRegion = await Integration.findOne({ 
+        userId,
         username, 
         region 
       });
       
       if (existingUsernameAndRegion) {
         return NextResponse.json(
-          { success: false, error: `An integration with this username and region already exists` },
+          { success: false, error: 'An integration with this username and region already exists' },
           { status: 409 }
         );
       }
@@ -73,12 +92,13 @@ export async function POST(request: NextRequest) {
       // Check for duplicate account name (excluding current integration)
       const duplicateAccountName = await Integration.findOne({
         _id: { $ne: integrationId },
+        userId,
         accountName
       });
       
       if (duplicateAccountName) {
         return NextResponse.json(
-          { success: false, error: `An integration with this account name already exists` },
+          { success: false, error: 'An integration with this account name already exists' },
           { status: 409 }
         );
       }
@@ -86,13 +106,14 @@ export async function POST(request: NextRequest) {
       // Check for duplicate username AND region combination (excluding current integration)
       const duplicateUsernameAndRegion = await Integration.findOne({
         _id: { $ne: integrationId },
+        userId,
         username,
         region
       });
       
       if (duplicateUsernameAndRegion) {
         return NextResponse.json(
-          { success: false, error: `An integration with this username and region already exists` },
+          { success: false, error: 'An integration with this username and region already exists.' },
           { status: 409 }
         );
       }

@@ -2,12 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import Integration from '@/models/Integration';
 import mongoose from 'mongoose';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/lib/auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Get the user's session
+    const session = await getServerSession(authOptions);
+    
+    // Check if the user is authenticated
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.user.id;
     const id = params.id;
     
     // Validate ID format
@@ -20,33 +34,23 @@ export async function GET(
 
     await connectToDatabase();
 
-    // Find integration by ID using Mongoose
-    const integration = await Integration.findById(id);
+    // Find integration by ID and ensure it belongs to the current user
+    const integration = await Integration.findOne({ _id: id, userId });
 
     if (!integration) {
       return NextResponse.json(
-        { success: false, error: 'Integration not found' },
+        { success: false, error: 'Integration not found or you do not have permission to access it' },
         { status: 404 }
       );
     }
 
-    // Return integration with success status
+    // Return integration with success status, excluding the actual password
+    const integrationData = integration.toObject();
+    delete integrationData.password;
+    
     return NextResponse.json({
       success: true,
-      integration: {
-        _id: integration._id,
-        accountName: integration.accountName,
-        username: integration.username,
-        password: integration.password, // Password will be encrypted
-        region: integration.region,
-        accountType: integration.accountType,
-        ordersCount: integration.ordersCount,
-        productOffersCount: integration.productOffersCount,
-        lastOrdersImport: integration.lastOrdersImport,
-        lastProductOffersImport: integration.lastProductOffersImport,
-        importStatus: integration.importStatus,
-        importError: integration.importError
-      }
+      integration: integrationData
     });
   } catch (error: any) {
     console.error('Error fetching integration:', error);
@@ -62,6 +66,18 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Get the user's session
+    const session = await getServerSession(authOptions);
+    
+    // Check if the user is authenticated
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.user.id;
     const id = params.id;
     
     // Validate ID format
@@ -74,12 +90,12 @@ export async function DELETE(
 
     await connectToDatabase();
 
-    // Delete integration by ID using Mongoose
-    const result = await Integration.findByIdAndDelete(id);
+    // Delete integration, ensuring it belongs to the current user
+    const result = await Integration.findOneAndDelete({ _id: id, userId });
 
     if (!result) {
       return NextResponse.json(
-        { success: false, error: 'Integration not found' },
+        { success: false, error: 'Integration not found or you do not have permission to delete it' },
         { status: 404 }
       );
     }
