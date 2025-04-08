@@ -67,7 +67,8 @@ export const authOptions: NextAuthOptions = {
           await connectToDatabase();
           
           // Check if user exists in our database with this email
-          const existingUser = await User.findOne({ email: profile.email });
+          let existingUser = await User.findOne({ email: profile.email });
+          let mongoDbUserId: string;
           
           if (existingUser) {
             // Use direct MongoDB update to set googleLinked flag and update profile
@@ -82,9 +83,11 @@ export const authOptions: NextAuthOptions = {
                 }
               }
             );
+            // Cast existingUser._id to ObjectId and then to string
+            mongoDbUserId = (existingUser._id as unknown as ObjectId).toString();
           } else {
             // Create new user with Google profile data
-            await User.collection.insertOne({
+            const newUser = await User.collection.insertOne({
               email: profile.email,
               name: profile.name || user.name,
               image: profile.image || user.image,
@@ -95,7 +98,11 @@ export const authOptions: NextAuthOptions = {
               createdAt: new Date(),
               updatedAt: new Date()
             });
+            mongoDbUserId = newUser.insertedId.toString();
           }
+          
+          // Override the user id with our MongoDB user id
+          user.id = mongoDbUserId;
         } catch (error) {
           console.error("Error during OAuth user creation:", error);
           // Don't fail the sign-in if we can't save to database
