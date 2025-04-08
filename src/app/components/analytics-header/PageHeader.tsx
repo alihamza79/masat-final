@@ -26,7 +26,12 @@ import { format, addDays, subDays, startOfMonth, endOfMonth, eachDayOfInterval }
 import { ApexOptions } from 'apexcharts';
 import { useTranslation } from 'react-i18next';
 
-const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+const Chart = dynamic(() => import('react-apexcharts'), {
+  ssr: false,
+  loading: () => <p>Loading Chart...</p>,
+  webpack: () => [(require as any).resolveWeak('react-apexcharts')],
+  modules: () => ({ 'react-apexcharts': (require as any).resolveWeak('react-apexcharts') })
+});
 
 const PageHeader = () => {
   const { t } = useTranslation();

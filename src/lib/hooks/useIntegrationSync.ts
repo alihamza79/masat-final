@@ -221,9 +221,22 @@ export const useIntegrationSync = () => {
       
       // Flatten the batch results and add to allOrders
       const batchOrders = batchResults.flat();
-      allOrders.push(...batchOrders);
       
-      console.log('batchOrders', batchOrders);
+      // Additional filtering step to ensure we only keep orders newer than the createdAfter date
+      // This helps prevent duplicates that might slip through the API filtering
+      const latestOrderDateObj = new Date(latestOrderDate);
+      const filteredBatchOrders = batchOrders.filter(order => {
+        const orderDate = new Date(order.date);
+        return orderDate > latestOrderDateObj;
+      });
+      
+      if (batchOrders.length !== filteredBatchOrders.length) {
+        console.log(`Filtered out ${batchOrders.length - filteredBatchOrders.length} orders with dates <= ${latestOrderDate}`);
+      }
+      
+      allOrders.push(...filteredBatchOrders);
+      
+      console.log('batchOrders after filtering', filteredBatchOrders);
 
       // Calculate progress as percentage of pages processed
       const progress = Math.round((batchEnd / totalPages) * 100);
