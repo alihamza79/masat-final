@@ -42,6 +42,29 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { SavedCalculation } from '../hooks/useSavedCalculations';
 
+// TabPanel component for switching between tabs
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && children}
+    </div>
+  );
+}
+
 interface ProductSelectionModalProps {
   open: boolean;
   onClose: () => void;
@@ -1041,81 +1064,82 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               )}
             </Box>
             
-            {/* Scrollable Products Container */}
-            <Box 
-              sx={{ 
-                position: 'absolute',
-                top: isMobile ? '90px' : '140px',
-                bottom: 0,
-                left: 0,
-                right: { xs: 0, sm: 3 },
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                pr: { sm: 1 },
-                pb: 1,
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: 'rgba(0,0,0,0.1)',
-                  borderRadius: '4px',
-                }
-              }}
-            >
-              {loadingEmagProducts ? (
-                <Grid container spacing={1.5}>
-                  {[...Array(8)].map((_, index) => (
-                    <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
-                      <ProductSkeleton />
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : filteredEmagProducts.length > 0 ? (
-                <Grid 
-                  container 
-                  spacing={1.5}
-                >
-                  {filteredEmagProducts.map((product) => (
-                    <Grid item xs={12} sm={6} key={product.id}>
-                      <ProductCard product={product} />
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : searchQuery.trim() !== '' ? (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  py: 4,
-                  color: 'text.secondary'
-                }}>
-                  <IconAlertCircle size={32} />
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {t('calculator.productSelection.noProductsFound')}
-                  </Typography>
-                </Box>
-              ) : emagProducts.length === 0 ? (
-                <Grid container spacing={1.5}>
-                  {[...Array(4)].map((_, index) => (
-                    <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
-                      <ProductSkeleton />
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : (
-                <Grid 
-                  container 
-                  spacing={1.5}
-                >
-                  {staticProducts.emag.map((product) => (
-                    <Grid item xs={12} sm={6} key={product.id}>
-                      <ProductCard product={product} />
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Box>
+            {/* Products Tab Content */}
+            <TabPanel value={activeTab} index={0}>
+              <Box 
+                sx={{ 
+                  position: 'absolute',
+                  top: isMobile ? '90px' : '140px',
+                  bottom: 0,
+                  left: 0,
+                  right: { xs: 0, sm: 3 },
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  pr: { sm: 1 },
+                  pb: 1,
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.1)',
+                    borderRadius: '4px',
+                  }
+                }}
+              >
+                {/* Display products if loading */}
+                {loading ? (
+                  <Grid container spacing={1.5}>
+                    {[...Array(8)].map((_, index) => (
+                      <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
+                        <ProductSkeleton />
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : products && products.length > 0 ? (
+                  // Display products if we have them
+                  <Grid container spacing={1.5}>
+                    {filteredEmagProducts.map((product) => (
+                      <Grid item xs={12} sm={6} key={product.id || product.emagProductOfferId}>
+                        <ProductCard product={product} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : searchQuery.trim() !== '' ? (
+                  // Display "no results" message when searching
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    py: 4,
+                    color: 'text.secondary'
+                  }}>
+                    <IconAlertCircle size={32} />
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      {t('calculator.productSelection.noProductsFound')}
+                    </Typography>
+                  </Box>
+                ) : (
+                  // Display "no products for your integrations" message when not searching
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    py: 4,
+                    color: 'text.secondary'
+                  }}>
+                    <IconAlertCircle size={32} />
+                    <Typography variant="body1" sx={{ mt: 1 }}>
+                      {t('calculator.productSelection.noProductsFound')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center', maxWidth: '80%' }}>
+                      No products found for your integrations. Please add an integration in the Integrations page first.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </TabPanel>
           </Box>
 
           {/* Vertical Divider - Only show on desktop */}

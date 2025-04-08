@@ -1,23 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import ProductOffer from '@/models/ProductOffer';
+import Integration from '@/models/Integration';
 import mongoose from 'mongoose';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/lib/auth';
 
 /**
- * GET endpoint to fetch ALL product offers
- * No filtering, returns all documents from the ProductOffer collection
+ * GET endpoint to fetch product offers for the current user's integrations
+ * Filters by the current user's integration IDs
  */
 export async function GET(request: NextRequest) {
   try {
+    // Get the user's session
+    const session = await getServerSession(authOptions);
+    
+    // Check if the user is authenticated
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.user.id;
     await connectToDatabase();
 
-    // Fetch all product offers, no filtering
-    const productOffers = await ProductOffer.find().sort({ created: -1 });
+    // First, get all integrations for the current user
+    const userIntegrations = await Integration.find({ userId });
+    
+    if (!userIntegrations || userIntegrations.length === 0) {
+      // User has no integrations, return empty array
+      return NextResponse.json({ 
+        success: true, 
+        data: { 
+          productOffers: [],
+          message: 'No integrations found for user' 
+        } 
+      });
+    }
+    
+    // Extract the integration IDs
+    const integrationIds = userIntegrations.map(integration => integration._id);
+    
+    // Fetch product offers that belong to the user's integrations
+    const productOffers = await ProductOffer.find({ 
+      integrationId: { $in: integrationIds } 
+    }).sort({ created: -1 });
 
-    return NextResponse.json({ success: true, data: { productOffers } });
+    return NextResponse.json({ 
+      success: true, 
+      data: { 
+        productOffers,
+        count: productOffers.length
+      } 
+    });
   } catch (error: any) {
     console.error('Error fetching product offers:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Failed to fetch product offers' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Failed to fetch product offers' 
+    }, { status: 500 });
   }
 }
 
@@ -114,7 +157,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error storing product offers:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to store product offers' },
+      { success: false, error: error.message || 'Failed to store products offers' },
       { status: 500 }
     );
   } finally {
