@@ -23,6 +23,7 @@ import AuthSocialButtons from "./AuthSocialButtons";
 import { useState, FormEvent, useEffect, ChangeEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import SetPasswordModal from "@/app/components/auth/SetPasswordModal";
 
 const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const router = useRouter();
@@ -250,48 +251,11 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       </form>
       {subtitle}
 
-      {/* Google Account Dialog */}
-      <Dialog
+      <SetPasswordModal
         open={showGoogleAccountDialog}
         onClose={() => setShowGoogleAccountDialog(false)}
-        aria-labelledby="google-dialog-title"
-      >
-        <DialogTitle id="google-dialog-title">
-          Google Account Detected
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" gutterBottom>
-            You've previously signed in with Google using this email, but haven't set a password yet.
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Would you like to continue with Google Sign-In or set a password for this account?
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
-          <Button 
-            onClick={() => setShowGoogleAccountDialog(false)} 
-            color="inherit"
-          >
-            Cancel
-          </Button>
-          <Box>
-            <Button 
-              onClick={handleSetPassword} 
-              color="primary" 
-              sx={{ mr: 1 }}
-            >
-              Set Password
-            </Button>
-            <Button 
-              onClick={handleGoogleSignIn} 
-              variant="contained" 
-              color="primary"
-            >
-              Continue with Google
-            </Button>
-          </Box>
-        </DialogActions>
-      </Dialog>
+        email={email}
+      />
     </>
   );
 };

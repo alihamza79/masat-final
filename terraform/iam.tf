@@ -83,3 +83,26 @@ resource "aws_iam_policy" "ecs_task_s3_policy" {
     ]
   })
 }
+
+resource "aws_iam_role_policy_attachment" "ses_send_email_policy_attachment_task_role" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.ses_send_email_policy.arn
+}
+
+resource "aws_iam_policy" "ses_send_email_policy" {
+  name        = "${var.project_name}-${var.env}-ses-send-email-policy"
+  description = "Policy to allow sending emails through SES using a verified identity"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ],
+        Resource = "arn:aws:ses:${var.aws_region}:754127347866:identity/shiftcrowd.eu"
+      }
+    ]
+  })
+}

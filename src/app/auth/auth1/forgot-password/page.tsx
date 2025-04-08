@@ -1,27 +1,36 @@
-import { Grid, Box, Typography } from "@mui/material";
-import PageContainer from "@/app/components/container/PageContainer";
-import AuthForgotPassword from "../../authForms/AuthForgotPassword";
+'use client';
+import { Grid, Box, Card, Typography } from '@mui/material';
+import PageContainer from '@/app/components/container/PageContainer';
+import Logo from '@/app/(DashboardLayout)/layout/logo/Logo';
+import ForgotPasswordFlow from '@/app/components/auth/ForgotPasswordFlow';
+import { useRouter } from 'next/navigation';
 import Image from "next/image";
-import Logo from "@/app/(DashboardLayout)/layout/logo/Logo";
 
-export default function ForgotPassword() {
+const ForgotPassword = () => {
+  const router = useRouter();
+
+  const handleComplete = () => {
+    router.push('/auth/auth1/login');
+  };
+
+  const handleCancel = () => {
+    router.push('/auth/auth1/login');
+  };
+
   return (
-    <PageContainer
-      title="Forgot Password Page"
-      description="this is Sample page"
-    >
+    <PageContainer title="Forgot Password" description="Recover your account password">
       <Grid
         container
-        justifyContent="center"
         spacing={0}
-        sx={{ overflowX: "hidden" }}
+        justifyContent="center"
+        sx={{ height: '100vh' }}
       >
         <Grid
           item
           xs={12}
           sm={12}
-          lg={8}
-          xl={9}
+          lg={7}
+          xl={8}
           sx={{
             position: "relative",
             "&:before": {
@@ -38,7 +47,7 @@ export default function ForgotPassword() {
         >
           <Box position="relative">
             <Box px={3}>
-              <Logo />
+              <Logo/>
             </Box>
             <Box
               alignItems="center"
@@ -69,30 +78,23 @@ export default function ForgotPassword() {
           item
           xs={12}
           sm={12}
-          lg={4}
-          xl={3}
+          lg={5}
+          xl={4}
           display="flex"
           justifyContent="center"
           alignItems="center"
         >
-          <Box p={4}>
-            <Typography variant="h4" fontWeight="700">
-              Forgot your password?
-            </Typography>
-
-            <Typography
-              color="textSecondary"
-              variant="subtitle2"
-              fontWeight="400"
-              mt={2}
-            >
-              Please enter the email address associated with your account and We
-              will email you a link to reset your password.
-            </Typography>
-            <AuthForgotPassword />
-          </Box>
+          <Card sx={{ width: '100%', maxWidth: '500px', p: { xs: 2, sm: 4 } }}>
+            <ForgotPasswordFlow
+              onComplete={handleComplete}
+              onCancel={handleCancel}
+              variant="inside-modal"
+            />
+          </Card>
         </Grid>
       </Grid>
     </PageContainer>
   );
-}
+};
+
+export default ForgotPassword;
