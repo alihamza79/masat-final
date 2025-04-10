@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic';
+
 import React, { useState } from 'react';
 import { Grid, Box, Card } from "@mui/material";
 import PageContainer from '@/app/components/container/PageContainer';

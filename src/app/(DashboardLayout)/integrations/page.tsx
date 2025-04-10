@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { Grid, Box, Typography, Button, CircularProgress } from '@mui/material';
 import PageHeader from '@/app/components/analytics-header/PageHeader';
