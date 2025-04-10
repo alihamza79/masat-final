@@ -44,8 +44,8 @@ ENV ENCRYPTION_IV=$ENCRYPTION_IV
 ARG NEXTAUTH_SECRET
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 
-ARG NEXTAUTH_URL
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
+# Set environment variable for NextAuth URL to avoid invalid URL errors during build
+ENV NEXTAUTH_URL=http://localhost
 
 # Google OAuth environment variables
 ARG GOOGLE_CLIENT_ID
