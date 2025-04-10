@@ -22,9 +22,7 @@ const AuthSocialButtons = ({ title }: signInType) => {
   const handleFacebookSignIn = async () => {
     try {
       setFacebookLoading(true);
-      // Facebook provider can be implemented in the future
-      alert('Facebook login is not implemented yet');
-      setFacebookLoading(false);
+      await signIn('facebook', { callbackUrl: '/' });
     } catch (error) {
       console.error('Facebook sign in error:', error);
       setFacebookLoading(false);

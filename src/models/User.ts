@@ -7,6 +7,7 @@ export interface IUser extends Document {
   name?: string;
   image?: string;
   googleLinked?: boolean;
+  facebookLinked?: boolean;
   credentialsLinked?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +36,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
     },
     googleLinked: {
+      type: Boolean,
+      default: false,
+    },
+    facebookLinked: {
       type: Boolean,
       default: false,
     },

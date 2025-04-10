@@ -74,12 +74,24 @@ resource "aws_ecs_task_definition" "this" {
             "value" : "https://${local.url}"
           },
           {
+            "name" : "NODE_ENV",
+            "value" : "production"
+          },
+          {
             "name" : "GOOGLE_CLIENT_ID",
             "value" : "${var.google_client_id}"
           },
           {
             "name" : "GOOGLE_CLIENT_SECRET",
             "value" : "${var.google_client_secret}"
+          },
+          {
+            "name" : "FACEBOOK_CLIENT_ID",
+            "value" : "${var.facebook_client_id}"
+          },
+          {
+            "name" : "FACEBOOK_CLIENT_SECRET",
+            "value" : "${var.facebook_client_secret}"
           }
         ]
         "portMappings" : [

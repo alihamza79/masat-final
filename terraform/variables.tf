@@ -54,6 +54,18 @@ variable "google_client_secret" {
   sensitive   = true
 }
 
+variable "facebook_client_id" {
+  description = "Facebook OAuth Client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "facebook_client_secret" {
+  description = "Facebook OAuth Client Secret"
+  type        = string
+  sensitive   = true
+}
+
 variable "nextauth_secret" {
   description = "NextAuth Secret key for JWT encryption"
   type        = string

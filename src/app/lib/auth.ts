@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import FacebookProvider from 'next-auth/providers/facebook';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/db/mongodb';
@@ -11,6 +12,10 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID || '',
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
     }),
     CredentialsProvider({
       name: 'Credentials',
@@ -54,6 +59,7 @@ export const authOptions: NextAuthOptions = {
             credentialsLinked: true
           };
         } catch (error: any) {
+          console.error('Authorization error:', error);
           throw new Error(error.message || 'Authentication failed');
         }
       }
@@ -61,8 +67,9 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // For Google logins, we need to check for existing accounts and link them
-      if (account?.provider === "google" && profile?.email) {
+      console.log('Sign in callback with account provider:', account?.provider);
+      // For Google or Facebook logins, we need to check for existing accounts and link them
+      if ((account?.provider === "google" || account?.provider === "facebook") && profile?.email) {
         try {
           await connectToDatabase();
           
@@ -71,12 +78,15 @@ export const authOptions: NextAuthOptions = {
           let mongoDbUserId: string;
           
           if (existingUser) {
-            // Use direct MongoDB update to set googleLinked flag and update profile
+            // Use direct MongoDB update to set provider flag and update profile
+            const providerFlag = account.provider === "google" ? "googleLinked" : "facebookLinked";
+            console.log(`Updating existing user with ${providerFlag} = true`);
+            
             await User.collection.updateOne(
               { email: profile.email },
               { 
                 $set: { 
-                  googleLinked: true,
+                  [providerFlag]: true,
                   // Only update name/image if they don't exist
                   ...((!existingUser.image && user.image) ? { image: user.image } : {}),
                   ...((!existingUser.name && user.name) ? { name: user.name } : {})
@@ -86,12 +96,15 @@ export const authOptions: NextAuthOptions = {
             // Cast existingUser._id to ObjectId and then to string
             mongoDbUserId = (existingUser._id as unknown as ObjectId).toString();
           } else {
-            // Create new user with Google profile data
+            // Create new user with provider profile data
+            const providerFlag = account.provider === "google" ? "googleLinked" : "facebookLinked";
+            console.log(`Creating new user with ${providerFlag} = true`);
+            
             const newUser = await User.collection.insertOne({
               email: profile.email,
               name: profile.name || user.name,
               image: profile.image || user.image,
-              googleLinked: true,
+              [providerFlag]: true,
               credentialsLinked: false,
               // Create a random password for the user
               password: await bcrypt.hash(Math.random().toString(36).slice(-10), 10),
@@ -126,6 +139,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
+  debug: process.env.NODE_ENV === 'development',
   pages: {
     signIn: '/auth/auth1/login',
     signOut: '/auth/auth1/login',
