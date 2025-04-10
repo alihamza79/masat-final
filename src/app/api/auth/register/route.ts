@@ -5,7 +5,7 @@ import User from '@/models/User';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, bypassVerification } = await request.json();
     
     // Validate input
     if (!email || !password) {
@@ -44,6 +44,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // For security, we now require OTP verification for new accounts
+    // This can only be bypassed in development or with a special flag
+    if (!bypassVerification && process.env.NODE_ENV !== 'development') {
+      return NextResponse.json(
+        { success: false, message: 'Email verification is required for registration. Please use the verification flow.' }, 
+        { status: 403 }
+      );
+    }
+    
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
@@ -52,6 +61,8 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase(),
       password: hashedPassword,
       name: name || '',
+      credentialsLinked: true,
+      emailVerified: !!bypassVerification, // Mark as verified only if bypassing verification
     });
     
     // Return success response (excluding password)

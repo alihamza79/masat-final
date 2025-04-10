@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, TextField, styled, Theme, SxProps, useTheme } from '@mui/material';
+import { Box, TextField, styled } from '@mui/material';
 
 interface OTPInputProps {
   length: number;
@@ -9,178 +9,143 @@ interface OTPInputProps {
 }
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
-  width: '45px',
+  width: '3rem',
+  height: '3rem',
+  margin: '0 0.5rem',
+  borderRadius: theme.shape.borderRadius,
   '& .MuiOutlinedInput-root': {
-    height: '50px',
-    '& input': {
-      padding: '10px 0',
-      textAlign: 'center',
-      fontSize: '1.2rem',
-      fontWeight: 600,
-    },
-    '&.Mui-focused': {
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: 2,
-      },
-    },
-    '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.mode === 'dark' 
-        ? theme.palette.grey[700] 
-        : theme.palette.grey[400],
-    },
+    height: '100%',
+    borderRadius: theme.shape.borderRadius,
+  },
+  '& .MuiInputBase-input': {
+    textAlign: 'center',
+    fontSize: '1.5rem',
+    padding: 0,
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   [theme.breakpoints.down('sm')]: {
-    width: '40px',
-    '& .MuiOutlinedInput-root': {
-      height: '45px',
-      '& input': {
-        fontSize: '1rem',
-      },
+    width: '2.5rem',
+    height: '2.5rem',
+    margin: '0 0.25rem',
+    '& .MuiInputBase-input': {
+      fontSize: '1.25rem',
     },
   },
 }));
 
-// Define a type for the filled style
-type FilledStyleType = {
-  '& .MuiOutlinedInput-notchedOutline'?: {
-    borderColor: string;
-  };
-};
-
-const OTPInput: React.FC<OTPInputProps> = ({ 
-  length = 6, 
-  value, 
-  onChange, 
-  disabled = false 
-}) => {
-  const theme = useTheme();
-  const [inputValues, setInputValues] = useState<string[]>(Array(length).fill(''));
+const OTPInput: React.FC<OTPInputProps> = ({ length, value, onChange, disabled = false }) => {
+  const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Initialize input refs
+  // Initialize refs array
   useEffect(() => {
-    inputRefs.current = inputRefs.current.slice(0, length);
+    inputRefs.current = Array(length).fill(null).map((_, i) => inputRefs.current[i] || null);
   }, [length]);
 
-  // Sync inputValues with external value prop
+  // Update OTP state when value prop changes
   useEffect(() => {
     if (value) {
-      const valueArray = value.split('').slice(0, length);
-      setInputValues([...valueArray, ...Array(length - valueArray.length).fill('')]);
+      const otpArray = value.split('').slice(0, length);
+      setOtp([...otpArray, ...Array(length - otpArray.length).fill('')]);
     } else {
-      setInputValues(Array(length).fill(''));
+      setOtp(Array(length).fill(''));
     }
   }, [value, length]);
 
-  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const newValue = e.target.value;
     
-    // Only accept single digit numeric input
-    if (!/^\d*$/.test(newValue) || newValue.length > 1) {
-      return;
-    }
-
-    // Create new array with the updated value
-    const newInputValues = [...inputValues];
-    newInputValues[index] = newValue;
-    setInputValues(newInputValues);
-
-    // Emit combined value up to parent
-    const combinedValue = newInputValues.join('');
-    onChange(combinedValue);
-
-    // Auto focus next input if a digit was entered
+    // Only allow one digit
+    if (!/^\d*$/.test(newValue)) return;
+    
+    // Update OTP array
+    const newOtp = [...otp];
+    newOtp[index] = newValue.slice(-1);
+    setOtp(newOtp);
+    
+    // Update parent value
+    onChange(newOtp.join(''));
+    
+    // Move focus to next input if current is filled
     if (newValue && index < length - 1) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      if (!inputValues[index] && index > 0) {
-        // Move focus to previous input if current is empty and backspace is pressed
-        const newInputValues = [...inputValues];
-        newInputValues[index - 1] = '';
-        setInputValues(newInputValues);
-        
-        // Update the combined value
-        onChange(newInputValues.join(''));
-        
-        // Move focus back
-        inputRefs.current[index - 1]?.focus();
-      }
-    } else if (e.key === 'ArrowLeft' && index > 0) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    // Move focus to previous input on backspace
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
-    } else if (e.key === 'ArrowRight' && index < length - 1) {
+    }
+    
+    // Allow arrow key navigation
+    if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      inputRefs.current[index - 1]?.focus();
+    }
+    
+    if (e.key === 'ArrowRight' && index < length - 1) {
+      e.preventDefault();
       inputRefs.current[index + 1]?.focus();
     }
   };
-
-  // Handle paste event
-  const handlePaste = (e: React.ClipboardEvent) => {
+  
+  // Handle paste event (e.g., pasting the whole OTP)
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text/plain').trim();
+    const pasteData = e.clipboardData.getData('text/plain').trim();
     
-    // Filter only numeric characters
-    const numericValue = pastedData.replace(/[^\d]/g, '').substring(0, length);
+    // Only allow digits
+    if (!/^\d*$/.test(pasteData)) return;
     
-    if (numericValue) {
-      const newInputValues = [...Array(length).fill('')];
-      
-      // Fill with pasted values
-      numericValue.split('').forEach((char, idx) => {
-        if (idx < length) {
-          newInputValues[idx] = char;
-        }
-      });
-      
-      setInputValues(newInputValues);
-      onChange(newInputValues.join(''));
-
-      // Focus last filled input or the next empty one
-      const focusIndex = Math.min(numericValue.length, length - 1);
-      inputRefs.current[focusIndex]?.focus();
+    const digitsArray = pasteData.split('').slice(0, length);
+    const newOtp = [...Array(length).fill('')];
+    
+    digitsArray.forEach((digit, i) => {
+      newOtp[i] = digit;
+    });
+    
+    setOtp(newOtp);
+    onChange(newOtp.join(''));
+    
+    // Focus the next empty input or the last input if all filled
+    const nextEmptyIndex = newOtp.findIndex(v => !v);
+    if (nextEmptyIndex !== -1) {
+      inputRefs.current[nextEmptyIndex]?.focus();
+    } else if (digitsArray.length > 0) {
+      inputRefs.current[length - 1]?.focus();
     }
   };
 
-  // Check if code is complete
-  const isCodeComplete = value.length === length;
-
-  // Get filled style based on whether code is complete
-  const filledStyle: FilledStyleType = isCodeComplete ? {
-    '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.success.main,
-    }
-  } : {};
-
   return (
-    <Box 
+    <Box
       sx={{
         display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
-        gap: { xs: 1, sm: 2 },
-        my: 2
+        my: 2,
+        width: '100%',
       }}
-      onPaste={handlePaste}
     >
-      {Array.from({ length }, (_, index) => (
+      {Array.from({ length }, (_, i) => (
         <StyledTextField
-          key={index}
-          inputRef={(el) => (inputRefs.current[index] = el)}
-          value={inputValues[index]}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(index, e)}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(index, e)}
-          disabled={disabled}
+          key={i}
+          inputRef={(el) => (inputRefs.current[i] = el)}
+          value={otp[i] || ''}
+          onChange={(e) => handleChange(e as React.ChangeEvent<HTMLInputElement>, i)}
+          onKeyDown={(e) => handleKeyDown(e as React.KeyboardEvent<HTMLInputElement>, i)}
+          onPaste={handlePaste}
           variant="outlined"
-          autoComplete="off"
+          disabled={disabled}
           inputProps={{
             maxLength: 1,
             inputMode: 'numeric',
             pattern: '[0-9]*',
-            style: { textAlign: 'center' }
+            autoComplete: 'one-time-code',
           }}
-          sx={filledStyle}
         />
       ))}
     </Box>

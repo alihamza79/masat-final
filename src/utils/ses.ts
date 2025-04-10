@@ -17,9 +17,29 @@ export function generateOTP(): string {
 // Function to send OTP via email
 export async function sendOTPEmail(
   to: string,
-  otp: string
+  otp: string,
+  purpose: 'registration' | 'set-password' | 'reset-password' = 'registration'
 ): Promise<boolean> {
   try {
+    // Determine subject and message based on purpose
+    let subject = 'Your Verification Code for Masat';
+    let heading = 'Verification Code';
+    let message = 'You\'re receiving this email because you requested a verification code.';
+    
+    if (purpose === 'registration') {
+      subject = 'Verify Your Email for Masat';
+      heading = 'Email Verification';
+      message = 'You\'re receiving this email because you registered for a Masat account. Please verify your email to complete your registration.';
+    } else if (purpose === 'set-password') {
+      subject = 'Set Password for Your Masat Account';
+      heading = 'Password Setup';
+      message = 'You\'re receiving this email because you requested to set a password for your Masat account.';
+    } else if (purpose === 'reset-password') {
+      subject = 'Reset Your Masat Password';
+      heading = 'Password Reset';
+      message = 'You\'re receiving this email because you requested to reset your password for your Masat account.';
+    }
+
     const params = {
       Source: 'contact@shiftcrowd.eu',
       Destination: {
@@ -27,7 +47,7 @@ export async function sendOTPEmail(
       },
       Message: {
         Subject: {
-          Data: 'Your Verification Code for Masat',
+          Data: subject,
           Charset: 'UTF-8',
         },
         Body: {
@@ -39,8 +59,8 @@ export async function sendOTPEmail(
                     <h1 style="color: #4361ee;">Masat</h1>
                   </div>
                   <div style="background-color: #f9f9f9; border-radius: 5px; padding: 20px; margin-bottom: 20px;">
-                    <h2 style="margin-top: 0; color: #333;">Verification Code</h2>
-                    <p>You're receiving this email because you requested to set a password for your Masat account.</p>
+                    <h2 style="margin-top: 0; color: #333;">${heading}</h2>
+                    <p>${message}</p>
                     <p>Your verification code is:</p>
                     <div style="background-color: #e0e0e0; padding: 10px; border-radius: 5px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; margin: 20px 0;">
                       ${otp}
