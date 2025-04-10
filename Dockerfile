@@ -44,8 +44,8 @@ ENV ENCRYPTION_IV=$ENCRYPTION_IV
 ARG NEXTAUTH_SECRET
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 
-# Set environment variable for NextAuth URL to avoid invalid URL errors during build
-ENV NEXTAUTH_URL=http://localhost
+ARG NEXTAUTH_URL
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
 
 # Set NODE_ENV for the build
 ARG NODE_ENV=production
