@@ -23,9 +23,7 @@ const options = {
   socketTimeoutMS: 30000, // Reduced from 45000
   family: 4,
   connectTimeoutMS: 10000,
-  heartbeatFrequencyMS: 30000, // More frequent heartbeats
-  // Set keepAlive to true to avoid connection issues
-  keepAlive: true
+  heartbeatFrequencyMS: 30000 // More frequent heartbeats
 };
 
 // Declare global mongoose cache
