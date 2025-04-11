@@ -76,7 +76,7 @@ export default function Register() {
             title="Welcome to Masat"
             subtext={
               <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                Your Admin Dashboard
+                Testing for deployment
               </Typography>
             }
             subtitle={
