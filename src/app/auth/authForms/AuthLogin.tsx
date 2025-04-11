@@ -125,25 +125,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       setError("");
       setLoading(true);
       setSigningIn(true);
+      setLoadingText("Authenticating...");
       
-      // Use a loading sequence to make the process feel faster
-      const loadingMessages = [
-        { message: "Authenticating...", delay: 300 },
-        { message: "Processing login...", delay: 1200 },
-        { message: "Almost there...", delay: 2500 },
-        { message: "Preparing your dashboard...", delay: 4000 }
-      ];
-      
-      // Start the loading sequence
-      loadingMessages.forEach((item, index) => {
-        setTimeout(() => {
-          if (index < loadingMessages.length) {
-            setLoadingText(item.message);
-          }
-        }, item.delay);
-      });
-      
-      // Attempt sign in
+      // Attempt sign in - no artificial delays
       const result = await signIn("credentials", {
         redirect: false,
         email,
@@ -155,13 +139,8 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         setLoading(false);
         setSigningIn(false);
       } else {
-        // Immediately show success message
-        setLoadingText("Login successful! Redirecting...");
-        
-        // Add short delay before redirect to show success state
-        setTimeout(() => {
-          router.push("/");
-        }, 500);
+        // Immediately redirect to dashboard
+        router.push("/dashboard");
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -300,19 +279,17 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(255,255,255,0.8)',
+            bgcolor: 'rgba(255,255,255,0.7)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
-            backdropFilter: 'blur(4px)',
-            transition: 'opacity 0.3s',
-            opacity: loadingText === "Login successful! Redirecting..." ? 1 : 0.8,
+            backdropFilter: 'blur(2px)',
           }}
         >
           <CircularProgress size={40} sx={{ mb: 2 }} />
-          <Typography variant="h6">{loadingText}</Typography>
+          <Typography variant="h6">Authenticating...</Typography>
         </Box>
       )}
     </>
