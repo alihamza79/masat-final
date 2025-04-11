@@ -203,6 +203,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
             label={t('integrations.form.fields.accountType')}
             onChange={handleSelectChange}
             required
+            disabled={isEdit}
             sx={{
               borderRadius: '8px',
               '& .MuiSelect-select': {

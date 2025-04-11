@@ -201,7 +201,7 @@ export async function PUT(request: NextRequest) {
     
     const userId = session.user.id;
     const body = await request.json();
-    const { _id, accountName, password, accountType } = body;
+    const { _id, accountName, password } = body;
     
     if (!_id || !accountName) {
       return NextResponse.json(
@@ -246,11 +246,6 @@ export async function PUT(request: NextRequest) {
     
     // Update fields
     integration.accountName = accountName;
-    
-    // Only update accountType if provided
-    if (accountType) {
-      integration.accountType = accountType;
-    }
     
     // Only update password if provided
     if (password) {
