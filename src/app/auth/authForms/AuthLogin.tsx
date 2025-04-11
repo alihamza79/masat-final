@@ -41,6 +41,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     credentialsLinked: boolean;
   }>({ googleLinked: false, credentialsLinked: false });
 
+  const [signingIn, setSigningIn] = useState(false);
+  const [loadingText, setLoadingText] = useState("Signing in...");
+
   // Check if email already exists with delay after typing
   useEffect(() => {
     if (email && email.includes('@')) {
@@ -121,7 +124,26 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     try {
       setError("");
       setLoading(true);
+      setSigningIn(true);
       
+      // Use a loading sequence to make the process feel faster
+      const loadingMessages = [
+        { message: "Authenticating...", delay: 300 },
+        { message: "Processing login...", delay: 1200 },
+        { message: "Almost there...", delay: 2500 },
+        { message: "Preparing your dashboard...", delay: 4000 }
+      ];
+      
+      // Start the loading sequence
+      loadingMessages.forEach((item, index) => {
+        setTimeout(() => {
+          if (index < loadingMessages.length) {
+            setLoadingText(item.message);
+          }
+        }, item.delay);
+      });
+      
+      // Attempt sign in
       const result = await signIn("credentials", {
         redirect: false,
         email,
@@ -131,13 +153,21 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       if (result?.error) {
         setError(result.error);
         setLoading(false);
+        setSigningIn(false);
       } else {
-        router.push("/dashboard");
+        // Immediately show success message
+        setLoadingText("Login successful! Redirecting...");
+        
+        // Add short delay before redirect to show success state
+        setTimeout(() => {
+          router.push("/");
+        }, 500);
       }
     } catch (error) {
       console.error("Sign in error:", error);
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
+      setSigningIn(false);
     }
   };
 
@@ -245,7 +275,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             type="submit"
             disabled={loading}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+                <Typography variant="button">{loadingText}</Typography>
+              </Box>
+            ) : "Sign In"}
           </Button>
         </Box>
       </form>
@@ -256,6 +291,30 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         onClose={() => setShowGoogleAccountDialog(false)}
         email={email}
       />
+
+      {signingIn && !error && (
+        <Box 
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(255,255,255,0.8)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(4px)',
+            transition: 'opacity 0.3s',
+            opacity: loadingText === "Login successful! Redirecting..." ? 1 : 0.8,
+          }}
+        >
+          <CircularProgress size={40} sx={{ mb: 2 }} />
+          <Typography variant="h6">{loadingText}</Typography>
+        </Box>
+      )}
     </>
   );
 };

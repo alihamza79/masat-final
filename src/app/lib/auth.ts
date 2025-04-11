@@ -7,6 +7,36 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import User, { IUser } from '@/models/User';
 import { ObjectId } from 'mongodb';
 
+// Cache user lookup to reduce database operations
+const userCache = new Map<string, any>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// Function to get user from cache or database
+async function getUserByEmail(email: string) {
+  const normalizedEmail = email.toLowerCase();
+  const cachedUser = userCache.get(normalizedEmail);
+  
+  if (cachedUser && cachedUser.timestamp > Date.now() - CACHE_TTL) {
+    return cachedUser.user;
+  }
+  
+  // Connect to database (this is already cached internally)
+  await connectToDatabase();
+  
+  // Find user by email
+  const user = await User.findOne({ email: normalizedEmail });
+  
+  // Cache the result
+  if (user) {
+    userCache.set(normalizedEmail, {
+      user,
+      timestamp: Date.now()
+    });
+  }
+  
+  return user;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -29,11 +59,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Connect to database
-          await connectToDatabase();
-
-          // Find user by email
-          const user = await User.findOne({ email: credentials.email.toLowerCase() }) as IUser;
+          const user = await getUserByEmail(credentials.email) as IUser;
           
           // If user doesn't exist or password doesn't match
           if (!user || !(await bcrypt.compare(credentials.password, user.password))) {
@@ -43,10 +69,12 @@ export const authOptions: NextAuthOptions = {
           // Mark this user as having used credentials login
           // Use direct MongoDB update to bypass schema validation
           const userId = user._id as unknown as ObjectId;
-          await User.collection.updateOne(
+          
+          // Update in database - don't await this to speed up login
+          User.collection.updateOne(
             { _id: userId },
             { $set: { credentialsLinked: true } }
-          );
+          ).catch(err => console.error('Error updating credentialsLinked flag:', err));
 
           // Return user without password
           return {
@@ -55,7 +83,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name || '',
             image: user.image || '',
             // Only include these if they're used for UI display, otherwise omit
-            googleLinked: true,
+            googleLinked: user.googleLinked || false,
             credentialsLinked: true
           };
         } catch (error: any) {
@@ -67,22 +95,24 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log('Sign in callback with account provider:', account?.provider);
+      // Skip extra processing for credential login to speed up the process
+      if (account?.provider === "credentials") {
+        return true;
+      }
+      
       // For Google or Facebook logins, we need to check for existing accounts and link them
       if ((account?.provider === "google" || account?.provider === "facebook") && profile?.email) {
         try {
-          await connectToDatabase();
-          
           // Check if user exists in our database with this email
-          let existingUser = await User.findOne({ email: profile.email });
+          const existingUser = await getUserByEmail(profile.email);
           let mongoDbUserId: string;
           
           if (existingUser) {
             // Use direct MongoDB update to set provider flag and update profile
             const providerFlag = account.provider === "google" ? "googleLinked" : "facebookLinked";
-            console.log(`Updating existing user with ${providerFlag} = true`);
             
-            await User.collection.updateOne(
+            // Update in database - don't await this to speed up login
+            User.collection.updateOne(
               { email: profile.email },
               { 
                 $set: { 
@@ -92,13 +122,13 @@ export const authOptions: NextAuthOptions = {
                   ...((!existingUser.name && user.name) ? { name: user.name } : {})
                 }
               }
-            );
+            ).catch(err => console.error(`Error updating ${providerFlag} flag:`, err));
+            
             // Cast existingUser._id to ObjectId and then to string
             mongoDbUserId = (existingUser._id as unknown as ObjectId).toString();
           } else {
             // Create new user with provider profile data
             const providerFlag = account.provider === "google" ? "googleLinked" : "facebookLinked";
-            console.log(`Creating new user with ${providerFlag} = true`);
             
             const newUser = await User.collection.insertOne({
               email: profile.email,
@@ -132,13 +162,15 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
+      // Only update the token when a new sign in happens (user is available)
       if (user) {
         token.id = user.id;
       }
       return token;
     },
   },
+  // Only enable debug in development
   debug: process.env.NODE_ENV === 'development',
   pages: {
     signIn: '/auth/auth1/login',
@@ -148,6 +180,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  // Increase JWT maxAge for better caching
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days 
   },
   secret: process.env.NEXTAUTH_SECRET,
 }; 
