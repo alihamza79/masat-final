@@ -171,7 +171,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   // Only enable debug in development
-  debug: true, // Temporarily enable for production debugging
+  debug: process.env.NODE_ENV === 'development',
   pages: {
     signIn: '/auth/auth1/login',
     signOut: '/auth/auth1/login',
