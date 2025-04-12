@@ -43,6 +43,32 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
 
   const [signingIn, setSigningIn] = useState(false);
   const [loadingText, setLoadingText] = useState("Signing in...");
+  
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+
+  // Load debug info on component mount
+  useEffect(() => {
+    // Temporary debug code - fetch NextAuth config information
+    const fetchDebugInfo = async () => {
+      try {
+        const response = await fetch('/api/debug-auth');
+        const data = await response.json();
+        setDebugInfo(data);
+        console.log("=== DEBUG AUTH INFO ===");
+        console.log("NextAuth URL:", data.nextAuthUrl);
+        console.log("Has NextAuth Secret:", data.hasNextAuthSecret);
+        console.log("Secret Length:", data.nextAuthSecretLength);
+        console.log("Secret First Char:", data.nextAuthSecretFirstChar);
+        console.log("Node Env:", data.nodeEnv);
+        console.log("======================");
+      } catch (err) {
+        console.error("Error fetching debug info:", err);
+      }
+    };
+    
+    fetchDebugInfo();
+  }, []);
 
   // Check if email already exists with delay after typing
   useEffect(() => {
@@ -104,6 +130,14 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     await signIn('google', { callbackUrl: '/' });
   };
 
+  // Temporary debug function
+  const logAuthError = (error: any) => {
+    console.error("=== AUTH ERROR DETAILS ===");
+    console.error("Error:", error);
+    console.error("Debug info:", debugInfo);
+    console.error("========================");
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -127,6 +161,11 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       setSigningIn(true);
       setLoadingText("Authenticating...");
       
+      console.log("=== AUTHENTICATION ATTEMPT ===");
+      console.log("Email:", email);
+      console.log("Debug Info:", debugInfo);
+      console.log("============================");
+      
       // Attempt sign in - no artificial delays
       const result = await signIn("credentials", {
         redirect: false,
@@ -135,14 +174,19 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       });
       
       if (result?.error) {
+        logAuthError(result.error);
         setError(result.error);
         setLoading(false);
         setSigningIn(false);
       } else {
+        console.log("=== AUTH SUCCESS ===");
+        console.log("Result:", result);
+        console.log("===================");
         // Immediately redirect to dashboard
         router.push("/dashboard");
       }
     } catch (error) {
+      logAuthError(error);
       console.error("Sign in error:", error);
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
@@ -164,6 +208,31 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       ) : null}
 
       {subtext}
+
+      {/* Temporary Debug Information Display */}
+      {debugInfo && (
+        <Box 
+          sx={{ 
+            my: 2, 
+            p: 2, 
+            border: '1px dashed red', 
+            borderRadius: 1, 
+            bgcolor: 'rgba(255, 0, 0, 0.05)',
+            fontSize: '12px'
+          }}
+        >
+          <Typography variant="subtitle2" color="error" fontWeight="bold">
+            Debug Info (TEMPORARY)
+          </Typography>
+          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '11px' }}>
+            {`NextAuth URL: ${debugInfo.nextAuthUrl || 'Not set'}
+Has Secret: ${debugInfo.hasNextAuthSecret ? 'Yes' : 'No'}
+Secret Length: ${debugInfo.nextAuthSecretLength}
+Environment: ${debugInfo.nodeEnv}
+Timestamp: ${debugInfo.timestamp}`}
+          </pre>
+        </Box>
+      )}
 
       <AuthSocialButtons title="Sign in with" />
       <Box mt={3}>
