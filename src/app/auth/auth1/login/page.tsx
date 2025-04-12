@@ -79,7 +79,7 @@ export default function Login() {
               title="Welcome to Masat"
               subtext={
                 <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                  Testing for deployment
+                  Admin Dashboard
                 </Typography>
               }
               subtitle={
