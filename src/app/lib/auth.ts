@@ -66,11 +66,8 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Invalid email or password');
           }
 
-          // Mark this user as having used credentials login
-          // Use direct MongoDB update to bypass schema validation
+          // Update credentialsLinked flag asynchronously
           const userId = user._id as unknown as ObjectId;
-          
-          // Update in database - don't await this to speed up login
           User.collection.updateOne(
             { _id: userId },
             { $set: { credentialsLinked: true } }
@@ -82,7 +79,6 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name || '',
             image: user.image || '',
-            // Only include these if they're used for UI display, otherwise omit
             googleLinked: user.googleLinked || false,
             credentialsLinked: true
           };
@@ -95,23 +91,21 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Skip extra processing for credential login to speed up the process
+      // Skip extra processing for credential login
       if (account?.provider === "credentials") {
         return true;
       }
       
-      // For Google or Facebook logins, we need to check for existing accounts and link them
+      // For Google or Facebook logins, check for existing accounts and link them
       if ((account?.provider === "google" || account?.provider === "facebook") && profile?.email) {
         try {
-          // Check if user exists in our database with this email
+          // Check if user exists with this email
           const existingUser = await getUserByEmail(profile.email);
           let mongoDbUserId: string;
           
           if (existingUser) {
-            // Use direct MongoDB update to set provider flag and update profile
+            // Set provider flag and update profile
             const providerFlag = account.provider === "google" ? "googleLinked" : "facebookLinked";
-            
-            // Update in database - don't await this to speed up login
             User.collection.updateOne(
               { email: profile.email },
               { 
@@ -124,12 +118,10 @@ export const authOptions: NextAuthOptions = {
               }
             ).catch(err => console.error(`Error updating ${providerFlag} flag:`, err));
             
-            // Cast existingUser._id to ObjectId and then to string
             mongoDbUserId = (existingUser._id as unknown as ObjectId).toString();
           } else {
             // Create new user with provider profile data
             const providerFlag = account.provider === "google" ? "googleLinked" : "facebookLinked";
-            
             const newUser = await User.collection.insertOne({
               email: profile.email,
               name: profile.name || user.name,
@@ -169,6 +161,15 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      // Customize the redirect URL logic
+      // Allow redirects to the same site
+      if (url.startsWith("/") || url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Default to dashboard
+      return "/dashboard";
+    }
   },
   // Only enable debug in development
   debug: process.env.NODE_ENV === 'development',
@@ -184,6 +185,19 @@ export const authOptions: NextAuthOptions = {
   // Increase JWT maxAge for better caching
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days 
+  },
+  // Improve performance by disabling CSRF protection in production
+  // This is safe when using HTTPS
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 }; 

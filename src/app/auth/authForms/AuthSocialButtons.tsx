@@ -3,36 +3,28 @@ import CustomSocialButton from "@/app/components/forms/theme-elements/CustomSoci
 import { Stack } from "@mui/system";
 import { Avatar, Box, CircularProgress } from "@mui/material";
 import { signInType } from "@/app/(DashboardLayout)/types/auth/auth";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
 
-const AuthSocialButtons = ({ title }: signInType) => {
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [facebookLoading, setFacebookLoading] = useState(false);
+interface AuthSocialButtonsProps extends signInType {
+  onGoogleSignIn?: () => void;
+  onFacebookSignIn?: () => void;
+  googleLoading?: boolean;
+  facebookLoading?: boolean;
+}
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setGoogleLoading(true);
-      await signIn('google', { callbackUrl: '/' });
-    } catch (error) {
-      console.error('Google sign in error:', error);
-    }
-  };
-
-  const handleFacebookSignIn = async () => {
-    try {
-      setFacebookLoading(true);
-      await signIn('facebook', { callbackUrl: '/' });
-    } catch (error) {
-      console.error('Facebook sign in error:', error);
-      setFacebookLoading(false);
-    }
-  };
-
+const AuthSocialButtons = ({ 
+  title, 
+  onGoogleSignIn, 
+  onFacebookSignIn,
+  googleLoading = false,
+  facebookLoading = false
+}: AuthSocialButtonsProps) => {
   return (
     <>
       <Stack direction="row" justifyContent="center" spacing={2} mt={3}>
-        <CustomSocialButton onClick={handleGoogleSignIn} disabled={googleLoading}>
+        <CustomSocialButton 
+          onClick={onGoogleSignIn} 
+          disabled={googleLoading}
+        >
           {googleLoading ? (
             <CircularProgress size={24} sx={{ mr: 1 }} />
           ) : (
@@ -58,7 +50,10 @@ const AuthSocialButtons = ({ title }: signInType) => {
           </Box>{" "}
           Google
         </CustomSocialButton>
-        <CustomSocialButton onClick={handleFacebookSignIn} disabled={facebookLoading}>
+        <CustomSocialButton 
+          onClick={onFacebookSignIn} 
+          disabled={facebookLoading}
+        >
           {facebookLoading ? (
             <CircularProgress size={24} sx={{ mr: 1 }} />
           ) : (

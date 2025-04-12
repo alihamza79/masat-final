@@ -20,13 +20,14 @@ import CustomCheckbox from "@/app/components/forms/theme-elements/CustomCheckbox
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
 import AuthSocialButtons from "./AuthSocialButtons";
-import { useState, FormEvent, useEffect, ChangeEvent } from "react";
+import { useState, FormEvent, useEffect, useRef, ChangeEvent } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SetPasswordModal from "@/app/components/auth/SetPasswordModal";
 
 const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -41,8 +42,36 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     credentialsLinked: boolean;
   }>({ googleLinked: false, credentialsLinked: false });
 
-  const [signingIn, setSigningIn] = useState(false);
-  const [loadingText, setLoadingText] = useState("Signing in...");
+  // Social login loading states
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
+  
+  // Check for errors in URL from NextAuth
+  useEffect(() => {
+    const errorFromQuery = searchParams?.get("error");
+    if (errorFromQuery) {
+      let errorMessage = "Authentication failed";
+      
+      // Map Next-Auth error codes to user-friendly messages
+      switch (errorFromQuery) {
+        case "CredentialsSignin":
+          errorMessage = "Invalid email or password";
+          break;
+        case "OAuthSignin":
+        case "OAuthCallback":
+        case "OAuthCreateAccount":
+          errorMessage = "Error connecting with social login. Please try another method.";
+          break;
+        case "Callback":
+          errorMessage = "Login callback error. Please try again.";
+          break;
+        default:
+          errorMessage = `Login error: ${errorFromQuery}`;
+      }
+      
+      setError(errorMessage);
+    }
+  }, [searchParams]);
 
   // Check if email already exists with delay after typing
   useEffect(() => {
@@ -78,15 +107,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       
       const data = await response.json();
       
-      // Log debugging information
-      console.log('Email check response:', data);
-      
       if (data.success && data.exists) {
-        // Force boolean values and log what we're setting
         const googleLinked = !!data.googleLinked;
         const credentialsLinked = !!data.credentialsLinked;
-        
-        console.log(`Setting auth methods - googleLinked: ${googleLinked}, credentialsLinked: ${credentialsLinked}`);
         
         setExistingAuthMethods({
           googleLinked,
@@ -101,9 +124,33 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   };
 
   const handleGoogleSignIn = async () => {
-    await signIn('google', { callbackUrl: '/' });
+    try {
+      setGoogleLoading(true);
+      
+      // Direct navigation to Google OAuth endpoint
+      // This is more reliable than using the signIn function
+      window.location.href = `/api/auth/signin/google?callbackUrl=${encodeURIComponent('/dashboard')}`;
+    } catch (error) {
+      console.error("Google sign in error:", error);
+      setGoogleLoading(false);
+      setError("Failed to connect to Google. Please try again.");
+    }
   };
 
+  const handleFacebookSignIn = async () => {
+    try {
+      setFacebookLoading(true);
+      
+      // Direct navigation to Facebook OAuth endpoint
+      window.location.href = `/api/auth/signin/facebook?callbackUrl=${encodeURIComponent('/dashboard')}`;
+    } catch (error) {
+      console.error("Facebook sign in error:", error);
+      setFacebookLoading(false);
+      setError("Failed to connect to Facebook. Please try again.");
+    }
+  };
+
+  // Reimplemented handleSubmit with more robust approach
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -120,33 +167,17 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       return;
     }
     
-    // Continue with normal login
     try {
       setError("");
       setLoading(true);
-      setSigningIn(true);
-      setLoadingText("Authenticating...");
       
-      // Attempt sign in - no artificial delays
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      });
-      
-      if (result?.error) {
-        setError(result.error);
-        setLoading(false);
-        setSigningIn(false);
-      } else {
-        // Immediately redirect to dashboard
-        router.push("/dashboard");
-      }
+      // Use a more direct approach for credential login
+      // Setting callbackUrl directly ensures better redirection in production
+      window.location.href = `/api/auth/callback/credentials?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callbackUrl=${encodeURIComponent('/dashboard')}`;
     } catch (error) {
       console.error("Sign in error:", error);
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
-      setSigningIn(false);
     }
   };
 
@@ -165,7 +196,13 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
 
       {subtext}
 
-      <AuthSocialButtons title="Sign in with" />
+      <AuthSocialButtons 
+        title="Sign in with" 
+        onGoogleSignIn={handleGoogleSignIn}
+        onFacebookSignIn={handleFacebookSignIn}
+        googleLoading={googleLoading}
+        facebookLoading={facebookLoading}
+      />
       <Box mt={3}>
         <Divider>
           <Typography
@@ -257,7 +294,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             {loading ? (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                <Typography variant="button">{loadingText}</Typography>
+                <Typography variant="button">Signing in...</Typography>
               </Box>
             ) : "Sign In"}
           </Button>
@@ -270,28 +307,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         onClose={() => setShowGoogleAccountDialog(false)}
         email={email}
       />
-
-      {signingIn && !error && (
-        <Box 
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: 'rgba(255,255,255,0.7)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            backdropFilter: 'blur(2px)',
-          }}
-        >
-          <CircularProgress size={40} sx={{ mb: 2 }} />
-          <Typography variant="h6">Authenticating...</Typography>
-        </Box>
-      )}
     </>
   );
 };
