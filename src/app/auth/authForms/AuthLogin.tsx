@@ -70,6 +70,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const checkEmailExists = async (email: string) => {
     try {
       setCheckingEmail(true);
+      console.log("🌐 [CLIENT] Checking if email exists:", email);
       const response = await fetch('/api/auth/check-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,14 +80,14 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       const data = await response.json();
       
       // Log debugging information
-      console.log('Email check response:', data);
+      console.log('🌐 [CLIENT] Email check response:', data);
       
       if (data.success && data.exists) {
         // Force boolean values and log what we're setting
         const googleLinked = !!data.googleLinked;
         const credentialsLinked = !!data.credentialsLinked;
         
-        console.log(`Setting auth methods - googleLinked: ${googleLinked}, credentialsLinked: ${credentialsLinked}`);
+        console.log(`🌐 [CLIENT] Setting auth methods - googleLinked: ${googleLinked}, credentialsLinked: ${credentialsLinked}`);
         
         setExistingAuthMethods({
           googleLinked,
@@ -94,13 +95,14 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         });
       }
     } catch (err) {
-      console.error('Error checking email:', err);
+      console.error('🌐 [CLIENT] Error checking email:', err);
     } finally {
       setCheckingEmail(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    console.log("🌐 [CLIENT] Initiating Google sign in");
     await signIn('google', { callbackUrl: '/' });
   };
 
@@ -116,12 +118,14 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     
     // Only show dialog if this is a Google-only account without credentials
     if (existingAuthMethods.googleLinked && !existingAuthMethods.credentialsLinked) {
+      console.log("🌐 [CLIENT] Showing Google account dialog for:", email);
       setShowGoogleAccountDialog(true);
       return;
     }
     
     // Continue with normal login
     try {
+      console.log("🌐 [CLIENT] Attempting login for email:", email);
       setError("");
       setLoading(true);
       setSigningIn(true);
@@ -134,12 +138,16 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         password,
       });
       
+      console.log("🌐 [CLIENT] Login result:", result);
+      
       if (result?.error) {
+        console.error("🌐 [CLIENT] Login failed:", result.error);
         setError(result.error);
         setLoading(false);
         setSigningIn(false);
       } else {
         // Use router.replace instead of push for a cleaner redirect
+        console.log("🌐 [CLIENT] Login successful, redirecting...");
         setLoadingText("Redirecting to dashboard...");
         
         try {
@@ -166,23 +174,26 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             ? decodeURIComponent(callbackUrl) 
             : '/dashboard';
           
+          console.log("🌐 [CLIENT] Redirecting to:", safeCallbackUrl);
+          
           // Use replace instead of push for better navigation
           await router.replace(safeCallbackUrl);
           
           // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
           setTimeout(() => {
             if (window.location.pathname.includes('/auth')) {
+              console.log("🌐 [CLIENT] Router navigation didn't complete, using fallback redirect");
               window.location.href = safeCallbackUrl;
             }
           }, 2000);
         } catch (navError) {
-          console.error("Navigation error:", navError);
+          console.error("🌐 [CLIENT] Navigation error:", navError);
           // Fallback to direct location change if router navigation fails
           window.location.href = '/dashboard';
         }
       }
     } catch (error) {
-      console.error("Sign in error:", error);
+      console.error("🌐 [CLIENT] Sign in error:", error);
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
       setSigningIn(false);
