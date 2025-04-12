@@ -9,6 +9,14 @@ const sesClient = new SESClient({
   },
 });
 
+// Log SES configuration for debugging
+console.log('SES Client Configuration:', {
+  region: process.env.AWS_REGION || 'eu-central-1',
+  hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
+  hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+  environment: process.env.NODE_ENV
+});
+
 // Function to generate a random 6-digit OTP
 export function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -21,6 +29,8 @@ export async function sendOTPEmail(
   purpose: 'registration' | 'set-password' | 'reset-password' = 'registration'
 ): Promise<boolean> {
   try {
+    console.log(`Attempting to send ${purpose} OTP email to:`, to);
+    
     // Determine subject and message based on purpose
     let subject = 'Your Verification Code for Masat';
     let heading = 'Verification Code';
@@ -40,8 +50,12 @@ export async function sendOTPEmail(
       message = 'You\'re receiving this email because you requested to reset your password for your Masat account.';
     }
 
+    // Use environment variable for Source email if available
+    const sourceEmail = process.env.SES_SOURCE_EMAIL || 'contact@shiftcrowd.eu';
+    console.log('Using source email:', sourceEmail);
+
     const params = {
-      Source: 'contact@shiftcrowd.eu',
+      Source: sourceEmail,
       Destination: {
         ToAddresses: [to],
       },
@@ -84,10 +98,34 @@ export async function sendOTPEmail(
       },
     };
 
-    await sesClient.send(new SendEmailCommand(params));
-    return true;
+    console.log('Sending email with params:', {
+      source: params.Source,
+      destination: params.Destination.ToAddresses,
+      subject: params.Message.Subject.Data
+    });
+
+    try {
+      console.log('Calling SES SendEmailCommand...');
+      await sesClient.send(new SendEmailCommand(params));
+      console.log('Email sent successfully');
+      return true;
+    } catch (sesError) {
+      console.error('SES SendEmailCommand error details:', {
+        message: (sesError as Error).message,
+        stack: (sesError as Error).stack,
+        errorType: sesError.constructor.name,
+        code: (sesError as any).code,
+        requestId: (sesError as any).$metadata?.requestId
+      });
+      throw sesError; // Re-throw to be caught by outer catch
+    }
   } catch (error) {
     console.error('Error sending email:', error);
+    console.error('Error details:', {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      errorType: error.constructor.name
+    });
     return false;
   }
 } 
