@@ -51,6 +51,8 @@ jobs:
             --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             --build-arg FACEBOOK_CLIENT_ID="${{ secrets.FACEBOOK_CLIENT_ID }}" \
             --build-arg FACEBOOK_CLIENT_SECRET="${{ secrets.FACEBOOK_CLIENT_SECRET }}" \
+            --build-arg AWS_REGION="eu-central-1" \
+            --build-arg SES_SOURCE_EMAIL="contact@shiftcrowd.eu" \
             -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 

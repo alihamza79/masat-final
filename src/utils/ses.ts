@@ -1,20 +1,37 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
-// Initialize SES client
-const sesClient = new SESClient({
-  region: process.env.AWS_REGION || 'eu-central-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+// Get environment variables
+const AWS_REGION = process.env.AWS_REGION || 'eu-central-1';
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+const SES_SOURCE_EMAIL = process.env.SES_SOURCE_EMAIL || 'contact@shiftcrowd.eu';
+const IS_LOCAL_ENV = process.env.NODE_ENV === 'development';
+
+// Create configuration for SES client
+const sesConfig: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
+  region: AWS_REGION,
+  // Important: In production/ECS environment, the IAM task role will be used automatically
+  // Only provide explicit credentials in local development
+};
+
+// Add explicit credentials only in local development
+if (IS_LOCAL_ENV && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  sesConfig.credentials = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY
+  };
+}
+
+// Initialize SES client with the configuration
+const sesClient = new SESClient(sesConfig);
 
 // Log SES configuration for debugging
 console.log('SES Client Configuration:', {
-  region: process.env.AWS_REGION || 'eu-central-1',
-  hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
-  hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
-  environment: process.env.NODE_ENV
+  region: AWS_REGION,
+  hasAccessKey: !!sesConfig.credentials?.accessKeyId,
+  hasSecretKey: !!sesConfig.credentials?.secretAccessKey,
+  environment: process.env.NODE_ENV,
+  sourceEmail: SES_SOURCE_EMAIL
 });
 
 // Function to generate a random 6-digit OTP
@@ -50,12 +67,10 @@ export async function sendOTPEmail(
       message = 'You\'re receiving this email because you requested to reset your password for your Masat account.';
     }
 
-    // Use environment variable for Source email if available
-    const sourceEmail = process.env.SES_SOURCE_EMAIL || 'contact@shiftcrowd.eu';
-    console.log('Using source email:', sourceEmail);
+    console.log('Using source email:', SES_SOURCE_EMAIL);
 
     const params = {
-      Source: sourceEmail,
+      Source: SES_SOURCE_EMAIL,
       Destination: {
         ToAddresses: [to],
       },

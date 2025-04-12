@@ -79,6 +79,11 @@ ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 ARG S3_BUCKET_NAME
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 
+# AWS SES environment variables
+# In ECS, the credentials will be ignored and the application will use the IAM role:
+ARG SES_SOURCE_EMAIL
+ENV SES_SOURCE_EMAIL=$SES_SOURCE_EMAIL
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
@@ -135,6 +140,8 @@ ARG AWS_SECRET_ACCESS_KEY
 ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 ARG S3_BUCKET_NAME
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
+ARG SES_SOURCE_EMAIL
+ENV SES_SOURCE_EMAIL=$SES_SOURCE_EMAIL
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
