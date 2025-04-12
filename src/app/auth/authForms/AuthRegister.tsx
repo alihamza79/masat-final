@@ -164,7 +164,21 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
         }, 2000);
       } else {
         // Sign-in successful, redirect to dashboard
-        router.push('/');
+        try {
+          // Use replace instead of push for better navigation
+          await router.replace('/');
+          
+          // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
+          setTimeout(() => {
+            if (window.location.pathname.includes('/auth')) {
+              window.location.href = '/';
+            }
+          }, 2000);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // Fallback to direct location change if router navigation fails
+          window.location.href = '/';
+        }
       }
       
     } catch (err) {
@@ -276,7 +290,21 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
         if (signInResult?.error) {
           setError(`Account created but sign-in failed: ${signInResult.error}`);
         } else {
-          router.push('/');
+          try {
+            // Use replace instead of push for better navigation
+            await router.replace('/');
+            
+            // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
+            setTimeout(() => {
+              if (window.location.pathname.includes('/auth')) {
+                window.location.href = '/';
+              }
+            }, 2000);
+          } catch (navError) {
+            console.error("Navigation error:", navError);
+            // Fallback to direct location change if router navigation fails
+            window.location.href = '/';
+          }
         }
       }, 2000);
       

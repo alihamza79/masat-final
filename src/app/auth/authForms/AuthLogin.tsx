@@ -139,8 +139,47 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         setLoading(false);
         setSigningIn(false);
       } else {
-        // Immediately redirect to dashboard
-        router.push("/dashboard");
+        // Use router.replace instead of push for a cleaner redirect
+        setLoadingText("Redirecting to dashboard...");
+        
+        try {
+          // Get the callbackUrl from the query parameters if it exists
+          const urlParams = new URLSearchParams(window.location.search);
+          const callbackUrl = urlParams.get('callbackUrl') || '/dashboard';
+          
+          // SECURITY: Validate callback URL to prevent open redirect vulnerabilities
+          // Only allow relative URLs or URLs to your own domain
+          const isValidRedirect = (url: string) => {
+            // Allow relative URLs
+            if (url.startsWith('/')) return true;
+            
+            try {
+              // For absolute URLs, check if they point to your domain
+              const urlObj = new URL(url);
+              return urlObj.hostname === window.location.hostname;
+            } catch {
+              return false;
+            }
+          };
+          
+          const safeCallbackUrl = isValidRedirect(decodeURIComponent(callbackUrl)) 
+            ? decodeURIComponent(callbackUrl) 
+            : '/dashboard';
+          
+          // Use replace instead of push for better navigation
+          await router.replace(safeCallbackUrl);
+          
+          // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
+          setTimeout(() => {
+            if (window.location.pathname.includes('/auth')) {
+              window.location.href = safeCallbackUrl;
+            }
+          }, 2000);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // Fallback to direct location change if router navigation fails
+          window.location.href = '/dashboard';
+        }
       }
     } catch (error) {
       console.error("Sign in error:", error);
