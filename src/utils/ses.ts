@@ -113,7 +113,7 @@ export async function sendOTPEmail(
       console.error('SES SendEmailCommand error details:', {
         message: (sesError as Error).message,
         stack: (sesError as Error).stack,
-        errorType: sesError.constructor.name,
+        errorType: (sesError as Error).constructor?.name || 'UnknownError',
         code: (sesError as any).code,
         requestId: (sesError as any).$metadata?.requestId
       });
@@ -124,7 +124,7 @@ export async function sendOTPEmail(
     console.error('Error details:', {
       message: (error as Error).message,
       stack: (error as Error).stack,
-      errorType: error.constructor.name
+      errorType: (error as Error).constructor?.name || 'UnknownError'
     });
     return false;
   }

@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     console.error('Error details:', {
       message: (error as Error).message,
       stack: (error as Error).stack,
-      errorType: error.constructor.name
+      errorType: (error as Error).constructor?.name || 'UnknownError'
     });
     return NextResponse.json(
       { success: false, message: 'Failed to verify code' }, 
