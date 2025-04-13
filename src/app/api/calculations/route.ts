@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import SavedCalculation from '@/app/models/SavedCalculation';
 import { uploadFileToS3, generatePresignedUrl } from '@/utils/s3';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/lib/auth';
 
 // Set export configuration for Next.js
 export const dynamic = 'force-dynamic';
@@ -10,8 +12,17 @@ export const runtime = 'nodejs';
 // GET handler to retrieve all saved calculations
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     await connectToDatabase();
-    const calculations = await SavedCalculation.find({}).sort({ createdAt: -1 });
+    const calculations = await SavedCalculation.find({ userId: session.user.id }).sort({ createdAt: -1 });
     
     // Generate fresh presigned URLs for images
     const calculationsWithPresignedUrls = await Promise.all(
@@ -46,6 +57,15 @@ export async function GET() {
 // POST handler to save a new calculation
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // Get FormData from the request
     const formData = await request.formData();
     
@@ -106,9 +126,10 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Check if there's already a saved calculation for this eMAG product
+    // Check if there's already a saved calculation for this eMAG product for this user
     if (emagProduct) {
       const existingCalculation = await SavedCalculation.findOne({
+        userId: session.user.id,
         'emagProduct.integrationId': emagProduct.integrationId,
         'emagProduct.productId': emagProduct.productId
       });
@@ -148,6 +169,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       image: imagePath, // Use the S3 key or default path
+      userId: session.user.id, // Add the userId from the session
       emagProduct,
       calculatorState
     });

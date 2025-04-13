@@ -15,6 +15,7 @@ export interface SavedCalculation {
   title: string;
   description: string;
   image: string;
+  userId: string;
   calculatorState: any;
   createdAt: string;
   emagProduct?: EmagProduct;

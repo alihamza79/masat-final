@@ -17,6 +17,11 @@ const SavedCalculationSchema = new Schema({
     type: String,
     default: '/products/default.jpg'
   },
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   emagProduct: {
     type: Object,
     default: null
