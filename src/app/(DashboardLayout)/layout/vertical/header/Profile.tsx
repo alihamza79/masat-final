@@ -34,10 +34,31 @@ const Profile = () => {
   };
 
   // Use user data from session or fallback to defaults
-  const userImage = session?.user?.image || "/images/profile/user-1.jpg";
+  const userImage = session?.user?.image || null;
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "user@example.com";
   const userRole = "User"; // Default role, can be expanded later
+  
+  // Get first letter of email for avatar if no image is available
+  const getAvatarContent = () => {
+    if (userImage) {
+      return <Avatar src={userImage} alt={userName} sx={{ width: 35, height: 35 }} />;
+    } else {
+      const emailFirstLetter = userEmail.charAt(0).toUpperCase();
+      return (
+        <Avatar 
+          sx={{ 
+            width: 35, 
+            height: 35, 
+            bgcolor: 'primary.main',
+            color: 'white',
+          }}
+        >
+          {emailFirstLetter}
+        </Avatar>
+      );
+    }
+  };
 
   return (
     <Box>
@@ -53,14 +74,7 @@ const Profile = () => {
         }}
         onClick={handleClick2}
       >
-        <Avatar
-          src={userImage}
-          alt={'ProfileImg'}
-          sx={{
-            width: 35,
-            height: 35,
-          }}
-        />
+        {getAvatarContent()}
       </IconButton>
       {/* ------------------------------------------- */}
       {/* Message Dropdown */}
@@ -82,14 +96,27 @@ const Profile = () => {
       >
         <Typography variant="h5">User Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
-          <Avatar src={userImage} alt={"ProfileImg"} sx={{ width: 95, height: 95 }} />
+          {userImage ? (
+            <Avatar src={userImage} alt={userName} sx={{ width: 95, height: 95 }} />
+          ) : (
+            <Avatar
+              sx={{
+                width: 95, 
+                height: 95,
+                bgcolor: 'primary.main',
+                color: 'white',
+                fontSize: '40px',
+                fontWeight: 'bold'
+              }}
+            >
+              {userEmail.charAt(0).toUpperCase()}
+            </Avatar>
+          )}
           <Box>
             <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
               {userName}
             </Typography>
-            <Typography variant="subtitle2" color="textSecondary">
-              {userRole}
-            </Typography>
+           
             <Typography
               variant="subtitle2"
               color="textSecondary"

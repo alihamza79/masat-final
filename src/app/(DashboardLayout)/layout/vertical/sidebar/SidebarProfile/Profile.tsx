@@ -13,8 +13,9 @@ export const Profile = () => {
   const { data: session } = useSession();
 
   // Use user data from session or fallback to defaults
-  const userImage = session?.user?.image || "/images/profile/user-1.jpg";
+  const userImage = session?.user?.image || null;
   const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "user@example.com";
   const userRole = "User"; // Default role, can be expanded later
 
   const handleLogout = async () => {
@@ -30,11 +31,23 @@ export const Profile = () => {
     >
       {!hideMenu ? (
         <>
-          <Avatar alt={userName} src={userImage} sx={{height: 40, width: 40}} />
+          {userImage ? (
+            <Avatar alt={userName} src={userImage} sx={{height: 40, width: 40}} />
+          ) : (
+            <Avatar 
+              sx={{ 
+                height: 40, 
+                width: 40, 
+                bgcolor: 'primary.main',
+                color: 'white',
+              }}
+            >
+              {userEmail.charAt(0).toUpperCase()}
+            </Avatar>
+          )}
 
           <Box>
             <Typography variant="h6">{userName}</Typography>
-            <Typography variant="caption">{userRole}</Typography>
           </Box>
           <Box sx={{ ml: 'auto' }}>
             <Tooltip title="Logout" placement="top">
