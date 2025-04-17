@@ -12,6 +12,10 @@ const publicPaths = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === '/health') {
+    return new NextResponse('OK', { status: 200 });
+  }
   
   // Check if the path is a public path
   if (publicPaths.some(path => pathname.startsWith(path))) {
