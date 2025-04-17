@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import User, { IUser } from '@/models/User';
 import { ObjectId } from 'mongodb';
+import { JWT } from 'next-auth/jwt';
 
 // Cache user lookup to reduce database operations
 const userCache = new Map<string, any>();
@@ -51,7 +52,8 @@ export const authOptions: NextAuthOptions = {
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        password: { label: 'Password', type: 'password' },
+        remember: { label: 'Remember', type: 'boolean' }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -84,7 +86,9 @@ export const authOptions: NextAuthOptions = {
             image: user.image || '',
             // Only include these if they're used for UI display, otherwise omit
             googleLinked: user.googleLinked || false,
-            credentialsLinked: true
+            credentialsLinked: true,
+            // Pass the remember flag to the token
+            remember: credentials.remember === 'true' || Boolean(credentials.remember)
           };
         } catch (error: any) {
           console.error('Authorization error:', error);
@@ -146,6 +150,11 @@ export const authOptions: NextAuthOptions = {
           
           // Override the user id with our MongoDB user id
           user.id = mongoDbUserId;
+          
+          // If remember flag was passed in the signIn options, add it to the user object
+          if (account.remember !== undefined) {
+            user.remember = !!account.remember;
+          }
         } catch (error) {
           console.error("Error during OAuth user creation:", error);
           // Don't fail the sign-in if we can't save to database
@@ -166,6 +175,10 @@ export const authOptions: NextAuthOptions = {
       // Only update the token when a new sign in happens (user is available)
       if (user) {
         token.id = user.id;
+        // Store remember preference in the token
+        if ('remember' in user) {
+          token.remember = user.remember;
+        }
       }
       return token;
     },
@@ -179,11 +192,13 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    // NextAuth types are not completely accurate here as it actually supports a function
+    maxAge: 30 * 24 * 60 * 60, // 30 days (fallback)
   },
   // Increase JWT maxAge for better caching
   jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days 
+    // NextAuth types are not completely accurate here as it actually supports a function
+    maxAge: 30 * 24 * 60 * 60, // 30 days (fallback)
   },
   secret: process.env.NEXTAUTH_SECRET,
 }; 

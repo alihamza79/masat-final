@@ -5,15 +5,22 @@ import { Avatar, Box, CircularProgress } from "@mui/material";
 import { signInType } from "@/app/(DashboardLayout)/types/auth/auth";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import GoogleIcon from '@mui/icons-material/Google';
+import FacebookIcon from '@mui/icons-material/Facebook';
 
-const AuthSocialButtons = ({ title }: signInType) => {
+interface Props {
+  title: string;
+  rememberDevice?: boolean;
+}
+
+const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [facebookLoading, setFacebookLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
-      await signIn('google', { callbackUrl: '/' });
+      await signIn('google', { callbackUrl: '/', remember: rememberDevice });
     } catch (error) {
       console.error('Google sign in error:', error);
     }
@@ -22,7 +29,7 @@ const AuthSocialButtons = ({ title }: signInType) => {
   const handleFacebookSignIn = async () => {
     try {
       setFacebookLoading(true);
-      await signIn('facebook', { callbackUrl: '/' });
+      await signIn('facebook', { callbackUrl: '/', remember: rememberDevice });
     } catch (error) {
       console.error('Facebook sign in error:', error);
       setFacebookLoading(false);
