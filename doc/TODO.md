@@ -77,6 +77,7 @@ This document contains the todo list for the MASAT (eMAG Marketplace Analytics T
 - [x] Develop sales calculator
 - [x] Add order analytics
 - [x] Remove console logging in production builds
+- [x] Create script to clean all collections of the database
 
 ## Technical Debt
 - [ ] Refactor authentication logic

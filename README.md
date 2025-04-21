@@ -29,6 +29,23 @@ MASAT is a Next.js application designed to help eMAG marketplace sellers analyze
 - AWS account (for S3 and SES)
 - eMAG seller account (for marketplace integration)
 
+### Database Management
+
+The project includes a utility script for managing the MongoDB database:
+
+```bash
+# List all collections and their document counts
+npm run clean-db -- --list
+
+# Clean all collections (with confirmation prompt)
+npm run clean-db -- --clean
+
+# Clean all collections (without confirmation)
+npm run clean-db -- --clean --force
+```
+
+⚠️ **Warning**: The clean operation will delete ALL data in ALL collections. Use with caution.
+
 ### Installation
 
 1. Clone the repository:
