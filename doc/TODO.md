@@ -80,6 +80,7 @@ This document contains the todo list for the MASAT (eMAG Marketplace Analytics T
 - [x] Create script to clean all collections of the database
 - [x] Optimize Docker container
 - [x] Remove unused env variables from Docker
+- [x] Improve GitHub Actions workflow
 
 ## Technical Debt
 - [ ] Refactor authentication logic
