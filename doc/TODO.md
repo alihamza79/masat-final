@@ -44,7 +44,7 @@ This document contains the todo list for the MASAT (eMAG Marketplace Analytics T
 ### Infrastructure
 - [X] Set up CI/CD pipeline
 - [ ] Implement automated testing
-- [ ] Optimize Docker container
+- [X] Optimize Docker container
 - [ ] Set up monitoring and alerting
 - [ ] Implement database backups and disaster recovery
 
@@ -78,6 +78,8 @@ This document contains the todo list for the MASAT (eMAG Marketplace Analytics T
 - [x] Add order analytics
 - [x] Remove console logging in production builds
 - [x] Create script to clean all collections of the database
+- [x] Optimize Docker container
+- [x] Remove unused env variables from Docker
 
 ## Technical Debt
 - [ ] Refactor authentication logic
