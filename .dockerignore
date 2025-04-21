@@ -11,3 +11,7 @@ yarn-debug.log
 yarn-error.log
 .DS_Store
 coverage
+build_docker_image.sh
+.next
+.idea
+scripts
