@@ -79,6 +79,7 @@ This document contains the todo list for the MASAT (eMAG Marketplace Analytics T
 - [x] Remove console logging in production builds
 - [x] Create script to clean all collections of the database
 - [x] Optimize Docker container
+- [x] Improve Docker builder image for faster builds
 - [x] Remove unused env variables from Docker
 - [x] Improve GitHub Actions workflow
 - [x] Remove unused env variables from Terraform
