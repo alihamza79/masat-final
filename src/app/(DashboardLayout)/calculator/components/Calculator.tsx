@@ -301,6 +301,8 @@ const Calculator = () => {
       console.log('Split values:', { prefix, integrationId, productId });
       
       // First check if there's a saved calculation for this eMAG product
+      // The API already filters by user ID, but we still need to check here
+      // The savedCalculations array is already filtered by the logged-in user
       const emagSavedCalculation = savedCalculations.find(
         calc => calc.emagProduct && 
                 calc.emagProduct.integrationId === integrationId && 

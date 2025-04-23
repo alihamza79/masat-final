@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material/styles';
-import { Card, CardContent, Typography, Stack, Box } from '@mui/material';
+import { Card, CardContent, Typography, Stack, Box, SxProps, Theme } from '@mui/material';
 import { useSelector } from '@/store/hooks';
 import { AppState } from '@/store/store';
 
@@ -13,6 +13,7 @@ type Props = {
   headsubtitle?: string | JSX.Element;
   children?: JSX.Element;
   middlecontent?: string | JSX.Element;
+  sx?: SxProps<Theme>;
 };
 
 const DashboardCard = ({
@@ -25,6 +26,7 @@ const DashboardCard = ({
   headtitle,
   headsubtitle,
   middlecontent,
+  sx
 }: Props) => {
   const customizer = useSelector((state: AppState) => state.customizer);
 
@@ -33,7 +35,15 @@ const DashboardCard = ({
 
   return (
     <Card
-      sx={{ padding: 0, border: !customizer.isCardShadow ?  `1px solid ${borderColor}` : 'none' }}
+      sx={{ 
+        padding: 0, 
+        border: !customizer.isCardShadow ? `1px solid ${borderColor}` : 'none',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 2,
+        ...sx
+      }}
       elevation={customizer.isCardShadow ? 9 : 0}
       variant={!customizer.isCardShadow ? 'outlined' : undefined}
     >
@@ -45,14 +55,14 @@ const DashboardCard = ({
           </Typography>
         </CardContent>
       ) : (
-        <CardContent sx={{p: "30px"}}>
+        <CardContent sx={{p: "20px", flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
           {title ? (
             <Stack
               direction="row"
               spacing={2}
               justifyContent="space-between"
               alignItems={'center'}
-              mb={3}
+              mb={2}
             >
               <Box>
                 {title ? <Typography variant="h5">{title}</Typography> : ''}
@@ -69,7 +79,9 @@ const DashboardCard = ({
             </Stack>
           ) : null}
 
+          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           {children}
+          </Box>
         </CardContent>
       )}
 
