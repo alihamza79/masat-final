@@ -86,7 +86,7 @@ jobs:
             ${{ runner.os }}-terraform-
 
       - name: Terraform Init
-        run: terraform init -migrate-state
+        run: terraform init -reconfigure
         working-directory: terraform
 
       # Add Terraform validation step
