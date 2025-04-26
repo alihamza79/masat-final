@@ -10,7 +10,16 @@ export const Profile = () => {
   const customizer = useSelector((state: AppState) => state.customizer);
   const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
-  const { data: session } = useSession();
+  const { data, status } = useSession();
+  
+  // Extract the actual session data from the nested structure
+  // Handle both standard NextAuth and our custom API response format
+  const sessionData = data as any; // Cast to any to avoid TypeScript errors
+  const session = sessionData?.session?.user ? sessionData.session : sessionData;
+
+  console.log("Sidebar Profile - Session data:", data);
+  console.log("Sidebar Profile - Extracted session:", session);
+  console.log("Sidebar Profile - Status:", status);
 
   // Use user data from session or fallback to defaults
   const userImage = session?.user?.image || null;

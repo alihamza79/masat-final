@@ -47,13 +47,13 @@ export function calculateDateRange(
         endDate: endOfDay(now)
       };
       
-    case 'currentMonth':
+    case 'thisMonth':
       return {
         startDate: startOfMonth(now),
-        endDate: now
+        endDate: endOfDay(now)
       };
       
-    case 'previousMonth': {
+    case 'lastMonth': {
       const lastMonth = subDays(startOfMonth(now), 1);
       return {
         startDate: startOfMonth(lastMonth),
@@ -61,13 +61,13 @@ export function calculateDateRange(
       };
     }
     
-    case 'currentQuarter':
+    case 'thisQuarter':
       return {
         startDate: startOfQuarter(now),
-        endDate: now
+        endDate: endOfDay(now)
       };
       
-    case 'previousQuarter': {
+    case 'lastQuarter': {
       const lastQuarter = subDays(startOfQuarter(now), 1);
       return {
         startDate: startOfQuarter(lastQuarter),
@@ -75,19 +75,26 @@ export function calculateDateRange(
       };
     }
     
-    case 'currentYear':
+    case 'thisYear':
       return {
         startDate: startOfYear(now),
-        endDate: now
+        endDate: endOfDay(now)
       };
       
-    case 'previousYear': {
+    case 'lastYear': {
       const lastYear = subDays(startOfYear(now), 1);
       return {
         startDate: startOfYear(lastYear),
         endDate: endOfYear(lastYear)
       };
     }
+    
+    case 'allTime':
+      // For all time, use a far past date (2000-01-01) to ensure we get all historical data
+      return {
+        startDate: new Date(2000, 0, 1),
+        endDate: endOfDay(now)
+      };
     
     case 'custom':
       if (customStartDate && customEndDate) {

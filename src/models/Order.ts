@@ -58,8 +58,8 @@ const OrderSchema = new Schema<IOrder>({
 OrderSchema.index({ integrationId: 1, emagOrderId: 1 }, { unique: true });
 // Add index for status for easy filtering
 OrderSchema.index({ status: 1 });
-// Add index for created date for sorting
-OrderSchema.index({ created: 1 });
+// Add index for date for sorting
+OrderSchema.index({ date: 1 });
 
 // Create and export the model
 export default mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);

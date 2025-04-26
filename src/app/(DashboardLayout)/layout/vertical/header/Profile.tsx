@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -18,9 +18,26 @@ import { Stack } from '@mui/system';
 import Image from 'next/image';
 
 const Profile = () => {
-  const { data: session } = useSession();
+  const { data, update: updateSession } = useSession();
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const hasTriedUpdate = useRef(false);
   
+  // Extract the actual session data from the nested structure
+  // Handle both standard NextAuth and our custom API response format
+  const sessionData = data as any; // Cast to any to avoid TypeScript errors
+  const session = sessionData?.session?.user ? sessionData.session : sessionData;
+  
+  // Try to update session once when component mounts
+  useEffect(() => {
+    // Only update if we don't have a session or if it's the default data
+    // AND we haven't tried updating before
+    if ((!session?.user?.name || session?.user?.name === 'User') && !hasTriedUpdate.current) {
+      hasTriedUpdate.current = true;
+      console.log('Attempting to update session...', data);
+      updateSession();
+    }
+  }, [session, updateSession, data]);
+
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
@@ -38,6 +55,16 @@ const Profile = () => {
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "user@example.com";
   const userRole = "User"; // Default role, can be expanded later
+  
+  // Add logging for debugging
+  useEffect(() => {
+    console.log('Profile component session data:', data);
+    console.log('Extracted user data:', {
+      image: userImage,
+      name: userName,
+      email: userEmail
+    });
+  }, [data, userImage, userName, userEmail]);
   
   // Get first letter of email for avatar if no image is available
   const getAvatarContent = () => {

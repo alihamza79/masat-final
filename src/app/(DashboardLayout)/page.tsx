@@ -240,7 +240,7 @@ const SimpleDistributionChart: React.FC<SimpleDistributionChartProps> = ({
 };
 
 export default function Dashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('last30days');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('allTime');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -258,13 +258,19 @@ export default function Dashboard() {
       const startDateStr = formatDateForAPI(dateRange.startDate);
       const endDateStr = formatDateForAPI(dateRange.endDate);
       
-      // Call the dashboard API
+      console.log(`Fetching dashboard data for period: ${selectedPeriod}`, {
+        startDate: startDateStr,
+        endDate: endDateStr
+      });
+      
+      // Call the dashboard API with date range
       const response = await dashboardService.getDashboardData(startDateStr, endDateStr);
       
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Failed to fetch dashboard data');
       }
       
+      // Use the real data for specified metrics
       setDashboardData(response.data);
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
@@ -272,7 +278,7 @@ export default function Dashboard() {
       
       // For development, fall back to mock data
       if (process.env.NODE_ENV === 'development') {
-        console.log('Using mock data in development mode');
+        console.log('Using mock data in development mode due to error');
         setDashboardData(dashboardService.getMockDashboardData());
       }
     } finally {
@@ -285,16 +291,22 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
   
-  // Fetch data when period changes
+  // Track period changes and fetch data when they change
+  useEffect(() => {
+    // Don't fetch on initial render (empty dependency array useEffect handles that)
+    if (selectedPeriod) {
+      fetchDashboardData();
+    }
+  }, [selectedPeriod, customStartDate, customEndDate]);
+  
+  // Handle period selection
   const handlePeriodChange = (period: PeriodType, startDate?: string, endDate?: string) => {
     setSelectedPeriod(period);
     if (period === 'custom' && startDate && endDate) {
       setCustomStartDate(startDate);
       setCustomEndDate(endDate);
     }
-    
-    // Trigger data reload with new period
-    fetchDashboardData();
+    // Data fetching is now handled by the useEffect that depends on these state variables
   };
   
   // Format currency for display
@@ -324,6 +336,42 @@ export default function Dashboard() {
   
   const theme = useTheme();
   
+  // Get period display text
+  const getPeriodDisplayText = () => {
+    if (selectedPeriod === 'custom' && customStartDate && customEndDate) {
+      const start = new Date(customStartDate).toLocaleDateString();
+      const end = new Date(customEndDate).toLocaleDateString();
+      return `from ${start} to ${end}`;
+    }
+    
+    switch (selectedPeriod) {
+      case 'today':
+        return 'for today';
+      case 'yesterday':
+        return 'for yesterday';
+      case 'last7days':
+        return 'for the last 7 days';
+      case 'last30days':
+        return 'for the last 30 days';
+      case 'thisMonth':
+        return 'for the current month';
+      case 'lastMonth':
+        return 'for the previous month';
+      case 'thisQuarter':
+        return 'for the current quarter';
+      case 'lastQuarter':
+        return 'for the previous quarter';
+      case 'thisYear':
+        return 'for the current year';
+      case 'lastYear':
+        return 'for the previous year';
+      case 'allTime':
+        return 'for all time';
+      default:
+        return '';
+    }
+  };
+  
   return (
     <PageContainer title="Dashboard" description="eMAG Seller Dashboard">
       {/* Header with period selector */}
@@ -335,17 +383,14 @@ export default function Dashboard() {
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 2,
-          p: 2, 
-          borderRadius: 2,
-          background: theme => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.01)',
-          boxShadow: theme => theme.shadows[1],
+          pb: 2,
           borderBottom: theme => `1px solid ${theme.palette.divider}`
         }}
       >
         <Box>
           <Typography variant="h3">Sales Dashboard</Typography>
           <Typography variant="body2" color="textSecondary">
-            Your sales overview for {selectedPeriod}
+            Your sales overview {getPeriodDisplayText()}
           </Typography>
         </Box>
         <PeriodSelector

@@ -72,7 +72,6 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
       offsetY: -15,
       animations: {
         enabled: true,
-        easing: 'easeinout',
         speed: 800,
         animateGradually: {
           enabled: true,
@@ -160,9 +159,7 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
       offsetY: 0,
       horizontalAlign: 'center',
       markers: {
-        radius: 8,
-        width: 10,
-        height: 10
+        size: 8
       },
       itemMargin: {
         horizontal: 15

@@ -39,7 +39,7 @@ const Menuitems: MenuitemsType[] = [
     id: uniqueId(),
     title: "menu.myAccount",
     icon: IconUser,
-    href: "/my-account",
+    href: "/account-settings",
   },
   {
     id: uniqueId(),
