@@ -7,6 +7,7 @@ import * as React from 'react';
 
 // components
 import AccountTab from '@/app/components/pages/account-setting/AccountTab';
+import SecurityTab from '@/app/components/pages/account-setting/SecurityTab';
 import BillsTab from '@/app/components/pages/account-setting/BillsTab';
 import BlankCard from '@/app/components/shared/BlankCard';
 import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons-react';
@@ -81,21 +82,16 @@ const AccountSetting = () => {
 
                 <Tab
                   iconPosition="start"
-                  icon={<IconBell size="22" />}
-                  label="Notifications"
+                  icon={<IconLock size="22" />}
+                  label="Security"
                   {...a11yProps(1)}
                 />
+
                 <Tab
                   iconPosition="start"
                   icon={<IconArticle size="22" />}
                   label="Bills"
                   {...a11yProps(2)}
-                />
-                <Tab
-                  iconPosition="start"
-                  icon={<IconLock size="22" />}
-                  label="Security"
-                  {...a11yProps(3)}
                 />
               </Tabs>
             </Box>
@@ -104,14 +100,11 @@ const AccountSetting = () => {
               <TabPanel value={value} index={0}>
                 <AccountTab />
               </TabPanel>
-              {/* <TabPanel value={value} index={1}>
-                <NotificationTab />
-              </TabPanel> */}
+              <TabPanel value={value} index={1}>
+                <SecurityTab />
+              </TabPanel>
               <TabPanel value={value} index={2}>
                 <BillsTab />
-              </TabPanel>
-              <TabPanel value={value} index={3}>
-                {/* <SecurityTab /> */}
               </TabPanel>
             </CardContent>
           </BlankCard>
