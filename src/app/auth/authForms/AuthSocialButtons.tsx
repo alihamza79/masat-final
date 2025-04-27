@@ -8,6 +8,8 @@ import { useState } from "react";
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 
+
+
 interface Props {
   title: string;
   rememberDevice?: boolean;
@@ -40,7 +42,7 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
     <>
       <Stack direction="row" justifyContent="center" spacing={2} mt={3}>
         <CustomSocialButton 
-          onClick={onGoogleSignIn} 
+          onClick={handleGoogleSignIn} 
           disabled={googleLoading}
         >
           {googleLoading ? (
@@ -69,7 +71,7 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
           Google
         </CustomSocialButton>
         <CustomSocialButton 
-          onClick={onFacebookSignIn} 
+          onClick={handleFacebookSignIn} 
           disabled={facebookLoading}
         >
           {facebookLoading ? (
