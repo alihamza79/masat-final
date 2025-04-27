@@ -55,6 +55,12 @@ const Menuitems: MenuitemsType[] = [
       },
       {
         id: uniqueId(),
+        title: "menu.expenses",
+        icon: IconCurrencyDollar,
+        href: "/expenses",
+      },
+      {
+        id: uniqueId(),
     title: "menu.subscriptionPayment",
     icon: IconCurrencyDollar,
     href: "/subscrfrfiption",
@@ -71,12 +77,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconCalculator,
     href: "/calculator",
   },
-  {
-    id: uniqueId(),
-    title: "menu.expenses",
-    icon: IconCurrencyDollar,
-    href: "/expenses",
-  },
+ 
   {
     id: uniqueId(),
     title: "menu.listingOptimizer",

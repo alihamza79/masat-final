@@ -108,6 +108,14 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
       y: {
         formatter: (value: number) => `${value.toLocaleString()} RON`,
       },
+      theme: theme.palette.mode,
+      style: {
+        fontSize: '12px',
+        fontFamily: theme.typography.fontFamily,
+      },
+      background: {
+        color: theme.palette.background.paper,
+      },
     },
     colors: [theme.palette.error.main, theme.palette.success.main],
     legend: {
@@ -119,6 +127,12 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
         horizontal: 10,
         vertical: 0
       },
+      labels: {
+        colors: theme.palette.text.primary
+      },
+      markers: {
+        strokeWidth: 0
+      }
     },
     responsive: [{
       breakpoint: 600,
