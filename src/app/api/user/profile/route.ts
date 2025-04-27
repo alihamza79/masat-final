@@ -7,26 +7,73 @@ import Company from '@/models/Company';
 import mongoose from 'mongoose';
 import { uploadFileToS3, deleteFileFromS3 } from '@/utils/s3';
 
+// Log the models
+console.log('Imported models in route.ts:', { 
+  User: typeof User, 
+  Company: typeof Company,
+  hasCompanyModel: !!Company,
+  isMongooseModel: Company && Company.modelName ? true : false
+});
+
 /**
  * GET endpoint to fetch user profile information
  */
 export async function GET(request: NextRequest) {
   try {
+    console.log('GET /api/user/profile: Request started');
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
+      console.log('GET /api/user/profile: No user session found');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     
+    console.log(`GET /api/user/profile: Session user found with email ${session.user.email}`);
     await connectToDatabase();
+    console.log('GET /api/user/profile: Connected to database');
     
     const user = await User.findOne({ email: session.user.email }).select('-password');
     if (!user) {
+      console.log(`GET /api/user/profile: User not found with email ${session.user.email}`);
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
     
+    console.log(`GET /api/user/profile: User found with ID ${user._id}`);
+    
     // Get company info if exists
-    const company = await Company.findOne({ userId: user._id });
+    let company = null;
+    try {
+      // Check if Company model is properly imported
+      if (!Company || typeof Company.findOne !== 'function') {
+        console.error('GET /api/user/profile: Company model is not properly imported');
+        throw new Error('Company model is not properly defined');
+      }
+
+      // Re-import it directly just in case
+      const CompanyModel = mongoose.models.Company || mongoose.model('Company', new mongoose.Schema({
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        name: { type: String, required: true }
+      }));
+      
+      // Try to find with both models
+      company = await CompanyModel.findOne({ userId: user._id });
+      console.log(`GET /api/user/profile: Company search result: ${company ? 'Found' : 'Not found'}`);
+      // Add detailed logging of what's being returned
+      console.log('GET /api/user/profile: Returning response with user data:', JSON.stringify({
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        companyFound: !!company,
+        companyData: company ? {
+          name: company.name,
+          taxId: company.taxId,
+          registrationNumber: company.registrationNumber
+        } : null
+      }));
+    } catch (companyError: any) {
+      console.error('GET /api/user/profile: Error finding company:', companyError);
+      // We'll still return user data even if company lookup fails
+    }
     
     return NextResponse.json({
       success: true,
@@ -37,7 +84,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error fetching user profile:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Failed to fetch profile' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Failed to fetch profile',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }
 

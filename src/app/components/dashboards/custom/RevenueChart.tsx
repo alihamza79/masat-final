@@ -55,9 +55,9 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   const totalCostOfGoods = costOfGoods.reduce((acc, curr) => acc + curr, 0);
   
   // Mock percentage changes (in a real app, this would come from API)
-  const revenueChange = 2;
-  const profitChange = -2;
-  const marginChange = 2;
+  const revenueChange: number = 2;
+  const profitChange: number = -2;
+  const marginChange: number = 2;
   
   // Format currency
   const formatCurrency = (value: number) => {
@@ -345,7 +345,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
                 <IconCircleCheck size={16} color={theme.palette.primary.main} />
                 <Typography variant="body2" color="textSecondary">Gross Revenue</Typography>
-                {revenueChange !== 0 && (
+                {revenueChange > 0 || revenueChange < 0 ? (
                   <Chip 
                     icon={revenueChange > 0 ? <IconArrowUpRight size={12} /> : <IconArrowDownRight size={12} />} 
                     label={`${revenueChange}%`} 
@@ -354,7 +354,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                     variant="outlined"
                     sx={{ height: 18, '& .MuiChip-label': { px: 0.5, py: 0.1, fontSize: '0.65rem' } }}
                   />
-                )}
+                ) : null}
               </Stack>
               <Typography variant="h5" fontWeight={600}>
                 {formatCurrency(totalRevenue)}
@@ -373,7 +373,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
                 <IconCircleCheck size={16} color={theme.palette.success.main} />
                 <Typography variant="body2" color="textSecondary">Net Profit</Typography>
-                {profitChange !== 0 && (
+                {profitChange > 0 || profitChange < 0 ? (
                   <Chip 
                     icon={profitChange > 0 ? <IconArrowUpRight size={12} /> : <IconArrowDownRight size={12} />} 
                     label={`${profitChange}%`} 
@@ -382,7 +382,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                     variant="outlined"
                     sx={{ height: 18, '& .MuiChip-label': { px: 0.5, py: 0.1, fontSize: '0.65rem' } }}
                   />
-                )}
+                ) : null}
               </Stack>
               <Typography variant="h5" fontWeight={600}>
                 {formatCurrency(totalProfit)}
@@ -401,7 +401,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
                 <IconCircleCheck size={16} color={theme.palette.warning.main} />
                 <Typography variant="body2" color="textSecondary">Cost of Goods</Typography>
-                {marginChange !== 0 && (
+                {marginChange > 0 || marginChange < 0 ? (
                   <Chip 
                     icon={marginChange > 0 ? <IconArrowUpRight size={12} /> : <IconArrowDownRight size={12} />} 
                     label={`${marginChange}%`} 
@@ -410,7 +410,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                     variant="outlined"
                     sx={{ height: 18, '& .MuiChip-label': { px: 0.5, py: 0.1, fontSize: '0.65rem' } }}
                   />
-                )}
+                ) : null}
               </Stack>
               <Typography variant="h5" fontWeight={600}>
                 {formatCurrency(totalCostOfGoods)}

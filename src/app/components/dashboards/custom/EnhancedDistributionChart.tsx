@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { 
@@ -13,7 +13,7 @@ interface DistributionData {
   name: string;
   value: number;
   color?: string;
-  icon?: React.ReactNode;
+  icon?: ReactElement;
 }
 
 interface EnhancedDistributionChartProps {
@@ -211,7 +211,7 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
                 {data.map((item, index) => (
                   <Chip
                     key={index}
-                    icon={item.icon ? item.icon : undefined}
+                    icon={item.icon}
                     label={`${item.name}: ${((item.value / total) * 100).toFixed(1)}%`}
                     size="small"
                     sx={{

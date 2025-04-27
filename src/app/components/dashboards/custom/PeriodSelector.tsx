@@ -115,6 +115,54 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
     return periodLabels[selectedPeriod] || 'Select period';
   };
   
+  // Custom Dialog for date selection
+  const CustomDateDialog = () => (
+    <Dialog open={openDateDialog} onClose={handleDateDialogClose}>
+      <DialogTitle>Select Date Range</DialogTitle>
+      <DialogContent>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <DatePicker
+              label="Start Date"
+              value={tempStartDate}
+              onChange={(newValue: Date | null) => setTempStartDate(newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  variant="outlined"
+                />
+              )}
+            />
+            <DatePicker
+              label="End Date"
+              value={tempEndDate}
+              onChange={(newValue: Date | null) => setTempEndDate(newValue)}
+              minDate={tempStartDate || undefined}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  variant="outlined"
+                />
+              )}
+            />
+          </Stack>
+        </LocalizationProvider>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleDateDialogClose}>Cancel</Button>
+        <Button 
+          onClick={handleDateDialogSubmit} 
+          variant="contained" 
+          disabled={!tempStartDate || !tempEndDate}
+        >
+          Apply
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <>
       <Button
@@ -252,37 +300,7 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         </MenuItem>
       </Menu>
       
-      {/* Custom date range dialog */}
-      <Dialog open={openDateDialog} onClose={handleDateDialogClose}>
-        <DialogTitle>Select Custom Date Range</DialogTitle>
-        <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Stack spacing={3} sx={{ mt: 1 }}>
-              <DatePicker
-                label="Start Date"
-                value={tempStartDate}
-                onChange={(newValue) => setTempStartDate(newValue)}
-              />
-              <DatePicker
-                label="End Date"
-                value={tempEndDate}
-                onChange={(newValue) => setTempEndDate(newValue)}
-                minDate={tempStartDate || undefined}
-              />
-            </Stack>
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDateDialogClose}>Cancel</Button>
-          <Button 
-            onClick={handleDateDialogSubmit} 
-            variant="contained" 
-            disabled={!tempStartDate || !tempEndDate}
-          >
-            Apply
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CustomDateDialog />
     </>
   );
 };

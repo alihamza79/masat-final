@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -18,7 +18,12 @@ import CustomFormLabel from '../../forms/theme-elements/CustomFormLabel';
 // services
 import axios from 'axios';
 
-const SecurityTab = () => {
+// Define props interface
+interface SecurityTabProps {
+  userData: any;
+}
+
+const SecurityTab = ({ userData }: SecurityTabProps) => {
   // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -30,6 +35,24 @@ const SecurityTab = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (message.type === 'success') {
+      timeoutId = setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 3000);
+    }
+    
+    // Cleanup timeout on component unmount or when message changes
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [message]);
+
   // Handle password data change
   const handlePasswordDataChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -39,6 +62,9 @@ const SecurityTab = () => {
   // Handle password change
   const handleChangePassword = async () => {
     try {
+      // Reset any existing messages
+      setMessage({ type: '', text: '' });
+
       // Validate passwords
       if (!passwordData.currentPassword) {
         setMessage({ type: 'error', text: 'Current password is required' });
@@ -54,6 +80,12 @@ const SecurityTab = () => {
         setMessage({ type: 'error', text: 'New password must be at least 6 characters' });
         return;
       }
+
+      // Check if new password is same as current password
+      if (passwordData.currentPassword === passwordData.newPassword) {
+        setMessage({ type: 'error', text: 'New password must be different from current password' });
+        return;
+      }
       
       if (passwordData.newPassword !== passwordData.confirmPassword) {
         setMessage({ type: 'error', text: 'Passwords do not match' });
@@ -61,7 +93,6 @@ const SecurityTab = () => {
       }
       
       setLoading(true);
-      setMessage({ type: '', text: '' });
       
       // Send password change request
       const response = await axios.post('/api/user/change-password', {
@@ -113,7 +144,7 @@ const SecurityTab = () => {
             </Typography>
             <Divider sx={{ mb: 3 }} />
             <Typography color="textSecondary" mb={3}>
-              Ensure your account is using a secure password
+              Choose a password that is at least 6 characters long and different from your current password
             </Typography>
             
             <Grid container spacing={3} maxWidth="md">
@@ -137,7 +168,10 @@ const SecurityTab = () => {
               </Grid>
               
               <Grid item xs={12} sm={6}>
-                <CustomFormLabel htmlFor="new-password">
+                <CustomFormLabel 
+                  sx={{ mt: { xs: 2, sm: 0 } }}
+                  htmlFor="new-password"
+                >
                   New Password
                 </CustomFormLabel>
                 <CustomTextField
@@ -153,7 +187,10 @@ const SecurityTab = () => {
               </Grid>
               
               <Grid item xs={12} sm={6}>
-                <CustomFormLabel htmlFor="confirm-password">
+                <CustomFormLabel 
+                  sx={{ mt: { xs: 2, sm: 0 } }}
+                  htmlFor="confirm-password"
+                >
                   Confirm New Password
                 </CustomFormLabel>
                 <CustomTextField
@@ -169,7 +206,7 @@ const SecurityTab = () => {
               </Grid>
               
               <Grid item xs={12}>
-                <Box mt={1}>
+                <Box>
                   <Button 
                     variant="contained" 
                     color="primary" 

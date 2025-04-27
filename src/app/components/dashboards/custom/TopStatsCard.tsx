@@ -18,7 +18,7 @@ const TopStatsCard: React.FC<TopStatsCardProps> = ({
   const theme = useTheme();
   
   // Get the appropriate icon color based on colorScheme
-  let iconColor;
+  let iconColor: string;
   switch (colorScheme) {
     case 'primary':
       iconColor = '#6870fa';  // Blue
@@ -39,7 +39,7 @@ const TopStatsCard: React.FC<TopStatsCardProps> = ({
       iconColor = '#7987ff';  // Purple/Blue
       break;
     default:
-      iconColor = theme.palette[colorScheme].main;
+      iconColor = theme.palette.primary.main; // Fallback to primary color
   }
   
   return (
@@ -52,7 +52,7 @@ const TopStatsCard: React.FC<TopStatsCardProps> = ({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: `${colorScheme}.light`,
+        backgroundColor: theme.palette[colorScheme]?.light || theme.palette.primary.light,
         boxShadow: 'none',
         '&:hover': {
           boxShadow: theme.shadows[1],

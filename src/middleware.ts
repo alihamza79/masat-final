@@ -8,9 +8,7 @@ const publicPaths = [
   '/auth/auth1/register',
   '/auth/auth1/forgot-password',
   '/auth/auth1/error',
-  '/debug-auth',
-  '/api/debug-auth',
-  '/api/check-cookies'
+  
 ];
 
 export async function middleware(request: NextRequest) {
@@ -24,11 +22,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('OK', { status: 200 });
   }
   
-  // Special path for debugging auth
-  if (pathname === '/debug-auth' || pathname.startsWith('/api/debug-auth') || pathname.startsWith('/api/check-cookies')) {
-    console.log(`[Middleware] Allowing access to debug path: ${pathname}`);
-    return NextResponse.next();
-  }
+  
   
   // Check if the path is a public path
   if (publicPaths.some(path => pathname.startsWith(path))) {

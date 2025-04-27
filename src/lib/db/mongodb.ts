@@ -5,7 +5,7 @@
 import mongoose from 'mongoose';
 
 // Connection URI
-const MONGODB_URI=process.env.MONGODB_URI || ''
+const MONGODB_URI = process.env.MONGODB_URI || '';
 
 // Add error handling for missing connection string
 if (!MONGODB_URI) {
@@ -55,64 +55,36 @@ const IDLE_CONNECTION_TIMEOUT = 30 * 60 * 1000;
  * @returns Mongoose connection instance
  */
 export async function connectToDatabase() {
-  // Check if connection exists and is active
   if (globalCache.conn) {
-    // Check connection state (0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting)
-    const connectionState = mongoose.connection.readyState;
-    
-    // If connected and not expired
-    if (connectionState === 1 && 
-        globalCache.lastConnectionTime && 
-        Date.now() - globalCache.lastConnectionTime < IDLE_CONNECTION_TIMEOUT) {
-      return globalCache.conn;
-    }
-    
-    // If connection is expired but still active, continue using it
-    // but update the timestamp to avoid too many reconnections
-    if (connectionState === 1) {
-      globalCache.lastConnectionTime = Date.now();
-      return globalCache.conn;
-    }
+    console.log('Using existing MongoDB connection');
+    return globalCache.conn;
   }
 
-  // Use existing promise if connection is in progress
-  if (globalCache.promise) {
-    try {
-      globalCache.conn = await globalCache.promise;
-      globalCache.lastConnectionTime = Date.now();
-      return globalCache.conn;
-    } catch (e) {
-      globalCache.promise = null;
-      console.error("Error connecting to MongoDB, retrying:", e);
-    }
+  if (!globalCache.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    console.log('Creating new MongoDB connection');
+    globalCache.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('MongoDB connected successfully');
+      return mongoose;
+    });
   }
-
-  // Create new connection
-  const opts = {
-    ...options,
-    bufferCommands: false,
-  };
-
-  mongoose.set('strictQuery', true);
   
-  // Create new connection promise
-  globalCache.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-    // Only log in development to reduce Vercel logs
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Connected to MongoDB with Mongoose');
-    }
-    return mongoose;
-  });
-
   try {
     globalCache.conn = await globalCache.promise;
+    
+    // Log the available models in mongoose
+    const modelNames = mongoose.modelNames();
+    console.log('Available Mongoose models:', modelNames);
+    
     globalCache.lastConnectionTime = Date.now();
-  } catch (e) {
-    globalCache.promise = null;
-    throw e;
+    return globalCache.conn;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
   }
-
-  return globalCache.conn;
 }
 
 /**

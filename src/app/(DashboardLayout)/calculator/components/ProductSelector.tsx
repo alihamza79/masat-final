@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Stack, Typography } from '@mui/material';
 import { IconPackage, IconChevronRight } from '@tabler/icons-react';
 import ProductSelectionModal from './ProductSelectionModal';
@@ -23,10 +23,31 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   savedCalculationsError
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
-  const { products, isLoading: productsLoading } = useProducts();
+  const { products, isLoading: productsLoading, hasProducts, error: productsError } = useProducts();
+  const [processedProducts, setProcessedProducts] = useState<any[]>([]);
+
+  // Process and validate products when they change
+  useEffect(() => {
+    console.log('ProductSelector received products:', products);
+    console.log('Products array length:', products?.length || 0);
+    
+    // Make sure we have valid products
+    if (Array.isArray(products) && products.length > 0) {
+      // Filter out any invalid products
+      const validProducts = products.filter(product => 
+        product && (product.emagProductOfferId || product._id)
+      );
+      console.log(`ProductSelector filtered ${validProducts.length} valid products from ${products.length} total`);
+      setProcessedProducts(validProducts);
+    } else {
+      console.log('No valid products available');
+      setProcessedProducts([]);
+    }
+  }, [products]);
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
   const handleProductSelect = (value: string) => {
+    console.log('Selected product value:', value);
     onSelectProduct(value);
     setOpenProductModal(false);
   };
@@ -89,8 +110,8 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         onSelectProduct={handleProductSelect}
         savedCalculations={savedCalculations}
         loading={loadingSavedCalculations || productsLoading}
-        error={savedCalculationsError}
-        products={products}
+        error={savedCalculationsError || (productsError ? String(productsError) : null)}
+        products={processedProducts}
       />
     </Stack>
   );

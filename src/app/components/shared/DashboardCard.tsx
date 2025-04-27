@@ -2,9 +2,10 @@ import { useTheme } from '@mui/material/styles';
 import { Card, CardContent, Typography, Stack, Box, SxProps, Theme } from '@mui/material';
 import { useSelector } from '@/store/hooks';
 import { AppState } from '@/store/store';
+import { ReactNode } from 'react';
 
 type Props = {
-  title?: string;
+  title?: string | ReactNode;
   subtitle?: string;
   action?: JSX.Element | any;
   footer?: JSX.Element;

@@ -1,25 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import React, { useEffect, useState } from 'react';
 
 // components
-import BlankCard from '../../shared/BlankCard';
-import CustomTextField from '../../forms/theme-elements/CustomTextField';
 import CustomFormLabel from '../../forms/theme-elements/CustomFormLabel';
 import CustomSelect from '../../forms/theme-elements/CustomSelect';
+import CustomTextField from '../../forms/theme-elements/CustomTextField';
+import BlankCard from '../../shared/BlankCard';
 
 // services
-import axios from 'axios';
 import { useSession } from 'next-auth/react';
 
 // images
@@ -37,27 +36,37 @@ const countries = [
   { value: 'BG', label: 'Bulgaria' },
 ];
 
-const AccountTab = () => {
-  const { data: session, update } = useSession();
+// Define props interface
+interface AccountTabProps {
+  userData: any;
+  companyData: any;
+  onDataUpdate: (data: any) => void;
+  sessionUpdate: any;
+}
+
+const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData, onDataUpdate, sessionUpdate }: AccountTabProps) => {
+  const { data: session } = useSession();
   
-  // User and company state
+  // User and company state - initialized from props
   const [userData, setUserData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    image: ''
+    name: initialUserData?.name || '',
+    email: initialUserData?.email || '',
+    phone: initialUserData?.phone || '',
+    image: initialUserData?.image || ''
   });
   
   const [companyData, setCompanyData] = useState({
-    name: '',
-    taxId: '',
-    registrationNumber: '',
-    address: '',
-    town: '',
-    country: '',
-    taxRate: 0,
-    isVatPayer: false
+    name: initialCompanyData?.name || '',
+    taxId: initialCompanyData?.taxId || '',
+    registrationNumber: initialCompanyData?.registrationNumber || '',
+    address: initialCompanyData?.address || '',
+    town: initialCompanyData?.town || '',
+    country: initialCompanyData?.country || '',
+    taxRate: initialCompanyData?.taxRate || 0,
+    isVatPayer: initialCompanyData?.isVatPayer || false
   });
+  
+  const [phoneNumber, setPhoneNumber] = useState(initialUserData?.phone || '');
   
   // UI state
   const [loading, setLoading] = useState(false);
@@ -65,50 +74,58 @@ const AccountTab = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
-  // Load user data
+  // Auto-hide success message after 3 seconds
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/user/profile');
-        
-        if (response.data.success) {
-          const { user, company } = response.data.data;
-          
-          // Set user data
-          setUserData({
-            name: user.name || '',
-            email: user.email || '',
-            phone: user.phone || '',
-            image: user.image || ''
-          });
-          
-          // Set company data if exists
-          if (company) {
-            setCompanyData({
-              name: company.name || '',
-              taxId: company.taxId || '',
-              registrationNumber: company.registrationNumber || '',
-              address: company.address || '',
-              town: company.town || '',
-              country: company.country || '',
-              taxRate: company.taxRate || 0,
-              isVatPayer: company.isVatPayer || false
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setMessage({ type: 'error', text: 'Failed to load user data' });
-      } finally {
-        setLoading(false);
+    let timeoutId: NodeJS.Timeout;
+    
+    if (message.type === 'success') {
+      timeoutId = setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 3000);
+    }
+    
+    // Cleanup timeout on component unmount or when message changes
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     };
-    
-    if (session?.user) {
-      fetchUserData();
+  }, [message]);
+  
+  // Update local state when props change
+  useEffect(() => {
+    if (initialUserData) {
+      setUserData({
+        name: initialUserData.name || '',
+        email: initialUserData.email || '',
+        phone: initialUserData.phone || '',
+        image: initialUserData.image || ''
+      });
     }
-  }, [session]);
+    
+    if (initialCompanyData) {
+      setCompanyData({
+        name: initialCompanyData.name || '',
+        taxId: initialCompanyData.taxId || '',
+        registrationNumber: initialCompanyData.registrationNumber || '',
+        address: initialCompanyData.address || '',
+        town: initialCompanyData.town || '',
+        country: initialCompanyData.country || '',
+        taxRate: initialCompanyData.taxRate || 0,
+        isVatPayer: initialCompanyData.isVatPayer || false
+      });
+    }
+  }, [initialUserData, initialCompanyData]);
+  
+  // Update the phone number in userData when it changes
+  useEffect(() => {
+    if (phoneNumber !== userData.phone) {
+      setUserData(prev => ({
+        ...prev,
+        phone: phoneNumber
+      }));
+    }
+  }, [phoneNumber]);
   
   // Handle profile image change
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,36 +210,30 @@ const AccountTab = () => {
         updateData.profileImage = imagePreview;
       }
       
-      // Send update request
-      const response = await axios.put('/api/user/profile', updateData);
+      // Notify parent about the update instead of making a direct API call
+      // The parent will handle updating the data cache
+      onDataUpdate(updateData);
       
-      if (response.data.success) {
-        setMessage({ type: 'success', text: 'Profile updated successfully' });
-        
-        // Update session with new user data
-        if (session) {
-          await update({
-            ...session,
-            user: {
-              ...session.user,
-              name: userData.name,
-              image: response.data.data.user.image
-            }
-          });
-        }
-      } else {
-        setMessage({ type: 'error', text: response.data.error || 'Failed to update profile' });
-      }
+      setMessage({ type: 'success', text: 'Profile updated successfully' });
+      
+      // Reset selected image state since it's been saved
+      setSelectedImage(null);
+      setImagePreview(null);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.error || 'Failed to update profile' 
+        text: error.message || 'Failed to update profile' 
       });
     } finally {
       setLoading(false);
     }
   };
+
+  // Log when userData changes
+  useEffect(() => {
+    console.log("userData updated:", userData);
+  }, [userData]);
 
   return (
     <Grid container spacing={3}>
@@ -322,10 +333,14 @@ const AccountTab = () => {
                       id="text-phone"
                       name="phone"
                       value={userData.phone}
-                      onChange={handleUserDataChange}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+                        setUserData(prev => ({ ...prev, phone: value }));
+                      }}
                       variant="outlined"
                       fullWidth
                       disabled={loading}
+                      placeholder="Enter phone number"
                     />
                   </Grid>
                 </Grid>
@@ -512,14 +527,7 @@ const AccountTab = () => {
           >
             {loading ? <CircularProgress size={24} /> : 'Save Changes'}
           </Button>
-          <Button 
-            size="large" 
-            variant="text" 
-            color="error"
-            disabled={loading}
-          >
-            Cancel
-          </Button>
+          
         </Stack>
       </Grid>
     </Grid>

@@ -2,13 +2,17 @@
 
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/app/components/container/PageContainer';
-import { Box, CardContent, Divider, Grid, Tab, Tabs } from '@mui/material';
+import { Box, CardContent, Divider, Grid, Tab, Tabs, CircularProgress, Alert } from '@mui/material';
 import * as React from 'react';
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+
+// Import our custom hook
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 // components
 import AccountTab from '@/app/components/pages/account-setting/AccountTab';
 import SecurityTab from '@/app/components/pages/account-setting/SecurityTab';
-import BillsTab from '@/app/components/pages/account-setting/BillsTab';
 import BlankCard from '@/app/components/shared/BlankCard';
 import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons-react';
 const BCrumb = [
@@ -51,10 +55,41 @@ function a11yProps(index: number) {
 }
 
 const AccountSetting = () => {
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = useState(0);
+  const { data: session, update } = useSession();
+  
+  // Use our custom hook to get user profile data with caching
+  const { 
+    userData, 
+    companyData, 
+    isLoading, 
+    error, 
+    updateProfile, 
+    refreshUserProfile 
+  } = useUserProfile();
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
+  };
+
+  // Handler for when data is updated in any tab
+  const handleDataUpdate = (data: any) => {
+    // Update the cache and session
+    updateProfile(data);
+    
+    // If the update includes user data we need to update next-auth session
+    if (data.name || data.profileImage) {
+      if (session) {
+        update({
+          ...session,
+          user: {
+            ...session.user,
+            name: data.name || session.user.name,
+            image: userData?.image || session.user.image
+          }
+        });
+      }
+    }
   };
 
   return (
@@ -97,15 +132,31 @@ const AccountSetting = () => {
             </Box>
             <Divider />
             <CardContent>
-              <TabPanel value={value} index={0}>
-                <AccountTab />
-              </TabPanel>
-              <TabPanel value={value} index={1}>
-                <SecurityTab />
-              </TabPanel>
-              <TabPanel value={value} index={2}>
-                <BillsTab />
-              </TabPanel>
+              {isLoading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" p={3}>
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  {error instanceof Error ? error.message : 'Failed to load user data'}
+                </Alert>
+              ) : (
+                <>
+                  <TabPanel value={value} index={0}>
+                    <AccountTab 
+                      userData={userData} 
+                      companyData={companyData} 
+                      onDataUpdate={handleDataUpdate}
+                      sessionUpdate={update}
+                    />
+                  </TabPanel>
+                  <TabPanel value={value} index={1}>
+                    <SecurityTab userData={userData} />
+                  </TabPanel>
+                  <TabPanel value={value} index={2}>
+                  </TabPanel>
+                </>
+              )}
             </CardContent>
           </BlankCard>
         </Grid>
