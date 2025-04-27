@@ -2,6 +2,12 @@
 
 FROM node:18-alpine AS base
 
+# Set production as default environment
+ARG NODE_ENV=production
+ENV NODE_ENV=$NODE_ENV \
+    NEXT_TELEMETRY_DISABLED=1
+
+
 # Stage for updating the lock file
 FROM base AS deps-updater
 WORKDIR /app
@@ -24,31 +30,11 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
-COPY . .
-COPY --from=deps /app/node_modules ./node_modules
-
-# Set NODE_ENV for the build
-ARG NODE_ENV=production
-ENV NODE_ENV=$NODE_ENV
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Disable telemetry during the build
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# These non-sensitive build arguments are OK to use in the Dockerfile
+# Set environment variables first - these rarely change
 ARG NEXTAUTH_URL
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
-
 ARG S3_BUCKET_NAME
-ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
-
 ARG SES_SOURCE_EMAIL
-ENV SES_SOURCE_EMAIL=$SES_SOURCE_EMAIL
-
 ARG AWS_REGION
-ENV AWS_REGION=$AWS_REGION
-
-# MongoDB environment variables
 ARG MONGODB_URI
 ARG ENCRYPTION_KEY
 ARG NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
@@ -60,8 +46,11 @@ ARG FACEBOOK_CLIENT_SECRET
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 
-# Set these temporarily for the build process only
-ENV MONGODB_URI=$MONGODB_URI \
+ENV NEXTAUTH_URL=$NEXTAUTH_URL \
+    S3_BUCKET_NAME=$S3_BUCKET_NAME \
+    SES_SOURCE_EMAIL=$SES_SOURCE_EMAIL \
+    AWS_REGION=$AWS_REGION \
+    MONGODB_URI=$MONGODB_URI \
     ENCRYPTION_KEY=$ENCRYPTION_KEY \
     NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=$NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY \
     NEXTAUTH_SECRET=$NEXTAUTH_SECRET \
@@ -72,6 +61,16 @@ ENV MONGODB_URI=$MONGODB_URI \
     AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
     AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
+
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy package.json - needed for the build process
+COPY package.json ./
+# Copy configuration files next - these change occasionally
+COPY next.config.mjs tsconfig*.json ./
+
+COPY public ./public
+COPY src ./src
 
 # Prune development dependencies
 RUN npm prune --production
@@ -87,18 +86,20 @@ ENV NODE_ENV=production
 # Disable telemetry during runtime
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user for better security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p /app/.next && \
+    chown -R nextjs:nodejs /app
 
-# Copy necessary files from the build stage
-COPY --from=builder /app/public ./public
-# No need to copy node_modules as they're included in the standalone output
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+# Copy the entire .next directory
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+# Copy public directory
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Copy the standalone directory structure if it exists (ensuring it doesn't fail if missing)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/ ./
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 

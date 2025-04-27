@@ -74,7 +74,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.11.4
 
       # Cache Terraform files
       - name: Cache Terraform
@@ -86,7 +86,7 @@ jobs:
             ${{ runner.os }}-terraform-
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -reconfigure
         working-directory: terraform
 
       # Add Terraform validation step
