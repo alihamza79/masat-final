@@ -2,88 +2,80 @@
 
 FROM node:18-alpine AS base
 
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
+# Set production as default environment
+ARG NODE_ENV=production
+ENV NODE_ENV=$NODE_ENV \
+    NEXT_TELEMETRY_DISABLED=1
 
-# Install dependencies based on the preferred package manager
+
+# Stage for updating the lock file
+FROM base AS deps-updater
+WORKDIR /app
 COPY package.json ./
-RUN npm i
+# Update the lock file
+RUN npm install --package-lock-only
+
+
+# Install dependencies only when needed
+# Install dependencies with the updated lock file
+FROM base AS deps
+WORKDIR /app
+COPY package.json ./
+COPY --from=deps-updater /app/package-lock.json ./
+# Now npm ci should work fine
+RUN npm ci
 
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 
-COPY . .
+# Set environment variables first - these rarely change
+ARG NEXTAUTH_URL
+ARG S3_BUCKET_NAME
+ARG SES_SOURCE_EMAIL
+ARG AWS_REGION
+ARG MONGODB_URI
+ARG ENCRYPTION_KEY
+ARG NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
+ARG NEXTAUTH_SECRET
+ARG GOOGLE_CLIENT_ID
+ARG GOOGLE_CLIENT_SECRET
+ARG FACEBOOK_CLIENT_ID
+ARG FACEBOOK_CLIENT_SECRET
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+
+ENV NEXTAUTH_URL=$NEXTAUTH_URL \
+    S3_BUCKET_NAME=$S3_BUCKET_NAME \
+    SES_SOURCE_EMAIL=$SES_SOURCE_EMAIL \
+    AWS_REGION=$AWS_REGION \
+    MONGODB_URI=$MONGODB_URI \
+    ENCRYPTION_KEY=$ENCRYPTION_KEY \
+    NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=$NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY \
+    NEXTAUTH_SECRET=$NEXTAUTH_SECRET \
+    GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID \
+    GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET \
+    FACEBOOK_CLIENT_ID=$FACEBOOK_CLIENT_ID \
+    FACEBOOK_CLIENT_SECRET=$FACEBOOK_CLIENT_SECRET \
+    AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+    AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+
 COPY --from=deps /app/node_modules ./node_modules
 
-# MongoDB environment variables
-ARG MONGODB_URI
-ENV MONGODB_URI=$MONGODB_URI
+# Copy package.json - needed for the build process
+COPY package.json ./
+# Copy configuration files next - these change occasionally
+COPY next.config.mjs tsconfig*.json ./
 
-ARG MONGODB_CLUSTER
-ENV MONGODB_CLUSTER=$MONGODB_CLUSTER
+COPY public ./public
+COPY src ./src
 
-ARG MONGODB_DATABASE
-ENV MONGODB_DATABASE=$MONGODB_DATABASE
+# Prune development dependencies
+RUN npm prune --production
 
-# Encryption environment variables
-ARG ENCRYPTION_KEY
-ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
-
-ARG NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
-ENV NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=$NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
-
-ARG ENCRYPTION_IV
-ENV ENCRYPTION_IV=$ENCRYPTION_IV
-
-# NextAuth environment variables
-ARG NEXTAUTH_SECRET
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-
-ARG NEXTAUTH_URL
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
-
-# Set NODE_ENV for the build
-ARG NODE_ENV=production
-ENV NODE_ENV=$NODE_ENV
-
-# Google OAuth environment variables
-ARG GOOGLE_CLIENT_ID
-ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
-
-ARG GOOGLE_CLIENT_SECRET
-ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
-
-# Facebook OAuth environment variables
-ARG FACEBOOK_CLIENT_ID
-ENV FACEBOOK_CLIENT_ID=$FACEBOOK_CLIENT_ID
-
-ARG FACEBOOK_CLIENT_SECRET
-ENV FACEBOOK_CLIENT_SECRET=$FACEBOOK_CLIENT_SECRET
-
-# AWS S3 environment variables
-# In ECS, these will be ignored and the application will use the IAM role:
-ARG AWS_REGION
-ENV AWS_REGION=$AWS_REGION
-
-ARG AWS_ACCESS_KEY_ID
-ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-
-ARG AWS_SECRET_ACCESS_KEY
-ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
-ARG S3_BUCKET_NAME
-ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
-
+# Build the application
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -91,55 +83,23 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
+# Disable telemetry during runtime
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user for better security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p /app/.next && \
+    chown -R nextjs:nodejs /app
 
-# Copy necessary files from the build stage
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+# Copy the entire .next directory
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+# Copy public directory
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Copy the standalone directory structure if it exists (ensuring it doesn't fail if missing)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/ ./
 
-# Copy environment variables from build args
-ARG MONGODB_URI
-ENV MONGODB_URI=$MONGODB_URI
-ARG MONGODB_CLUSTER
-ENV MONGODB_CLUSTER=$MONGODB_CLUSTER
-ARG MONGODB_DATABASE
-ENV MONGODB_DATABASE=$MONGODB_DATABASE
-ARG ENCRYPTION_KEY
-ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
-ARG NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
-ENV NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=$NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY
-ARG ENCRYPTION_IV
-ENV ENCRYPTION_IV=$ENCRYPTION_IV
-ARG NEXTAUTH_SECRET
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-ARG NEXTAUTH_URL
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
-ARG GOOGLE_CLIENT_ID
-ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
-ARG GOOGLE_CLIENT_SECRET
-ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
-ARG FACEBOOK_CLIENT_ID
-ENV FACEBOOK_CLIENT_ID=$FACEBOOK_CLIENT_ID
-ARG FACEBOOK_CLIENT_SECRET
-ENV FACEBOOK_CLIENT_SECRET=$FACEBOOK_CLIENT_SECRET
-ARG AWS_REGION
-ENV AWS_REGION=$AWS_REGION
-ARG AWS_ACCESS_KEY_ID
-ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
-ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-ARG S3_BUCKET_NAME
-ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 

@@ -33,6 +33,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [loading, setLoading] = useState(false);
   const [emailTimeout, setEmailTimeout] = useState<NodeJS.Timeout | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
   
   // Google account dialog
   const [showGoogleAccountDialog, setShowGoogleAccountDialog] = useState(false);
@@ -131,11 +132,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       setSigningIn(true);
       setLoadingText("Authenticating...");
       
-      // Attempt sign in - no artificial delays
+      // Attempt sign in - pass remember device preference
       const result = await signIn("credentials", {
         redirect: false,
         email,
         password,
+        remember: rememberDevice
       });
       
       console.log("🌐 [CLIENT] Login result:", result);
@@ -215,7 +217,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
 
       {subtext}
 
-      <AuthSocialButtons title="Sign in with" />
+      <AuthSocialButtons title="Sign in with" rememberDevice={rememberDevice} />
       <Box mt={3}>
         <Divider>
           <Typography
@@ -278,7 +280,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           >
             <FormGroup>
               <FormControlLabel
-                control={<CustomCheckbox defaultChecked />}
+                control={
+                  <CustomCheckbox 
+                    checked={rememberDevice} 
+                    onChange={(e) => setRememberDevice(e.target.checked)} 
+                  />
+                }
                 label="Remember this Device"
               />
             </FormGroup>

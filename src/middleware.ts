@@ -12,6 +12,10 @@ const publicPaths = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === '/health') {
+    return new NextResponse('OK', { status: 200 });
+  }
   
   // Check if the path is a public path
   if (publicPaths.some(path => pathname.startsWith(path))) {
@@ -47,7 +51,9 @@ export async function middleware(request: NextRequest) {
   if (!token) {
     const url = new URL('/auth/auth1/login', request.url);
     // Set the return URL so we can redirect after login
-    url.searchParams.set('callbackUrl', encodeURI(request.url));
+    const baseUrl = process.env.NEXTAUTH_URL || request.url;
+    const pathWithSearch = request.nextUrl.pathname + request.nextUrl.search;
+    url.searchParams.set('callbackUrl', encodeURI(new URL(pathWithSearch, baseUrl).toString()));
     return NextResponse.redirect(url);
   }
   

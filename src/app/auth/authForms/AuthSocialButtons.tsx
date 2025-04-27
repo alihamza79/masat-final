@@ -3,21 +3,39 @@ import CustomSocialButton from "@/app/components/forms/theme-elements/CustomSoci
 import { Stack } from "@mui/system";
 import { Avatar, Box, CircularProgress } from "@mui/material";
 import { signInType } from "@/app/(DashboardLayout)/types/auth/auth";
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+import GoogleIcon from '@mui/icons-material/Google';
+import FacebookIcon from '@mui/icons-material/Facebook';
 
-interface AuthSocialButtonsProps extends signInType {
-  onGoogleSignIn?: () => void;
-  onFacebookSignIn?: () => void;
-  googleLoading?: boolean;
-  facebookLoading?: boolean;
+interface Props {
+  title: string;
+  rememberDevice?: boolean;
 }
 
-const AuthSocialButtons = ({ 
-  title, 
-  onGoogleSignIn, 
-  onFacebookSignIn,
-  googleLoading = false,
-  facebookLoading = false
-}: AuthSocialButtonsProps) => {
+const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      await signIn('google', { callbackUrl: '/', remember: rememberDevice });
+    } catch (error) {
+      console.error('Google sign in error:', error);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    try {
+      setFacebookLoading(true);
+      await signIn('facebook', { callbackUrl: '/', remember: rememberDevice });
+    } catch (error) {
+      console.error('Facebook sign in error:', error);
+      setFacebookLoading(false);
+    }
+  };
+
   return (
     <>
       <Stack direction="row" justifyContent="center" spacing={2} mt={3}>

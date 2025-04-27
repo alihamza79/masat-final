@@ -22,11 +22,11 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode(
     [
       {
-        "name" : "${var.project_name}-${var.env}-container",
-        "image" : "${var.image_uri}",
-        "entryPoint" : [],
-        "essential" : true,
-        "logConfiguration" : {
+        name : "${var.project_name}-${var.env}-container",
+        image : "${var.image_uri}",
+        entryPoint : [],
+        essential : true,
+        logConfiguration : {
           "logDriver" : "awslogs",
           "options" : {
             "awslogs-group" : "${aws_cloudwatch_log_group.this.id}",
@@ -34,20 +34,10 @@ resource "aws_ecs_task_definition" "this" {
             "awslogs-stream-prefix" : "${var.project_name}-sample-app"
           }
         },
-        # mongodb+srv://masat-dev-username:<db_password>@masat-dev-cluster.annucyt.mongodb.net/?retryWrites=true&w=majority&appName=masat-dev-cluster
-        # "mongodb+srv://masat-dev-username:jcxI9%oc5nQsC9cG@masat-dev-cluster.annucyt.mongodb.net?retryWrites=true&w=majority&appName=masat"
         environment = [
           {
             "name" : "MONGODB_URI",
             "value" : "${replace(mongodbatlas_serverless_instance.test.connection_strings_standard_srv, "mongodb+srv://", "mongodb+srv://${mongodbatlas_database_user.test.username}:${random_password.db_user_password.result}@")}/masat?retryWrites=true&w=majority&appName=${var.project_name}"
-          },
-          {
-            "name" : "MONGODB_CLUSTER",
-            "value" : replace(mongodbatlas_serverless_instance.test.connection_strings_standard_srv, "mongodb+srv://", "")
-          },
-          {
-            "name" : "MONGODB_DATABASE",
-            "value" : var.project_name
           },
           {
             "name" : "NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY",
@@ -56,10 +46,6 @@ resource "aws_ecs_task_definition" "this" {
           {
             "name" : "ENCRYPTION_KEY",
             "value" : "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-          },
-          {
-            "name" : "ENCRYPTION_IV",
-            "value" : "0123456789abcdef"
           },
           {
             "name" : "S3_BUCKET_NAME",
@@ -94,15 +80,15 @@ resource "aws_ecs_task_definition" "this" {
             "value" : "${var.facebook_client_secret}"
           }
         ]
-        "portMappings" : [
+        portMappings : [
           {
             "containerPort" : 3000
 
           }
         ],
-        "cpu" : 256,
-        "memory" : 512,
-        "networkMode" : "awsvpc"
+        cpu : 256,
+        memory : 512,
+        networkMode : "awsvpc"
       }
     ])
 
@@ -195,7 +181,7 @@ resource "aws_s3_bucket" "this" {
 resource "aws_s3_bucket_acl" "this" {
   bucket = aws_s3_bucket.this.id
   acl    = "public-read"
-  
+
   # Must be configured after ownership controls
   depends_on = [aws_s3_bucket_ownership_controls.this]
 }
@@ -226,7 +212,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
 # Set bucket ownership controls
 resource "aws_s3_bucket_ownership_controls" "this" {
   bucket = aws_s3_bucket.this.bucket
-  
+
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
@@ -235,7 +221,7 @@ resource "aws_s3_bucket_ownership_controls" "this" {
 # Create a bucket policy to allow public read access
 resource "aws_s3_bucket_policy" "this" {
   bucket = aws_s3_bucket.this.bucket
-  
+
   # Wait for the public access block to be configured first
   depends_on = [aws_s3_bucket_public_access_block.this]
 

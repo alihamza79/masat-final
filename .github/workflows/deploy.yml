@@ -3,7 +3,7 @@ name: Deploy with Terraform
 on:
   push:
     branches: [ "main" ]
-  pull_request:
+  # Removed pull_request trigger to avoid unnecessary runs
 
 permissions:
   contents: read
@@ -16,9 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+      # Set up Docker Buildx for better caching
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -31,49 +31,102 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # Cache Docker layers to speed up builds
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: masat-dev
-          IMAGE_TAG: ${{ github.sha }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/masat-dev:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: |
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+            NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY=${{ secrets.NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY }}
+            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+            NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+            NODE_ENV=production
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            FACEBOOK_CLIENT_ID=${{ secrets.FACEBOOK_CLIENT_ID }}
+            FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}
+            AWS_REGION=eu-central-1
+            SES_SOURCE_EMAIL=contact@shiftcrowd.eu
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Move cache to avoid growing cache size
+      - name: Move cache
         run: |
-          docker build \
-            --build-arg MONGODB_URI="${{ secrets.MONGODB_URI }}" \
-            --build-arg MONGODB_CLUSTER="${{ secrets.MONGODB_CLUSTER }}" \
-            --build-arg MONGODB_DATABASE="${{ secrets.MONGODB_DATABASE }}" \
-            --build-arg ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
-            --build-arg NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY="${{ secrets.NEXT_PUBLIC_RESPONSE_ENCRYPTION_KEY }}" \
-            --build-arg ENCRYPTION_IV="${{ secrets.ENCRYPTION_IV }}" \
-            --build-arg NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
-            --build-arg NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
-            --build-arg NODE_ENV="production" \
-            --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            --build-arg FACEBOOK_CLIENT_ID="${{ secrets.FACEBOOK_CLIENT_ID }}" \
-            --build-arg FACEBOOK_CLIENT_SECRET="${{ secrets.FACEBOOK_CLIENT_SECRET }}" \
-            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # Set up Terraform with caching
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.4
+
+      # Cache Terraform files
+      - name: Cache Terraform
+        uses: actions/cache@v3
+        with:
+          path: terraform/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('terraform/**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -reconfigure
         working-directory: terraform
 
+      # Add Terraform validation step
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: terraform
+
+      # Set common Terraform variables
+      - name: Set Terraform Variables
+        run: |
+          echo "TF_VAR_image_uri=${{ steps.login-ecr.outputs.registry }}/masat-dev:${{ github.sha }}" >> $GITHUB_ENV
+          echo "TF_VAR_mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" >> $GITHUB_ENV
+          echo "TF_VAR_mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" >> $GITHUB_ENV
+          echo "TF_VAR_atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "TF_VAR_nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}" >> $GITHUB_ENV
+          echo "TF_VAR_facebook_client_id=${{ secrets.FACEBOOK_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_facebook_client_secret=${{ secrets.FACEBOOK_CLIENT_SECRET }}" >> $GITHUB_ENV
+
       - name: Terraform Plan
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: masat-dev
-          IMAGE_TAG: ${{ github.sha }}
-        run: terraform plan -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}" -var="facebook_client_id=${{ secrets.FACEBOOK_CLIENT_ID }}" -var="facebook_client_secret=${{ secrets.FACEBOOK_CLIENT_SECRET }}"
+        run: terraform plan -input=false
         working-directory: terraform
 
       - name: Terraform Apply
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: masat-dev
-          IMAGE_TAG: ${{ github.sha }}
-        run: terraform apply -auto-approve -input=false -var="image_uri=$REGISTRY/$REPOSITORY:$IMAGE_TAG" -var="mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" -var="mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" -var="atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}" -var="facebook_client_id=${{ secrets.FACEBOOK_CLIENT_ID }}" -var="facebook_client_secret=${{ secrets.FACEBOOK_CLIENT_SECRET }}"
+        run: terraform apply -auto-approve -input=false
         working-directory: terraform
-        
+
       - name: Force ECS Service Update
         run: |
           aws ecs update-service --cluster masat-dev-cluster --service masat-dev-ecs-service --force-new-deployment
+
+      # Add deployment status notification
+      - name: Deployment Status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment completed successfully!"
+            echo "Image: ${{ steps.login-ecr.outputs.registry }}/masat-dev:${{ github.sha }}"
+            echo "Deployed at: $(date)"
+          else
+            echo "❌ Deployment failed!"
+          fi

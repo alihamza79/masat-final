@@ -1,0 +1,17 @@
+node_modules
+doc
+terraform
+.git
+.github
+.vscode
+*.md
+.env*
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.DS_Store
+coverage
+build_docker_image.sh
+.next
+.idea
+scripts
