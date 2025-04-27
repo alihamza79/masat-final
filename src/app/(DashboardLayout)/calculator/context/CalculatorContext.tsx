@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface CategoryData {
   pieces: number;
@@ -345,6 +346,25 @@ const CalculatorContext = createContext<{
 
 export function CalculatorProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
+  const { companyData } = useUserProfile();
+
+  // Initialize calculator with user profile settings
+  useEffect(() => {
+    if (companyData) {
+      // Set tax rate from user profile if available
+      if (companyData.taxRate !== undefined) {
+        dispatch({ type: 'SET_TAX_RATE', payload: Number(companyData.taxRate) });
+      }
+      
+      // Set profile type based on VAT payer status
+      if (companyData.isVatPayer !== undefined) {
+        dispatch({ 
+          type: 'SET_PROFILE_TYPE', 
+          payload: companyData.isVatPayer ? 'vat' : 'profile'
+        });
+      }
+    }
+  }, [companyData]);
 
   return (
     <CalculatorContext.Provider value={{ state, dispatch }}>

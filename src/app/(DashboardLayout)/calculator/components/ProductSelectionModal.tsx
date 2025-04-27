@@ -1149,7 +1149,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                 }}
               >
                 {/* Display products if loading */}
-                {loading ? (
+                {(loading || loadingEmagProducts) ? (
                   <Grid container spacing={1.5}>
                     {[...Array(8)].map((_, index) => (
                       <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
@@ -1196,9 +1196,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                     <Typography variant="h6" sx={{ mt: 2, color: 'text.primary', textAlign: 'center' }}>
                       No eMAG Products Available
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center', maxWidth: '400px' }}>
-                      Your eMAG account appears to be connected, but no products were found. Make sure your integration is properly set up and your eMAG account contains published products.
-                    </Typography>
+                    
                     <Button 
                       variant="outlined" 
                       color="primary" 

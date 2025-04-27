@@ -480,18 +480,27 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   sx={{ mt: 2 }}
                   htmlFor="tax-rate"
                 >
-                  Tax Rate (%)
+                  Tax Rate
                 </CustomFormLabel>
-                <CustomTextField
+                <CustomSelect
                   id="tax-rate"
                   name="taxRate"
                   value={companyData.taxRate}
-                  onChange={handleCompanyDataChange}
+                  onChange={(e: React.ChangeEvent<{ value: unknown }>) => {
+                    const value = e.target.value;
+                    setCompanyData(prev => ({
+                      ...prev,
+                      taxRate: Number(value)
+                    }));
+                  }}
                   variant="outlined"
                   fullWidth
-                  type="number"
                   disabled={loading}
-                />
+                >
+                  <MenuItem value={1}>1%</MenuItem>
+                  <MenuItem value={3}>3%</MenuItem>
+                  <MenuItem value={16}>16%</MenuItem>
+                </CustomSelect>
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
