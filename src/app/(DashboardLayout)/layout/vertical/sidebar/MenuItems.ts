@@ -73,6 +73,12 @@ const Menuitems: MenuitemsType[] = [
   },
   {
     id: uniqueId(),
+    title: "menu.expenses",
+    icon: IconCurrencyDollar,
+    href: "/expenses",
+  },
+  {
+    id: uniqueId(),
     title: "menu.listingOptimizer",
     icon: IconChartDonut3,
     href: "/listing-optfrfimizer",
