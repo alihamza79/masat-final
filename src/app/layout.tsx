@@ -5,6 +5,7 @@ import "./global.css";
 import { Inter } from 'next/font/google';
 import { Providers } from '@/providers/Providers';
 import { Toaster } from 'react-hot-toast';
+import { ReactQueryProvider } from '@/providers/ReactQueryProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +24,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ReduxProviders>
           <Providers>
-            <MyApp>{children}</MyApp>
+            <ReactQueryProvider>
+              <MyApp>{children}</MyApp>
+            </ReactQueryProvider>
             <Toaster position="top-right" />
           </Providers>
         </ReduxProviders>

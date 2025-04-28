@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -16,11 +16,47 @@ import { useSession, signOut } from 'next-auth/react';
 import { IconMail } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import Image from 'next/image';
+import axios from 'axios';
 
 const Profile = () => {
-  const { data: session } = useSession();
+  const { data, update: updateSession } = useSession();
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const hasTriedUpdate = useRef(false);
+  // Add state for fresh user data
+  const [userData, setUserData] = useState<any>(null);
   
+  // Extract the actual session data from the nested structure
+  const sessionData = data as any; // Cast to any to avoid TypeScript errors
+  const session = sessionData?.session?.user ? sessionData.session : sessionData;
+  
+  // Fetch fresh user data directly from API
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axios.get('/api/user/profile');
+        if (response.data.success) {
+          console.log('Header Profile - Fresh user data:', response.data.data.user);
+          setUserData(response.data.data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, []);
+  
+  // Try to update session once when component mounts
+  useEffect(() => {
+    // Only update if we don't have a session or if it's the default data
+    // AND we haven't tried updating before
+    if ((!session?.user?.name || session?.user?.name === 'User') && !hasTriedUpdate.current) {
+      hasTriedUpdate.current = true;
+      console.log('Attempting to update session...', data);
+      updateSession();
+    }
+  }, [session, updateSession, data]);
+
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
@@ -33,16 +69,37 @@ const Profile = () => {
     await signOut({ callbackUrl: '/auth/auth1/login' });
   };
 
-  // Use user data from session or fallback to defaults
-  const userImage = session?.user?.image || null;
-  const userName = session?.user?.name || "User";
-  const userEmail = session?.user?.email || "user@example.com";
-  const userRole = "User"; // Default role, can be expanded later
+  // Prefer fresh data from API over session data
+  const userImage = userData?.image || session?.user?.image || null;
+  const userName = userData?.name || session?.user?.name || "User";
+  const userEmail = userData?.email || session?.user?.email || "user@example.com";
+  
+  // Format image URL correctly for S3 paths
+  const formattedUserImage = userImage ? 
+    (userImage.startsWith('http') ? 
+      userImage : 
+      `/api/image?path=${encodeURIComponent(userImage)}`) 
+    : null;
+  
+  // Add logging for debugging
+  useEffect(() => {
+    console.log('Header Profile - Session data:', data);
+    console.log('Header Profile - Fresh userData:', userData);
+    console.log('Header Profile - Using image:', userImage);
+    console.log('Header Profile - Formatted image URL:', formattedUserImage);
+  }, [data, userData, userImage, formattedUserImage]);
   
   // Get first letter of email for avatar if no image is available
   const getAvatarContent = () => {
-    if (userImage) {
-      return <Avatar src={userImage} alt={userName} sx={{ width: 35, height: 35 }} />;
+    if (formattedUserImage) {
+      return (
+        <Avatar 
+          key={formattedUserImage} 
+          src={formattedUserImage} 
+          alt={userName} 
+          sx={{ width: 35, height: 35 }} 
+        />
+      );
     } else {
       const emailFirstLetter = userEmail.charAt(0).toUpperCase();
       return (
@@ -96,8 +153,13 @@ const Profile = () => {
       >
         <Typography variant="h5">User Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
-          {userImage ? (
-            <Avatar src={userImage} alt={userName} sx={{ width: 95, height: 95 }} />
+          {formattedUserImage ? (
+            <Avatar 
+              key={formattedUserImage} 
+              src={formattedUserImage} 
+              alt={userName} 
+              sx={{ width: 95, height: 95 }} 
+            />
           ) : (
             <Avatar
               sx={{

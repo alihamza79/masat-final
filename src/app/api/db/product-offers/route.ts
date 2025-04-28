@@ -17,8 +17,17 @@ export async function GET(request: NextRequest) {
     // Get the user's session
     const session = await getServerSession(authOptions);
     
+    // DEBUGGING - Log session details
+    console.log('Session in product-offers API:', JSON.stringify({
+      exists: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id || 'none',
+      userEmail: session?.user?.email || 'none'
+    }));
+    
     // Check if the user is authenticated
     if (!session || !session.user || !session.user.id) {
+      console.log('Authentication failed - missing session or user ID');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -28,33 +37,84 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id;
     await connectToDatabase();
 
-    // First, get all integrations for the current user
-    const userIntegrations = await Integration.find({ userId });
+    // Parse query params for filtering
+    const url = new URL(request.url);
+    const integrationId = url.searchParams.get('integrationId');
+    const pageStr = url.searchParams.get('page');
+    const pageSizeStr = url.searchParams.get('pageSize');
+    const search = url.searchParams.get('search');
     
-    if (!userIntegrations || userIntegrations.length === 0) {
-      // User has no integrations, return empty array
-      return NextResponse.json({ 
-        success: true, 
-        data: { 
-          productOffers: [],
-          message: 'No integrations found for user' 
-        } 
-      });
+    // Default pagination values
+    const page = pageStr ? parseInt(pageStr, 10) : 1;
+    const pageSize = pageSizeStr ? parseInt(pageSizeStr, 10) : 100;
+    const skip = (page - 1) * pageSize;
+    
+    // Build query object
+    let query: any = {};
+    
+    if (integrationId) {
+      // If specific integrationId is provided, use it
+      if (!mongoose.Types.ObjectId.isValid(integrationId)) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid integration ID format' },
+          { status: 400 }
+        );
+      }
+      query.integrationId = integrationId;
+    } else {
+      // Otherwise, get all integrations for the current user
+      const userIntegrations = await Integration.find({ userId });
+      
+      if (!userIntegrations || userIntegrations.length === 0) {
+        // User has no integrations, return empty array
+        console.log(`No integrations found for user ${userId}`);
+        return NextResponse.json({ 
+          success: true, 
+          data: { 
+            productOffers: [],
+            count: 0,
+            message: 'No integrations found for user' 
+          } 
+        });
+      }
+      
+      // Extract the integration IDs
+      const integrationIds = userIntegrations.map(integration => integration._id);
+      console.log(`Found ${integrationIds.length} integrations for user ${userId}`);
+      
+      // Add integrationIds to query
+      query.integrationId = { $in: integrationIds };
     }
     
-    // Extract the integration IDs
-    const integrationIds = userIntegrations.map(integration => integration._id);
+    // Add text search if provided
+    if (search) {
+      query.$text = { $search: search };
+    }
+    
+    console.log('Product offers query:', JSON.stringify(query));
     
     // Fetch product offers that belong to the user's integrations
-    const productOffers = await ProductOffer.find({ 
-      integrationId: { $in: integrationIds } 
-    }).sort({ created: -1 });
+    const productOffers = await ProductOffer.find(query)
+      .limit(pageSize)
+      .skip(skip)
+      .sort({ updatedAt: -1 })
+      .populate('integrationId', 'name type platformId shopId');
+    
+    // Count total documents for pagination
+    const totalCount = await ProductOffer.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+    
+    console.log(`Found ${productOffers.length} product offers out of ${totalCount} total`);
 
     return NextResponse.json({ 
       success: true, 
       data: { 
         productOffers,
-        count: productOffers.length
+        count: productOffers.length,
+        totalCount,
+        totalPages,
+        page,
+        pageSize
       } 
     });
   } catch (error: any) {

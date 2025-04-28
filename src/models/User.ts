@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   name?: string;
   image?: string;
+  phone?: string;
   googleLinked?: boolean;
   facebookLinked?: boolean;
   credentialsLinked?: boolean;
@@ -35,6 +36,10 @@ const UserSchema = new Schema<IUser>(
     },
     image: {
       type: String,
+    },
+    phone: {
+      type: String,
+      trim: true,
     },
     googleLinked: {
       type: Boolean,

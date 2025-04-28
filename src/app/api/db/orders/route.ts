@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const orders = await Order.find(query).sort({ created: -1 });
+    const orders = await Order.find(query).sort({ date: -1 });
 
     return NextResponse.json({ success: true, data: { orders } });
   } catch (error: any) {

@@ -34,14 +34,59 @@ import TaxesSection from './sections/TaxesSection';
 import { toast } from 'react-hot-toast';
 import { useCommissionLoading } from '../context/CommissionLoadingContext';
 import axios from 'axios';
+import React from 'react';
 
 const Calculator = () => {
   const { t } = useTranslation();
   // integrationsData removed since it's no longer used
   const { integrations } = useIntegrationsStore();
-  const { products, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
+  const { products: queryProducts, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
   const { fetchCommission, error: commissionError, isCached } = useCommission();
   const { isLoading: commissionLoading, setIsLoading: setCommissionLoading } = useCommissionLoading();
+  
+  // Add state for directly fetched products
+  const [directProducts, setDirectProducts] = useState<any[]>([]);
+  const [isDirectFetching, setIsDirectFetching] = useState(false);
+  
+  // Function to directly fetch products from the API
+  const fetchProductsDirectly = async () => {
+    try {
+      setIsDirectFetching(true);
+      console.log('Calculator: Directly fetching products from API...');
+      
+      const response = await fetch('/api/db/product-offers', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include' // Include cookies for authentication
+      });
+      
+      const data = await response.json();
+      console.log('Calculator: Direct API response:', data);
+      
+      if (data.success && data.data && Array.isArray(data.data.productOffers)) {
+        console.log(`Calculator: Successfully fetched ${data.data.productOffers.length} products directly`);
+        setDirectProducts(data.data.productOffers);
+      } else {
+        console.error('Calculator: API returned invalid data structure:', data);
+        setDirectProducts([]);
+      }
+    } catch (error) {
+      console.error('Calculator: Error fetching products directly:', error);
+      setDirectProducts([]);
+    } finally {
+      setIsDirectFetching(false);
+    }
+  };
+  
+  // Fetch products directly on component mount
+  useEffect(() => {
+    fetchProductsDirectly();
+  }, []);
+  
+  // Use either direct products or query products, with direct products taking priority
+  const products = directProducts.length > 0 ? directProducts : queryProducts;
   
   // Move selectedProduct state declaration before the hooks that use it
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -62,6 +107,42 @@ const Calculator = () => {
     
   } = useSavedCalculations();
 
+  // Use a ref instead of state for the product map to avoid re-renders
+  const productIdMapRef = React.useRef<Map<string, any>>(new Map());
+  
+  // Update product map whenever products change
+  useEffect(() => {
+    console.log('Updating product ID map...');
+    const newMap = new Map<string, any>();
+    
+    if (products && products.length > 0) {
+      products.forEach((product: any) => {
+        // Get all possible ID forms for each product
+        const ids = [];
+        
+        // Add MongoDB ID if available
+        if (product._id) {
+          ids.push(product._id.toString());
+        }
+        
+        // Add eMAG product offer ID if available
+        if (product.emagProductOfferId) {
+          ids.push(product.emagProductOfferId.toString());
+        }
+        
+        // Store the product under each possible ID
+        ids.forEach(id => {
+          newMap.set(id, product);
+        });
+      });
+      
+      console.log(`Built product map with ${newMap.size} entries`);
+    }
+    
+    // Update the ref instead of state
+    productIdMapRef.current = newMap;
+  }, [products]);
+
   // Define a helper function to get product name by value
   const getProductNameByValue = (value: string, calculationsParam?: SavedCalculation[]): string | undefined => {
     // Check if it's a saved calculation
@@ -78,15 +159,30 @@ const Calculator = () => {
     // Check if it's an eMAG product
     if (value.startsWith('emag-')) {
       const parts = value.split('-');
-      if (parts.length < 3) return undefined;
+      if (parts.length < 3) {
+        return 'Unknown eMAG Product';
+      }
+      
       const integrationId = parts[1];
       const productId = parts[2];
-      const product = products.find((p: any) => 
-        p.integrationId === integrationId && 
-        (String(p.emagProductOfferId) === productId || 
-         String(p._id) === productId)
-      );
-      return product ? product.name : undefined;
+      
+      // First try to find in our productIdMap
+      const product = productIdMapRef.current.get(productId);
+      if (product) {
+        return product.name;
+      }
+      
+      // If not in map, search through products array
+      const foundProduct = products.find((p: any) => {
+        // Check both possible ID forms
+        return String(p._id) === productId || String(p.emagProductOfferId) === productId;
+      });
+      
+      if (foundProduct) {
+        return foundProduct.name;
+      }
+      
+      return `eMAG Product ${productId.slice(0, 8)}`;
     }
     
     // For other product types
@@ -260,31 +356,28 @@ const Calculator = () => {
   // Handle product selection
   const handleSelectProduct = async (value: string) => {
     console.log('handleSelectProduct called with value:', value);
-    console.log('Available integrations:', integrations.map(i => ({
-      _id: i._id,
-      accountName: i.accountName,
-      accountType: i.accountType
-    })));
     
-    // Count FBE integrations
-    const fbeIntegrations = integrations.filter(i => i.accountType === 'FBE');
-    console.log('FBE integrations count:', fbeIntegrations.length);
+    // Skip processing if value is null or undefined
+    if (!value) {
+      console.log('Empty product value, resetting calculator');
+      resetCalculatorValues();
+      setSelectedProduct('');
+      return;
+    }
     
     // Skip processing if value contains "undefined"
-    if (value && value.includes('undefined')) {
+    if (value.includes('undefined')) {
       console.error('Invalid product ID detected:', value);
       toast.error('Invalid product selected. Please try another product.');
       return;
     }
     
+    console.log('Setting selectedProduct to:', value);
     setSelectedProduct(value);
-    if (!value) {
-      resetCalculatorValues();
-      return;
-    }
     
     // Handle saved calculations
     if (value.startsWith('saved-')) {
+      console.log('Loading saved calculation:', value);
       resetCalculatorValues();
       const calculationId = value.replace('saved-', '');
       await loadSavedCalculation(calculationId);
@@ -294,11 +387,21 @@ const Calculator = () => {
     // Reset calculator values for all other types
     resetCalculatorValues();
     
-    // Handle eMAG product selection check for saved calculations
+    // Handle eMAG product selection
     if (value.startsWith('emag-') && value.split('-').length > 2) {
       console.log('Processing eMAG product:', value);
       const [prefix, integrationId, productId] = value.split('-');
       console.log('Split values:', { prefix, integrationId, productId });
+      
+      // Log all available products to help with debugging
+      console.log('Available products:', 
+        products.map((p: any) => ({
+          id: p._id?.toString(),
+          emagId: p.emagProductOfferId?.toString(),
+          name: p.name,
+          integrationId: typeof p.integrationId === 'object' ? p.integrationId?._id : p.integrationId
+        }))
+      );
       
       // First check if there's a saved calculation for this eMAG product
       const emagSavedCalculation = savedCalculations.find(
@@ -317,17 +420,33 @@ const Calculator = () => {
       console.log('Processing as standard eMAG product');
       console.log('Looking for product in products array with length:', products.length);
       
-      const productOffer = products.find((p: any) => {
-        // Check if product matches integrationId and either emagProductOfferId or _id
-        const match = p.integrationId === integrationId && 
-                    (String(p.emagProductOfferId) === productId || 
-                     String(p._id) === productId);
+      // Try to find the product in different ways to ensure we catch all possible formats
+      let productOffer = null;
+      
+      // First try direct match
+      productOffer = products.find((p: any) => {
+        // Check if integration ID matches (handle both string and object forms)
+        const integrationMatches = typeof p.integrationId === 'object' 
+          ? p.integrationId?._id?.toString() === integrationId 
+          : p.integrationId?.toString() === integrationId;
+          
+        // Check if product ID matches (either emagProductOfferId or _id)
+        const productMatches = 
+          (p.emagProductOfferId?.toString() === productId) || 
+          (p._id?.toString() === productId);
         
-        if (match) {
-          console.log('Found matching product:', p);
-        }
-        return match;
+        return integrationMatches && productMatches;
       });
+      
+      if (!productOffer) {
+        // Try a more lenient match if strict match failed
+        console.log('Direct match failed, trying looser matching...');
+        productOffer = products.find((p: any) => {
+          // Match only by product ID
+          return (p.emagProductOfferId?.toString() === productId) || 
+                 (p._id?.toString() === productId);
+        });
+      }
       
       if (productOffer) {
         console.log('Found product offer:', productOffer);
@@ -660,6 +779,9 @@ const Calculator = () => {
           savedCalculations={savedCalculations}
           loadingSavedCalculations={loadingSavedCalculations}
           savedCalculationsError={savedCalculationsError}
+          products={products}
+          isLoading={productsLoading || isDirectFetching}
+          onRefresh={fetchProductsDirectly}
         />
 
         {/* Controls Stack */}
