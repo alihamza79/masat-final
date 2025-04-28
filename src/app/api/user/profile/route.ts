@@ -155,27 +155,60 @@ export async function PUT(request: NextRequest) {
     
     // Handle company data if provided
     if (companyData) {
+      console.log('Company data received in PUT endpoint:', companyData);
       let company = await Company.findOne({ userId: user._id });
       
+      // Check if we're only updating tax settings
+      const onlyTaxSettings = 
+        Object.keys(companyData).length <= 2 && 
+        (companyData.taxRate !== undefined || companyData.isVatPayer !== undefined) &&
+        !companyData.name;
+        
+      console.log('Only tax settings?', onlyTaxSettings);
+      
       if (!company) {
-        // Create new company record if it doesn't exist
-        company = new Company({
-          userId: user._id,
-          name: companyData.name || 'My Company',
-        });
+        // Only create a new company record if ALL required fields are present
+        if (companyData.name) {
+          console.log('Creating new company record');
+          // Create new company record if it doesn't exist and has name
+          company = new Company({
+            userId: user._id,
+            name: companyData.name,
+            // Copy other fields if provided
+            ...(companyData.taxId && { taxId: companyData.taxId }),
+            ...(companyData.registrationNumber && { registrationNumber: companyData.registrationNumber }),
+            ...(companyData.address && { address: companyData.address }),
+            ...(companyData.town && { town: companyData.town }),
+            ...(companyData.country && { country: companyData.country }),
+            ...(companyData.taxRate !== undefined && { taxRate: Number(companyData.taxRate) }),
+            ...(companyData.isVatPayer !== undefined && { isVatPayer: Boolean(companyData.isVatPayer) })
+          });
+        } else {
+          // Missing required fields
+          console.log('Not creating company - missing required fields');
+          return NextResponse.json({ 
+            success: false, 
+            error: 'Please enter company name and other required details to save tax settings' 
+          }, { status: 400 });
+        }
+      } else {
+        // Existing company record - update fields
+        console.log('Updating existing company record');
+        // Update company fields
+        if (companyData.name !== undefined) company.name = companyData.name;
+        if (companyData.taxId !== undefined) company.taxId = companyData.taxId;
+        if (companyData.registrationNumber !== undefined) company.registrationNumber = companyData.registrationNumber;
+        if (companyData.address !== undefined) company.address = companyData.address;
+        if (companyData.town !== undefined) company.town = companyData.town;
+        if (companyData.country !== undefined) company.country = companyData.country;
+        if (companyData.taxRate !== undefined) company.taxRate = Number(companyData.taxRate);
+        if (companyData.isVatPayer !== undefined) company.isVatPayer = Boolean(companyData.isVatPayer);
       }
       
-      // Update company fields
-      if (companyData.name !== undefined) company.name = companyData.name;
-      if (companyData.taxId !== undefined) company.taxId = companyData.taxId;
-      if (companyData.registrationNumber !== undefined) company.registrationNumber = companyData.registrationNumber;
-      if (companyData.address !== undefined) company.address = companyData.address;
-      if (companyData.town !== undefined) company.town = companyData.town;
-      if (companyData.country !== undefined) company.country = companyData.country;
-      if (companyData.taxRate !== undefined) company.taxRate = companyData.taxRate;
-      if (companyData.isVatPayer !== undefined) company.isVatPayer = companyData.isVatPayer;
-      
-      await company.save();
+      // Save the company data
+      if (company) {
+        await company.save();
+      }
     }
     
     // Return updated data

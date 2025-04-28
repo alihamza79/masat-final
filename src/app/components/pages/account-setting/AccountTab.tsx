@@ -11,6 +11,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 // components
 import CustomFormLabel from '../../forms/theme-elements/CustomFormLabel';
@@ -73,6 +74,8 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [hasTaxSettingsOnly, setHasTaxSettingsOnly] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   
   // Auto-hide success message after 3 seconds
   useEffect(() => {
@@ -186,6 +189,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
     try {
       setLoading(true);
       setMessage({ type: '', text: '' });
+      setFieldErrors({});
       
       // Prepare form data
       const updateData: any = {
@@ -193,22 +197,78 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
         phone: userData.phone
       };
       
-      // Add company data if any field is filled
-      if (
-        companyData.name ||
-        companyData.taxId ||
-        companyData.registrationNumber ||
-        companyData.address ||
-        companyData.town ||
-        companyData.country
-      ) {
-        updateData.company = companyData;
+      // Check if user is trying to set tax settings without company details
+      const hasTaxSettingsOnlyCheck = 
+        (companyData.taxRate > 0 || companyData.isVatPayer === true) && 
+        !companyData.name &&
+        !companyData.taxId &&
+        !companyData.registrationNumber &&
+        !companyData.address &&
+        !companyData.town &&
+        !companyData.country;
+      
+      // Update state for UI indicators
+      setHasTaxSettingsOnly(hasTaxSettingsOnlyCheck);
+      
+      if (hasTaxSettingsOnlyCheck) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Please fill in company details to save tax settings. At minimum, a company name is required.' 
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Check if any company identifying info is filled
+      const hasCompanyName = !!companyData.name;
+      
+      // If company name is filled, all other required fields must be filled too
+      if (hasCompanyName) {
+        // Required company fields (all company fields are required if name is filled)
+        const requiredCompanyFields = [
+          { field: 'taxId', label: 'Tax ID' },
+          { field: 'registrationNumber', label: 'Registration Number' },
+          { field: 'address', label: 'Address' },
+          { field: 'town', label: 'Town/City' },
+          { field: 'country', label: 'Country' }
+        ];
+        
+        const missingFields = requiredCompanyFields.filter(
+          field => !companyData[field.field as keyof typeof companyData]
+        );
+        
+        // Create errors object for field highlighting
+        const errors: Record<string, boolean> = {};
+        missingFields.forEach(field => {
+          errors[field.field] = true;
+        });
+        
+        if (missingFields.length > 0) {
+          const missingFieldNames = missingFields.map(f => f.label).join(', ');
+          setFieldErrors(errors);
+          setMessage({ 
+            type: 'error', 
+            text: `All company details are required. Missing: ${missingFieldNames}.` 
+          });
+          setLoading(false);
+          return;
+        }
+        
+        // Include all company data since all required fields are filled
+        updateData.company = {
+          ...companyData,
+          taxRate: Number(companyData.taxRate)
+        };
+      } else {
+        // No company data provided, which is fine - continue without company data
       }
       
       // Add profile image if selected
       if (selectedImage && imagePreview) {
         updateData.profileImage = imagePreview;
       }
+      
+      console.log('Full update data being sent:', updateData);
       
       // Notify parent about the update instead of making a direct API call
       // The parent will handle updating the data cache
@@ -237,11 +297,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
 
   return (
     <Grid container spacing={3}>
-      {message.text && message.type === 'error' && (
-        <Grid item xs={12}>
-          <Alert severity="error">{message.text}</Alert>
-        </Grid>
-      )}
+      {/* Only keep success message at the top */}
       {message.text && message.type === 'success' && (
         <Grid item xs={12}>
           <Alert severity="success">{message.text}</Alert>
@@ -356,6 +412,22 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
           <CardContent>
             <Typography variant="h5" mb={1}>
               Company Details
+              {hasTaxSettingsOnly && (
+                <Typography 
+                  component="span" 
+                  color="error" 
+                  sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 'normal',
+                    ml: 2,
+                    display: 'inline-flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <IconAlertCircle size={16} style={{ marginRight: '4px' }} />
+                  Please provide company information to save tax settings
+                </Typography>
+              )}
             </Typography>
             <Divider sx={{ mb: 3 }} />
             
@@ -375,6 +447,9 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   variant="outlined"
                   fullWidth
                   disabled={loading}
+                  // Highlight field with error if tax settings are being saved without company name
+                  error={hasTaxSettingsOnly}
+                  helperText={hasTaxSettingsOnly ? "Required field" : ""}
                 />
               </Grid>
               
@@ -393,6 +468,8 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   variant="outlined"
                   fullWidth
                   disabled={loading}
+                  error={fieldErrors.taxId}
+                  helperText={fieldErrors.taxId ? "Required field" : ""}
                 />
               </Grid>
               
@@ -411,6 +488,8 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   variant="outlined"
                   fullWidth
                   disabled={loading}
+                  error={fieldErrors.registrationNumber}
+                  helperText={fieldErrors.registrationNumber ? "Required field" : ""}
                 />
               </Grid>
               
@@ -429,6 +508,8 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   variant="outlined"
                   fullWidth
                   disabled={loading}
+                  error={fieldErrors.address}
+                  helperText={fieldErrors.address ? "Required field" : ""}
                 />
               </Grid>
               
@@ -447,6 +528,8 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   variant="outlined"
                   fullWidth
                   disabled={loading}
+                  error={fieldErrors.town}
+                  helperText={fieldErrors.town ? "Required field" : ""}
                 />
               </Grid>
               
@@ -465,6 +548,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   value={companyData.country}
                   onChange={handleCountryChange}
                   disabled={loading}
+                  error={fieldErrors.country}
                 >
                   <MenuItem value="">Select Country</MenuItem>
                   {countries.map((option) => (
@@ -473,6 +557,11 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                     </MenuItem>
                   ))}
                 </CustomSelect>
+                {fieldErrors.country && (
+                  <Typography variant="caption" color="error">
+                    Required field
+                  </Typography>
+                )}
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
@@ -526,17 +615,28 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       
       {/* Save Changes Button */}
       <Grid item xs={12}>
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'end' }} mt={1}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={2} 
+          sx={{ 
+            justifyContent: 'flex-end',
+            alignItems: { xs: 'stretch', sm: 'center' } 
+          }} 
+          mt={1}
+        >
           <Button 
             size="large" 
             variant="contained" 
             color="primary" 
             onClick={handleSaveProfile}
             disabled={loading}
+            sx={{ 
+              minWidth: '150px',
+              alignSelf: { xs: 'stretch', sm: 'auto' }
+            }}
           >
             {loading ? <CircularProgress size={24} /> : 'Save Changes'}
           </Button>
-          
         </Stack>
       </Grid>
     </Grid>

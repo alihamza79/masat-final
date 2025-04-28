@@ -52,8 +52,21 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
   const valueWidth = '100px';
   const { t } = useTranslation();
 
+  // Check if any values have been entered to determine if we should calculate taxes
+  const hasEnteredData = 
+    data.salePrice > 0 || 
+    data.shippingPrice > 0 || 
+    data.productCost > 0 || 
+    data.fulfillmentCost > 0 || 
+    (data.otherExpenses || 0) > 0;
+
   // Calculate income tax based on tax rate
   const calculateIncomeTax = () => {
+    // If no data has been entered, return 0
+    if (!hasEnteredData) {
+      return 0;
+    }
+
     if (calculations.taxRate === 16) {
       // For 16% tax rate, use the sum of all components
       // Round each value to 2 decimal places before summing
@@ -77,8 +90,7 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
   // Calculate VAT components
   const calculateVATToBePaid = () => {
     // Return 0 if there are no input values
-    if (data.salePrice === 0 && data.shippingPrice === 0 && data.productCost === 0 && 
-        data.fulfillmentCost === 0 && (data.otherExpenses || 0) === 0) {
+    if (!hasEnteredData) {
       return 0;
     }
 
@@ -89,6 +101,7 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
     if(profileType==='profile'){
       saleVatRate=0;
     }
+    
     // 1. Sales Section - VAT Collection
     const vatSales = (data.salePrice * saleVatRate) + (data.shippingPrice * saleVatRate);
 
@@ -96,8 +109,16 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
     const commissionAmount = (data.salePrice + data.shippingPrice) * (data.commission / 100);
     const vatEmag = commissionAmount * VAT_RATE;
 
-    // 3. Fulfillment Section
-    const shippingCost = category === 'FBM-Genius' ? 5 : category === 'FBE' ? 0 : data.fulfillmentShippingCost;
+    // 3. Fulfillment Section - Only use hardcoded value if user has entered data
+    let shippingCost = 0;
+    if (category === 'FBM-Genius' && hasEnteredData) {
+      shippingCost = 5;
+    } else if (category === 'FBE') {
+      shippingCost = 0;
+    } else {
+      shippingCost = data.fulfillmentShippingCost;
+    }
+    
     const vatFulfillment = (shippingCost * VAT_RATE) + (data.fulfillmentCost * VAT_RATE);
 
     // 4. Expenditures Section
@@ -116,11 +137,8 @@ const TaxesSection: React.FC<TaxesSectionProps> = ({
       vatProductCost = (purchasePriceWithVAT * purchaseVatRate) + (shippingCostWithVAT * purchaseVatRate);
     }
 
-    
-
     // 6. Final VAT to be paid calculation
     const vatToBePaid = vatSales - vatEmag - vatFulfillment - vatExpenditures - vatProductCost;
-
 
     // Round to 2 decimal places
     return Number(vatToBePaid.toFixed(2));

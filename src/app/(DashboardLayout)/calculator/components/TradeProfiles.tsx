@@ -1,25 +1,24 @@
 'use client';
-import React, { useEffect } from 'react';
-import {
-  Box,
-  Stack,
-  Typography,
-  MenuItem,
-  InputAdornment,
-  IconButton,
-  Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
-  SelectChangeEvent,
-  CircularProgress
-} from '@mui/material';
 import CustomSelect from '@/app/components/forms/theme-elements/CustomSelect';
 import CustomTextField from '@/app/components/forms/theme-elements/CustomTextField';
-import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
-import { useCalculator } from '../context/CalculatorContext';
-import { useTranslation } from 'react-i18next';
-import { useCommissionLoading } from '../context/CommissionLoadingContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import {
+  Box,
+  CircularProgress,
+  InputAdornment,
+  MenuItem,
+  SelectChangeEvent,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import { IconInfoCircle } from '@tabler/icons-react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useCalculator } from '../context/CalculatorContext';
+import { useCommissionLoading } from '../context/CommissionLoadingContext';
 
 const TradeProfiles = () => {
   const { t } = useTranslation();
