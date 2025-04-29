@@ -180,23 +180,33 @@ const ProductImage = ({ product, size = 'small' }: { product: any, size?: 'small
   );
 };
 
-const ExpenseDialog: React.FC<ExpenseDialogProps> = ({ 
+const ExpenseDialog = ({ 
   open, 
   onClose, 
   mode, 
   expense,
   onSave,
   isSaving
-}) => {
+}: ExpenseDialogProps) => {
+  // Validation error state
+  const [errors, setErrors] = useState<Record<string,string>>({});
+
   const [type, setType] = useState<ExpenseType>('one-time');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [dateError, setDateError] = useState('');
   const [date, setDate] = useState<Date | null>(new Date());
   const [isRecurring, setIsRecurring] = useState(false);
   const [unitsCount, setUnitsCount] = useState('');
   const [costPerUnit, setCostPerUnit] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+
+  // Clear errors on type change or open
+  useEffect(() => {
+    setErrors({});
+    setDateError('');
+  }, [type, open]);
 
   const { products, isLoading: productsLoading } = useProducts();
 
@@ -261,6 +271,12 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
 
   const handleProductSelect = (product: any) => {
     setSelectedProduct(product);
+    // Clear product selection error if present
+    if (errors.product) {
+      const newErrors = { ...errors };
+      delete newErrors.product;
+      setErrors(newErrors);
+    }
     if (product) {
       // Update expense with product details
       setDescription(product.name || '');
@@ -268,31 +284,23 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
   };
 
   const handleSubmit = () => {
-    // Validate form
-    if (type !== 'cogs' && !description.trim()) {
-      return; // Description is required for non-COGS expenses
+    // Validate form fields
+    const validationErrors: Record<string,string> = {};
+    if (type !== 'cogs') {
+      if (!description.trim()) validationErrors.description = 'Description is required';
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) validationErrors.amount = 'Valid amount is required';
     }
-
-    if (type !== 'cogs' && (!amount || isNaN(Number(amount)) || Number(amount) <= 0)) {
-      return; // Valid amount is required for non-COGS expenses
-    }
-
     if (!date) {
-      return; // Date is required
+      validationErrors.date = 'Date is required';
     }
-
     if (type === 'cogs') {
-      if (!selectedProduct) {
-        return; // Product selection is required for COGS
-      }
-      
-      if (!unitsCount || isNaN(Number(unitsCount)) || Number(unitsCount) <= 0) {
-        return; // Valid units count is required for COGS
-      }
-      
-      if (!costPerUnit || isNaN(Number(costPerUnit)) || Number(costPerUnit) <= 0) {
-        return; // Valid cost per unit is required for COGS
-      }
+      if (!selectedProduct) validationErrors.product = 'Product selection is required';
+      if (!unitsCount || isNaN(Number(unitsCount)) || Number(unitsCount) <= 0) validationErrors.unitsCount = 'Units count must be greater than 0';
+      if (!costPerUnit || isNaN(Number(costPerUnit)) || Number(costPerUnit) <= 0) validationErrors.costPerUnit = 'Cost per unit must be greater than 0';
+    }
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
 
     // Create expense object
@@ -358,6 +366,8 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
             {...params}
             label="Search Product"
             onChange={(e) => setSearchQuery(e.target.value)}
+            error={Boolean(errors.product)}
+            helperText={errors.product || "Search by name, SKU (part_number) or PNK (part_number_key)"}
             InputProps={{
               ...params.InputProps,
               startAdornment: (
@@ -375,7 +385,6 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
                 </>
               ),
             }}
-            helperText="Search by name, SKU (part_number) or PNK (part_number_key)"
             fullWidth
           />
         )}
@@ -447,9 +456,19 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
                     label="Number of Units"
                     type="number"
                     value={unitsCount}
-                    onChange={(e) => setUnitsCount(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setUnitsCount(value);
+                      if (errors.unitsCount) {
+                        const newErrors = { ...errors };
+                        delete newErrors.unitsCount;
+                        setErrors(newErrors);
+                      }
+                    }}
                     fullWidth
                     size="small"
+                    error={Boolean(errors.unitsCount)}
+                    helperText={errors.unitsCount}
                     InputProps={{
                       inputProps: { min: 0 },
                     }}
@@ -458,9 +477,19 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
                     label="Cost per Unit"
                     type="number"
                     value={costPerUnit}
-                    onChange={(e) => setCostPerUnit(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCostPerUnit(value);
+                      if (errors.costPerUnit) {
+                        const newErrors = { ...errors };
+                        delete newErrors.costPerUnit;
+                        setErrors(newErrors);
+                      }
+                    }}
                     fullWidth
                     size="small"
+                    error={Boolean(errors.costPerUnit)}
+                    helperText={errors.costPerUnit}
                     InputProps={{
                       startAdornment: <InputAdornment position="start">RON</InputAdornment>,
                       inputProps: { min: 0 },
@@ -506,9 +535,19 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
             <TextField
               label="Description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setDescription(value);
+                if (errors.description) {
+                  const newErrors = { ...errors };
+                  delete newErrors.description;
+                  setErrors(newErrors);
+                }
+              }}
               fullWidth
               required
+              error={Boolean(errors.description)}
+              helperText={errors.description}
             />
           )}
 
@@ -517,9 +556,19 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
               label="Amount"
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAmount(value);
+                if (errors.amount) {
+                  const newErrors = { ...errors };
+                  delete newErrors.amount;
+                  setErrors(newErrors);
+                }
+              }}
               fullWidth
               required
+              error={Boolean(errors.amount)}
+              helperText={errors.amount}
               InputProps={{
                 startAdornment: <InputAdornment position="start">RON</InputAdornment>,
                 inputProps: { min: 0 },
@@ -533,7 +582,13 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
               value={date}
               onChange={(newDate) => {
                 if (newDate) {
-                  setDate(newDate as Date);
+                  const dt = newDate as Date;
+                  setDate(dt);
+                  if (errors.date) {
+                    const newErrors = { ...errors };
+                    delete newErrors.date;
+                    setErrors(newErrors);
+                  }
                 }
               }}
               renderInput={(params) => (
@@ -541,6 +596,8 @@ const ExpenseDialog: React.FC<ExpenseDialogProps> = ({
                   {...params}
                   fullWidth
                   required
+                  error={Boolean(errors.date)}
+                  helperText={errors.date}
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
