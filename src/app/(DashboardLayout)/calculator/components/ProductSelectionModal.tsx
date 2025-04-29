@@ -43,6 +43,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { SavedCalculation } from '../hooks/useSavedCalculations';
+import useProducts from '@/lib/hooks/useProducts';
 
 // TabPanel component for switching between tabs
 interface TabPanelProps {
@@ -73,10 +74,11 @@ interface ProductSelectionModalProps {
   selectedProduct: string;
   onSelectProduct: (value: string) => void;
   savedCalculations: SavedCalculation[];
-  loading: boolean;
-  error: string | null;
-  products: any[];
   integrationsData?: Record<string, any>;
+  // products, loading, and error are now provided by useProducts hook, so they're optional
+  products?: any[];
+  loading?: boolean;
+  error?: string | null;
 }
 
 export type { ProductSelectionModalProps };
@@ -225,14 +227,24 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   selectedProduct,
   onSelectProduct,
   savedCalculations,
-  loading,
-  error,
-  products,
-  integrationsData
+  integrationsData,
+  // These props are now optional since we'll use the hook
+  products: propProducts,
+  loading: propLoading,
+  error: propError
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Use the products hook to get products data
+  const { products: hookProducts, isLoading: hookLoading, error: hookError, refetch } = useProducts();
+  
+  // Use hook data or fall back to props
+  const products = hookProducts?.length > 0 ? hookProducts : (propProducts || []);
+  const loading = hookLoading || propLoading;
+  const error = hookError ? String(hookError) : propError;
+  
   const [activeTab, setActiveTab] = useState(0);
   const [emagProducts, setEmagProducts] = useState<any[]>([]);
   const [filteredEmagProducts, setFilteredEmagProducts] = useState<any[]>([]);
@@ -242,6 +254,13 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   const [loadingEmagProducts, setLoadingEmagProducts] = useState(false);
   const [deletingCalculationId, setDeletingCalculationId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Refetch products when modal opens
+  useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
 
   // Debug log when the modal opens or products change
   

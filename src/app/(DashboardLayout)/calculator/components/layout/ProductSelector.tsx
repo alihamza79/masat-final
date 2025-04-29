@@ -13,8 +13,6 @@ interface ProductSelectorProps {
   loadingSavedCalculations: boolean;
   savedCalculationsError: string | null;
   integrationsData?: Record<string, any>;
-  products?: any[];
-  isLoading?: boolean;
   onRefresh?: () => void;
 }
 
@@ -26,20 +24,11 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   loadingSavedCalculations,
   savedCalculationsError,
   integrationsData,
-  products,
   onRefresh
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
   const { isLoading: productsLoading, error: productsError, refetch } = useProducts();
   const [refreshing, setRefreshing] = useState(false);
-
-  // Log when products change to help debug
-  React.useEffect(() => {
-    console.log('ProductSelector - products updated, length:', products?.length || 0);
-    if (Array.isArray(products) && products.length > 0) {
-      console.log('ProductSelector - first product:', products[0]);
-    }
-  }, [products]);
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
   const handleProductSelect = (value: string) => {
@@ -59,18 +48,6 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
       } else {
         // Otherwise use react-query refetch
         await refetch();
-        
-        // Also do a direct API call to ensure we get fresh data
-        const response = await fetch('/api/db/product-offers', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-          console.log(`Direct API call returned ${data.data.productOffers.length} products`);
-        }
       }
     } catch (error) {
       console.error('Error refreshing products:', error);
@@ -166,10 +143,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         selectedProduct={selectedProduct}
         onSelectProduct={handleProductSelect}
         savedCalculations={savedCalculations}
-        loading={loadingSavedCalculations || productsLoading}
-        error={savedCalculationsError ? savedCalculationsError : null}
         integrationsData={integrationsData}
-        products={products || []}
       />
     </Stack>
   );

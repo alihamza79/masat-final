@@ -24,25 +24,10 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
   const { products, isLoading: productsLoading, hasProducts, error: productsError } = useProducts();
-  const [processedProducts, setProcessedProducts] = useState<any[]>([]);
-
-  // Process and validate products when they change
+  
+  // Log when products update
   useEffect(() => {
-    console.log('ProductSelector received products:', products);
-    console.log('Products array length:', products?.length || 0);
-    
-    // Make sure we have valid products
-    if (Array.isArray(products) && products.length > 0) {
-      // Filter out any invalid products
-      const validProducts = products.filter(product => 
-        product && (product.emagProductOfferId || product._id)
-      );
-      console.log(`ProductSelector filtered ${validProducts.length} valid products from ${products.length} total`);
-      setProcessedProducts(validProducts);
-    } else {
-      console.log('No valid products available');
-      setProcessedProducts([]);
-    }
+    console.log('ProductSelector received products count:', products?.length || 0);
   }, [products]);
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
@@ -109,9 +94,6 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         selectedProduct={selectedProduct}
         onSelectProduct={handleProductSelect}
         savedCalculations={savedCalculations}
-        loading={loadingSavedCalculations || productsLoading}
-        error={savedCalculationsError || (productsError ? String(productsError) : null)}
-        products={processedProducts}
       />
     </Stack>
   );
