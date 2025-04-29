@@ -779,8 +779,6 @@ const Calculator = () => {
           savedCalculations={savedCalculations}
           loadingSavedCalculations={loadingSavedCalculations}
           savedCalculationsError={savedCalculationsError}
-          products={products}
-          isLoading={productsLoading || isDirectFetching}
           onRefresh={fetchProductsDirectly}
         />
 
