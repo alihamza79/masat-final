@@ -22,9 +22,9 @@ import {
   CircularProgress,
   Tooltip,
 } from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { 
   IconSearch, 
   IconPackage, 
@@ -33,29 +33,20 @@ import {
   IconHeadphones, 
   IconDeviceDesktop, 
   IconShirt,
-  IconBrandApple 
+  IconBrandApple,
+  IconCalendar 
 } from '@tabler/icons-react';
 import useProducts from '@/lib/hooks/useProducts';
+import { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
+import { format } from 'date-fns';
 
 interface ExpenseDialogProps {
   open: boolean;
   onClose: () => void;
   mode: 'add' | 'edit';
-  expense?: {
-    id?: number;
-    description: string;
-    amount: number;
-    date: string;
-    type: string;
-    isRecurring?: boolean;
-    product?: {
-      name: string;
-      sku: string;
-      pnk: string;
-      unitsCount: number;
-      costPerUnit: number;
-    };
-  } | null;
+  expense?: Expense | null;
+  onSave: (expense: Omit<Expense, '_id'> | Expense) => void;
+  isSaving: boolean;
 }
 
 // Helper function to render product image or fallback icon
@@ -189,8 +180,15 @@ const ProductImage = ({ product, size = 'small' }: { product: any, size?: 'small
   );
 };
 
-const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => {
-  const [type, setType] = useState('one-time');
+const ExpenseDialog: React.FC<ExpenseDialogProps> = ({ 
+  open, 
+  onClose, 
+  mode, 
+  expense,
+  onSave,
+  isSaving
+}) => {
+  const [type, setType] = useState<ExpenseType>('one-time');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState<Date | null>(new Date());
@@ -215,32 +213,131 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
     }).slice(0, 10); // Limit to 10 results for performance
   }, [searchQuery, products]);
 
+  // Reset form when dialog closes
   useEffect(() => {
-    if (expense) {
+    if (!open) {
+      // Small timeout to allow animation to complete
+      const timer = setTimeout(() => {
+        setType('one-time');
+        setDescription('');
+        setAmount('');
+        setDate(new Date());
+        setIsRecurring(false);
+        setUnitsCount('');
+        setCostPerUnit('');
+        setSearchQuery('');
+        setSelectedProduct(null);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  // Populate form when editing an existing expense
+  useEffect(() => {
+    if (expense && mode === 'edit') {
       setType(expense.type);
-      setDescription(expense.description);
+      setDescription(expense.description || '');
       setAmount(expense.amount.toString());
-      setDate(new Date(expense.date));
+      setDate(expense.date ? new Date(expense.date) : new Date());
       setIsRecurring(expense.isRecurring || false);
+      
       if (expense.product) {
+        // For COGS expenses, populate product fields
         setUnitsCount(expense.product.unitsCount.toString());
         setCostPerUnit(expense.product.costPerUnit.toString());
-        // We don't set selectedProduct here because we would need to match it with our products list
+        
+        // Create a product object for display
+        setSelectedProduct({
+          emagProductOfferId: expense.product.emagProductOfferId,
+          name: expense.product.name,
+          part_number: expense.product.part_number,
+          part_number_key: expense.product.part_number_key,
+          image: expense.product.image,
+        });
       }
     }
-  }, [expense]);
+  }, [expense, mode]);
 
   const handleProductSelect = (product: any) => {
     setSelectedProduct(product);
     if (product) {
-      // You can set other fields based on the product if needed
+      // Update expense with product details
       setDescription(product.name || '');
     }
   };
 
   const handleSubmit = () => {
-    // Handle form submission (UI only for now)
-    onClose();
+    // Validate form
+    if (type !== 'cogs' && !description.trim()) {
+      return; // Description is required for non-COGS expenses
+    }
+
+    if (type !== 'cogs' && (!amount || isNaN(Number(amount)) || Number(amount) <= 0)) {
+      return; // Valid amount is required for non-COGS expenses
+    }
+
+    if (!date) {
+      return; // Date is required
+    }
+
+    if (type === 'cogs') {
+      if (!selectedProduct) {
+        return; // Product selection is required for COGS
+      }
+      
+      if (!unitsCount || isNaN(Number(unitsCount)) || Number(unitsCount) <= 0) {
+        return; // Valid units count is required for COGS
+      }
+      
+      if (!costPerUnit || isNaN(Number(costPerUnit)) || Number(costPerUnit) <= 0) {
+        return; // Valid cost per unit is required for COGS
+      }
+    }
+
+    // Create expense object
+    const expenseData: Omit<Expense, '_id'> = {
+      type,
+      description: type === 'cogs' && selectedProduct ? selectedProduct.name : description,
+      amount: type === 'cogs' 
+        ? Number(unitsCount) * Number(costPerUnit) 
+        : Number(amount),
+      date: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      isRecurring: (type === 'monthly' || type === 'annually') ? isRecurring : false,
+    };
+
+    // Add product details for COGS expenses
+    if (type === 'cogs' && selectedProduct) {
+      expenseData.product = {
+        emagProductOfferId: selectedProduct.emagProductOfferId || selectedProduct._id || '',
+        name: selectedProduct.name,
+        part_number: selectedProduct.part_number || '',
+        part_number_key: selectedProduct.part_number_key || '',
+        image: getImageUrl(selectedProduct),
+        unitsCount: Number(unitsCount),
+        costPerUnit: Number(costPerUnit),
+      };
+    }
+
+    // If editing, include the ID
+    if (mode === 'edit' && expense?._id) {
+      onSave({ ...expenseData, _id: expense._id });
+    } else {
+      onSave(expenseData);
+    }
+  };
+
+  // Get image URL from product
+  const getImageUrl = (product: any) => {
+    if (product.image) {
+      return product.image;
+    }
+    
+    if (product.images && product.images.length > 0 && product.images[0].url) {
+      return product.images[0].url;
+    }
+    
+    return '';
   };
 
   const renderCogsFields = () => (
@@ -379,7 +476,12 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
   );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={isSaving ? undefined : onClose} 
+      maxWidth="sm" 
+      fullWidth
+    >
       <DialogTitle>
         {mode === 'add' ? 'Add New Expense' : 'Edit Expense'}
       </DialogTitle>
@@ -390,7 +492,8 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             <Select
               value={type}
               label="Type"
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => setType(e.target.value as ExpenseType)}
+              disabled={mode === 'edit'} // Don't allow changing type when editing
             >
               <MenuItem value="one-time">One Time</MenuItem>
               <MenuItem value="monthly">Monthly</MenuItem>
@@ -399,12 +502,15 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             </Select>
           </FormControl>
 
-          <TextField
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            fullWidth
-          />
+          {type !== 'cogs' && (
+            <TextField
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              required
+            />
+          )}
 
           {type !== 'cogs' && (
             <TextField
@@ -413,6 +519,7 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               fullWidth
+              required
               InputProps={{
                 startAdornment: <InputAdornment position="start">RON</InputAdornment>,
                 inputProps: { min: 0 },
@@ -424,8 +531,26 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             <DatePicker
               label="Date"
               value={date}
-              onChange={(newValue: Date | null) => setDate(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth />}
+              onChange={(newDate) => {
+                if (newDate) {
+                  setDate(newDate as Date);
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  required
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconCalendar size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
             />
           </LocalizationProvider>
 
@@ -445,9 +570,20 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          {mode === 'add' ? 'Add' : 'Save'}
+        <Button 
+          onClick={onClose}
+          disabled={isSaving}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          color="primary"
+          disabled={isSaving}
+          startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+        >
+          {isSaving ? 'Saving...' : (mode === 'add' ? 'Add' : 'Save')}
         </Button>
       </DialogActions>
     </Dialog>
