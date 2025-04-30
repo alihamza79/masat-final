@@ -22,9 +22,9 @@ import {
   CircularProgress,
   Tooltip,
 } from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { 
   IconSearch, 
   IconPackage, 
@@ -33,29 +33,20 @@ import {
   IconHeadphones, 
   IconDeviceDesktop, 
   IconShirt,
-  IconBrandApple 
+  IconBrandApple,
+  IconCalendar 
 } from '@tabler/icons-react';
 import useProducts from '@/lib/hooks/useProducts';
+import { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
+import { format } from 'date-fns';
 
 interface ExpenseDialogProps {
   open: boolean;
   onClose: () => void;
   mode: 'add' | 'edit';
-  expense?: {
-    id?: number;
-    description: string;
-    amount: number;
-    date: string;
-    type: string;
-    isRecurring?: boolean;
-    product?: {
-      name: string;
-      sku: string;
-      pnk: string;
-      unitsCount: number;
-      costPerUnit: number;
-    };
-  } | null;
+  expense?: Expense | null;
+  onSave: (expense: Omit<Expense, '_id'> | Expense) => void;
+  isSaving: boolean;
 }
 
 // Helper function to render product image or fallback icon
@@ -189,16 +180,33 @@ const ProductImage = ({ product, size = 'small' }: { product: any, size?: 'small
   );
 };
 
-const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => {
-  const [type, setType] = useState('one-time');
+const ExpenseDialog = ({ 
+  open, 
+  onClose, 
+  mode, 
+  expense,
+  onSave,
+  isSaving
+}: ExpenseDialogProps) => {
+  // Validation error state
+  const [errors, setErrors] = useState<Record<string,string>>({});
+
+  const [type, setType] = useState<ExpenseType>('one-time');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [dateError, setDateError] = useState('');
   const [date, setDate] = useState<Date | null>(new Date());
   const [isRecurring, setIsRecurring] = useState(false);
   const [unitsCount, setUnitsCount] = useState('');
   const [costPerUnit, setCostPerUnit] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+
+  // Clear errors on type change or open
+  useEffect(() => {
+    setErrors({});
+    setDateError('');
+  }, [type, open]);
 
   const { products, isLoading: productsLoading } = useProducts();
 
@@ -215,32 +223,129 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
     }).slice(0, 10); // Limit to 10 results for performance
   }, [searchQuery, products]);
 
+  // Reset form when dialog closes
   useEffect(() => {
-    if (expense) {
+    if (!open) {
+      // Small timeout to allow animation to complete
+      const timer = setTimeout(() => {
+        setType('one-time');
+        setDescription('');
+        setAmount('');
+        setDate(new Date());
+        setIsRecurring(false);
+        setUnitsCount('');
+        setCostPerUnit('');
+        setSearchQuery('');
+        setSelectedProduct(null);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  // Populate form when editing an existing expense
+  useEffect(() => {
+    if (expense && mode === 'edit') {
       setType(expense.type);
-      setDescription(expense.description);
+      setDescription(expense.description || '');
       setAmount(expense.amount.toString());
-      setDate(new Date(expense.date));
+      setDate(expense.date ? new Date(expense.date) : new Date());
       setIsRecurring(expense.isRecurring || false);
+      
       if (expense.product) {
+        // For COGS expenses, populate product fields
         setUnitsCount(expense.product.unitsCount.toString());
         setCostPerUnit(expense.product.costPerUnit.toString());
-        // We don't set selectedProduct here because we would need to match it with our products list
+        
+        // Create a product object for display
+        setSelectedProduct({
+          emagProductOfferId: expense.product.emagProductOfferId,
+          name: expense.product.name,
+          part_number: expense.product.part_number,
+          part_number_key: expense.product.part_number_key,
+          image: expense.product.image,
+        });
       }
     }
-  }, [expense]);
+  }, [expense, mode]);
 
   const handleProductSelect = (product: any) => {
     setSelectedProduct(product);
+    // Clear product selection error if present
+    if (errors.product) {
+      const newErrors = { ...errors };
+      delete newErrors.product;
+      setErrors(newErrors);
+    }
     if (product) {
-      // You can set other fields based on the product if needed
+      // Update expense with product details
       setDescription(product.name || '');
     }
   };
 
   const handleSubmit = () => {
-    // Handle form submission (UI only for now)
-    onClose();
+    // Validate form fields
+    const validationErrors: Record<string,string> = {};
+    if (type !== 'cogs') {
+      if (!description.trim()) validationErrors.description = 'Description is required';
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) validationErrors.amount = 'Valid amount is required';
+    }
+    if (!date) {
+      validationErrors.date = 'Date is required';
+    }
+    if (type === 'cogs') {
+      if (!selectedProduct) validationErrors.product = 'Product selection is required';
+      if (!unitsCount || isNaN(Number(unitsCount)) || Number(unitsCount) <= 0) validationErrors.unitsCount = 'Units count must be greater than 0';
+      if (!costPerUnit || isNaN(Number(costPerUnit)) || Number(costPerUnit) <= 0) validationErrors.costPerUnit = 'Cost per unit must be greater than 0';
+    }
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    // Create expense object
+    const expenseData: Omit<Expense, '_id'> = {
+      type,
+      description: type === 'cogs' && selectedProduct ? selectedProduct.name : description,
+      amount: type === 'cogs' 
+        ? Number(unitsCount) * Number(costPerUnit) 
+        : Number(amount),
+      date: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      isRecurring: (type === 'monthly' || type === 'annually') ? isRecurring : false,
+    };
+
+    // Add product details for COGS expenses
+    if (type === 'cogs' && selectedProduct) {
+      expenseData.product = {
+        emagProductOfferId: selectedProduct.emagProductOfferId || selectedProduct._id || '',
+        name: selectedProduct.name,
+        part_number: selectedProduct.part_number || '',
+        part_number_key: selectedProduct.part_number_key || '',
+        image: getImageUrl(selectedProduct),
+        unitsCount: Number(unitsCount),
+        costPerUnit: Number(costPerUnit),
+      };
+    }
+
+    // If editing, include the ID
+    if (mode === 'edit' && expense?._id) {
+      onSave({ ...expenseData, _id: expense._id });
+    } else {
+      onSave(expenseData);
+    }
+  };
+
+  // Get image URL from product
+  const getImageUrl = (product: any) => {
+    if (product.image) {
+      return product.image;
+    }
+    
+    if (product.images && product.images.length > 0 && product.images[0].url) {
+      return product.images[0].url;
+    }
+    
+    return '';
   };
 
   const renderCogsFields = () => (
@@ -261,6 +366,8 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             {...params}
             label="Search Product"
             onChange={(e) => setSearchQuery(e.target.value)}
+            error={Boolean(errors.product)}
+            helperText={errors.product || "Search by name, SKU (part_number) or PNK (part_number_key)"}
             InputProps={{
               ...params.InputProps,
               startAdornment: (
@@ -278,7 +385,6 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
                 </>
               ),
             }}
-            helperText="Search by name, SKU (part_number) or PNK (part_number_key)"
             fullWidth
           />
         )}
@@ -350,9 +456,19 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
                     label="Number of Units"
                     type="number"
                     value={unitsCount}
-                    onChange={(e) => setUnitsCount(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setUnitsCount(value);
+                      if (errors.unitsCount) {
+                        const newErrors = { ...errors };
+                        delete newErrors.unitsCount;
+                        setErrors(newErrors);
+                      }
+                    }}
                     fullWidth
                     size="small"
+                    error={Boolean(errors.unitsCount)}
+                    helperText={errors.unitsCount}
                     InputProps={{
                       inputProps: { min: 0 },
                     }}
@@ -361,9 +477,19 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
                     label="Cost per Unit"
                     type="number"
                     value={costPerUnit}
-                    onChange={(e) => setCostPerUnit(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCostPerUnit(value);
+                      if (errors.costPerUnit) {
+                        const newErrors = { ...errors };
+                        delete newErrors.costPerUnit;
+                        setErrors(newErrors);
+                      }
+                    }}
                     fullWidth
                     size="small"
+                    error={Boolean(errors.costPerUnit)}
+                    helperText={errors.costPerUnit}
                     InputProps={{
                       startAdornment: <InputAdornment position="start">RON</InputAdornment>,
                       inputProps: { min: 0 },
@@ -379,7 +505,12 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
   );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={isSaving ? undefined : onClose} 
+      maxWidth="sm" 
+      fullWidth
+    >
       <DialogTitle>
         {mode === 'add' ? 'Add New Expense' : 'Edit Expense'}
       </DialogTitle>
@@ -390,7 +521,8 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             <Select
               value={type}
               label="Type"
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => setType(e.target.value as ExpenseType)}
+              disabled={mode === 'edit'} // Don't allow changing type when editing
             >
               <MenuItem value="one-time">One Time</MenuItem>
               <MenuItem value="monthly">Monthly</MenuItem>
@@ -399,20 +531,44 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             </Select>
           </FormControl>
 
-          <TextField
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            fullWidth
-          />
+          {type !== 'cogs' && (
+            <TextField
+              label="Description"
+              value={description}
+              onChange={(e) => {
+                const value = e.target.value;
+                setDescription(value);
+                if (errors.description) {
+                  const newErrors = { ...errors };
+                  delete newErrors.description;
+                  setErrors(newErrors);
+                }
+              }}
+              fullWidth
+              required
+              error={Boolean(errors.description)}
+              helperText={errors.description}
+            />
+          )}
 
           {type !== 'cogs' && (
             <TextField
               label="Amount"
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAmount(value);
+                if (errors.amount) {
+                  const newErrors = { ...errors };
+                  delete newErrors.amount;
+                  setErrors(newErrors);
+                }
+              }}
               fullWidth
+              required
+              error={Boolean(errors.amount)}
+              helperText={errors.amount}
               InputProps={{
                 startAdornment: <InputAdornment position="start">RON</InputAdornment>,
                 inputProps: { min: 0 },
@@ -424,8 +580,34 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
             <DatePicker
               label="Date"
               value={date}
-              onChange={(newValue: Date | null) => setDate(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth />}
+              onChange={(newDate) => {
+                if (newDate) {
+                  const dt = newDate as Date;
+                  setDate(dt);
+                  if (errors.date) {
+                    const newErrors = { ...errors };
+                    delete newErrors.date;
+                    setErrors(newErrors);
+                  }
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  required
+                  error={Boolean(errors.date)}
+                  helperText={errors.date}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconCalendar size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
             />
           </LocalizationProvider>
 
@@ -445,9 +627,20 @@ const ExpenseDialog = ({ open, onClose, mode, expense }: ExpenseDialogProps) => 
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          {mode === 'add' ? 'Add' : 'Save'}
+        <Button 
+          onClick={onClose}
+          disabled={isSaving}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          color="primary"
+          disabled={isSaving}
+          startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+        >
+          {isSaving ? 'Saving...' : (mode === 'add' ? 'Add' : 'Save')}
         </Button>
       </DialogActions>
     </Dialog>

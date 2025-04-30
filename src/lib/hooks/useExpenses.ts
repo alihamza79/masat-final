@@ -1,0 +1,147 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+export type ExpenseType = 'one-time' | 'monthly' | 'annually' | 'cogs';
+
+export interface ExpenseProduct {
+  emagProductOfferId?: string;
+  name: string;
+  part_number?: string; // SKU
+  part_number_key?: string; // PNK
+  image?: string;
+  unitsCount: number;
+  costPerUnit: number;
+}
+
+export interface Expense {
+  _id?: string;
+  userId?: string;
+  type: ExpenseType;
+  description: string;
+  amount: number;
+  date: string | Date;
+  isRecurring?: boolean;
+  product?: ExpenseProduct;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const EXPENSES_QUERY_KEY = ['expenses'];
+
+// API functions
+const fetchExpenses = async (type?: ExpenseType) => {
+  const url = type 
+    ? `/api/expenses?type=${type}` 
+    : '/api/expenses';
+  
+  const response = await axios.get(url);
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Failed to fetch expenses');
+  }
+  return response.data.data.expenses;
+};
+
+const createExpense = async (expense: Omit<Expense, '_id'>) => {
+  const response = await axios.post('/api/expenses', expense);
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Failed to create expense');
+  }
+  return response.data.data.expense;
+};
+
+const updateExpense = async (expense: Expense) => {
+  // Ensure we send `id` instead of `_id` for the API
+  const { _id, ...rest } = expense;
+  if (!_id) {
+    throw new Error('Expense ID is required for update');
+  }
+  // Send `id` field for the PUT endpoint
+  const response = await axios.put('/api/expenses', { id: _id, ...rest });
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Failed to update expense');
+  }
+  return response.data.data.expense;
+};
+
+const deleteExpense = async (id: string) => {
+  const response = await axios.delete(`/api/expenses?id=${id}`);
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Failed to delete expense');
+  }
+  return true;
+};
+
+export const useExpenses = (type?: ExpenseType) => {
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Query for fetching expenses
+  const { 
+    data: expenses = [], 
+    isLoading, 
+    error, 
+    refetch 
+  } = useQuery({
+    queryKey: [...EXPENSES_QUERY_KEY, type],
+    queryFn: () => fetchExpenses(type),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Mutation for creating expenses
+  const createMutation = useMutation({
+    mutationFn: createExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
+      toast.success('Expense created successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create expense');
+    },
+  });
+
+  // Mutation for updating expenses
+  const updateMutation = useMutation({
+    mutationFn: updateExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
+      toast.success('Expense updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update expense');
+    },
+  });
+
+  // Mutation for deleting expenses
+  const deleteMutation = useMutation({
+    mutationFn: deleteExpense,
+    onMutate: (id: string) => {
+      setIsDeleting(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
+      toast.success('Expense deleted successfully');
+      setIsDeleting(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete expense');
+      setIsDeleting(null);
+    },
+  });
+
+  return {
+    expenses,
+    isLoading,
+    error,
+    refetch,
+    createExpense: createMutation.mutate,
+    isCreating: createMutation.isPending,
+    updateExpense: updateMutation.mutate,
+    isUpdating: updateMutation.isPending,
+    deleteExpense: deleteMutation.mutate,
+    isDeleting,
+  };
+};
+
+export default useExpenses; 

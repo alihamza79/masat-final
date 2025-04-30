@@ -25,78 +25,38 @@ import {
   Select,
   InputLabel,
   SelectChangeEvent,
+  CircularProgress,
+  Alert,
+  Skeleton,
 } from '@mui/material';
 import { IconDotsVertical, IconPlus, IconPencil, IconTrash } from '@tabler/icons-react';
 import ExpenseDialog from './ExpenseDialog';
-
-type ExpenseType = 'one-time' | 'monthly' | 'annually' | 'cogs';
-
-interface Expense {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  type: ExpenseType;
-  isRecurring?: boolean;
-  product?: {
-    name: string;
-    sku: string;
-    pnk: string;
-    unitsCount: number;
-    costPerUnit: number;
-  };
-}
-
-// Dummy data
-const dummyExpenses: Expense[] = [
-  {
-    id: 1,
-    description: 'Office Rent',
-    amount: 2500,
-    date: '2024-03-15',
-    type: 'monthly',
-    isRecurring: true,
-  },
-  {
-    id: 2,
-    description: 'Software License',
-    amount: 1200,
-    date: '2024-03-10',
-    type: 'annually',
-    isRecurring: true,
-  },
-  {
-    id: 3,
-    description: 'Equipment Purchase',
-    amount: 5000,
-    date: '2024-03-05',
-    type: 'one-time',
-  },
-  {
-    id: 4,
-    description: 'Product A',
-    amount: 3000,
-    date: '2024-03-01',
-    type: 'cogs',
-    product: {
-      name: 'Product A',
-      sku: 'SKU123',
-      pnk: 'PNK456',
-      unitsCount: 100,
-      costPerUnit: 30,
-    },
-  },
-];
+import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
+import useExpenses, { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
+import { format } from 'date-fns';
 
 const ExpensesList = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [expenses] = useState<Expense[]>(dummyExpenses);
   const [selectedType, setSelectedType] = useState<ExpenseType | 'all'>('all');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+
+  // Get expenses with optional type filter
+  const { 
+    expenses, 
+    isLoading, 
+    error, 
+    createExpense, 
+    updateExpense, 
+    deleteExpense, 
+    isCreating, 
+    isUpdating, 
+    isDeleting 
+  } = useExpenses(selectedType === 'all' ? undefined : selectedType);
 
   const handleTypeChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -128,17 +88,106 @@ const ExpensesList = () => {
   const handleEditClick = () => {
     setDialogMode('edit');
     setIsDialogOpen(true);
-    handleMenuClose();
+    setAnchorEl(null);
+  };
+
+  const handleSaveExpense = (expense: Omit<Expense, '_id'> | Expense) => {
+    if ('_id' in expense) {
+      updateExpense(expense);
+    } else {
+      createExpense(expense);
+    }
+    setIsDialogOpen(false);
   };
 
   const handleDeleteClick = () => {
-    // Handle delete (UI only for now)
-    handleMenuClose();
+    setIsDeleteDialogOpen(true);
+    setAnchorEl(null);
   };
 
-  const filteredExpenses = expenses.filter(
-    (expense) => selectedType === 'all' || expense.type === selectedType
-  );
+  const handleConfirmDelete = () => {
+    if (selectedExpense?._id) {
+      // delete the selected expense
+      deleteExpense(selectedExpense._id);
+    }
+    // close dialog and clear selection
+    setIsDeleteDialogOpen(false);
+    setSelectedExpense(null);
+  };
+
+  // Format date in a readable format
+  const formatDate = (dateString: string | Date) => {
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy');
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
+  // Get the expense name for delete confirmation
+  const getExpenseName = (expense: Expense | null) => {
+    if (!expense) return '';
+    
+    if (expense.type === 'cogs' && expense.product) {
+      return expense.product.name;
+    }
+    
+    return expense.description || `Expense #${expense._id?.substring(0, 6)}`;
+  };
+
+  // Render loading state when fetching expenses
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent>
+          <Box sx={{ mb: 3 }}>
+            <Skeleton variant="text" width="200px" height={40} />
+            <Skeleton variant="rectangular" height={48} sx={{ mt: 2 }} />
+          </Box>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  {Array(isMobile ? 3 : 5).fill(0).map((_, index) => (
+                    <TableCell key={index}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Array(5).fill(0).map((_, index) => (
+                  <TableRow key={index}>
+                    {Array(isMobile ? 3 : 5).fill(0).map((_, cellIndex) => (
+                      <TableCell key={cellIndex}>
+                        <Skeleton variant="text" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            Error loading expenses: {error instanceof Error ? error.message : 'Unknown error'}
+          </Alert>
+          <Button variant="outlined" onClick={() => window.location.reload()}>
+            Reload Page
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -233,86 +282,107 @@ const ExpensesList = () => {
           </Box>
         )}
 
-        <Box sx={{ width: '100%', overflowX: 'auto' }}>
-          <TableContainer sx={{ minWidth: { xs: 300, sm: 600 } }}>
-            <Table size={isMobile ? "small" : "medium"}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Description</TableCell>
-                  {!isMobile && <TableCell>Type</TableCell>}
-                  <TableCell>Amount</TableCell>
-                  {!isMobile && <TableCell>Date</TableCell>}
-                  {!isMobile && <TableCell>Status</TableCell>}
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredExpenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>
-                      {expense.description}
-                      {isMobile && (
-                        <>
-                          <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            <Chip
-                              label={expense.type.toUpperCase()}
-                              color={
-                                expense.type === 'cogs'
-                                  ? 'warning'
-                                  : expense.type === 'one-time'
-                                  ? 'info'
-                                  : 'default'
-                              }
-                              size="small"
-                            />
-                            {expense.isRecurring && (
-                              <Chip label="Recurring" color="success" size="small" />
-                            )}
-                          </Box>
-                          <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                            {new Date(expense.date).toLocaleDateString()}
-                          </Typography>
-                        </>
-                      )}
-                    </TableCell>
-                    {!isMobile && (
+        {expenses.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              No expenses found.
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<IconPlus />}
+              onClick={handleAddClick}
+              sx={{ mt: 1 }}
+            >
+              Add Your First Expense
+            </Button>
+          </Box>
+        ) : (
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <TableContainer sx={{ minWidth: { xs: 300, sm: 600 } }}>
+              <Table size={isMobile ? "small" : "medium"}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Description</TableCell>
+                    {!isMobile && <TableCell>Type</TableCell>}
+                    <TableCell>Amount</TableCell>
+                    {!isMobile && <TableCell>Date</TableCell>}
+                    {!isMobile && <TableCell>Status</TableCell>}
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {expenses.map((expense: Expense) => (
+                    <TableRow key={expense._id}>
                       <TableCell>
-                        <Chip
-                          label={expense.type.toUpperCase()}
-                          color={
-                            expense.type === 'cogs'
-                              ? 'warning'
-                              : expense.type === 'one-time'
-                              ? 'info'
-                              : 'default'
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                    )}
-                    <TableCell>{expense.amount.toLocaleString()} RON</TableCell>
-                    {!isMobile && <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>}
-                    {!isMobile && (
-                      <TableCell>
-                        {expense.isRecurring && (
-                          <Chip label="Recurring" color="success" size="small" />
+                        {expense.description}
+                        {isMobile && (
+                          <>
+                            <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              <Chip
+                                label={expense.type.toUpperCase()}
+                                color={
+                                  expense.type === 'cogs'
+                                    ? 'warning'
+                                    : expense.type === 'one-time'
+                                    ? 'info'
+                                    : 'default'
+                                }
+                                size="small"
+                              />
+                              {expense.isRecurring && (
+                                <Chip label="Recurring" color="success" size="small" />
+                              )}
+                            </Box>
+                            <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                              {formatDate(expense.date)}
+                            </Typography>
+                          </>
                         )}
                       </TableCell>
-                    )}
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuOpen(e, expense)}
-                      >
-                        <IconDotsVertical size={isMobile ? 18 : 20} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                      {!isMobile && (
+                        <TableCell>
+                          <Chip
+                            label={expense.type.toUpperCase()}
+                            color={
+                              expense.type === 'cogs'
+                                ? 'warning'
+                                : expense.type === 'one-time'
+                                ? 'info'
+                                : 'default'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell>{expense.amount.toLocaleString()} RON</TableCell>
+                      {!isMobile && <TableCell>{formatDate(expense.date)}</TableCell>}
+                      {!isMobile && (
+                        <TableCell>
+                          {expense.isRecurring && (
+                            <Chip label="Recurring" color="success" size="small" />
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell align="right">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleMenuOpen(e, expense)}
+                          disabled={isDeleting === expense._id}
+                        >
+                          {isDeleting === expense._id ? (
+                            <CircularProgress size={18} />
+                          ) : (
+                            <IconDotsVertical size={isMobile ? 18 : 20} />
+                          )}
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
 
         <Menu
           anchorEl={anchorEl}
@@ -329,11 +399,24 @@ const ExpensesList = () => {
           </MenuItem>
         </Menu>
 
+        {/* Expense Dialog for Add/Edit */}
         <ExpenseDialog
           open={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
           mode={dialogMode}
           expense={selectedExpense}
+          onSave={handleSaveExpense}
+          isSaving={isCreating || isUpdating}
+        />
+
+        {/* Delete confirmation dialog */}
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          integrationName={getExpenseName(selectedExpense)}
+          title="Delete Expense"
+          message={`Are you sure you want to delete the expense "${getExpenseName(selectedExpense)}"? This action cannot be undone.`}
         />
       </CardContent>
     </Card>

@@ -1,24 +1,64 @@
 'use client';
-import { Card, CardContent, Typography, Box, useMediaQuery } from '@mui/material';
+import { Card, CardContent, Typography, Box, useMediaQuery, Skeleton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
+import useExpenses, { Expense } from '@/lib/hooks/useExpenses';
+import { useMemo } from 'react';
+import { isThisYear, getMonth } from 'date-fns';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: boolean, height?: number }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Fetch expense data
+  const { expenses, isLoading } = useExpenses();
 
-  // Dummy data for the chart
+  // Calculate monthly expenses for the current year
+  const monthlyData = useMemo(() => {
+    // Initialize arrays with zeros for all 12 months
+    const expensesData = Array(12).fill(0);
+    const profitData = Array(12).fill(0); // We don't have real profit data yet
+    
+    // Process real expenses data
+    if (expenses && expenses.length > 0) {
+      expenses.forEach((expense: Expense) => {
+        const expenseDate = new Date(expense.date);
+        
+        // Only include expenses from the current year
+        if (isThisYear(expenseDate)) {
+          const month = getMonth(expenseDate);
+          expensesData[month] += expense.amount;
+          
+          // For now, let's simulate profit as 1.2x expenses
+          // This should be replaced with real profit data when available
+          profitData[month] += expense.amount * 1.2;
+        }
+      });
+    }
+    
+    return {
+      expenses: expensesData,
+      profit: profitData
+    };
+  }, [expenses]);
+
+  // Prepare chart data
   const series = [
     {
       name: 'Expenses',
-      data: [35000, 42000, 38000, 45000, 39000, 41000, 48000, 44000, 46000, 43000, 40000, 42000],
+      data: monthlyData.expenses,
     },
     {
       name: 'Profit',
-      data: [45000, 52000, 49000, 55000, 48000, 51000, 58000, 54000, 56000, 53000, 50000, 52000],
+      data: monthlyData.profit,
     },
   ];
+
+  // Calculate min and max values for y-axis with some padding
+  const allValues = [...monthlyData.expenses, ...monthlyData.profit];
+  const maxValue = Math.max(...allValues, 10000) * 1.2; // Add 20% padding
+  const minValue = Math.max(0, Math.min(...allValues) * 0.8); // Don't go below zero
 
   const options = {
     chart: {
@@ -100,8 +140,8 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
         offsetX: -5,
       },
       tickAmount: 7,
-      min: 30000,
-      max: 60000,
+      min: minValue,
+      max: maxValue,
       forceNiceScale: true,
     },
     tooltip: {
@@ -202,19 +242,33 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
           flexDirection: 'column',
           height: 'calc(100% - 40px)',
         }}>
-          <Box sx={{ 
-            width: '100%',
-            flex: 1,
-            height: '100%',
-          }}>
-            <Chart
-              options={options}
-              series={series}
-              type="area"
-              height={chartHeight}
-              width="100%"
-            />
-          </Box>
+          {isLoading ? (
+            <Box sx={{ 
+              width: '100%',
+              flex: 1,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Skeleton variant="rectangular" width="100%" height={chartHeight} animation="wave" />
+            </Box>
+          ) : (
+            <Box sx={{ 
+              width: '100%',
+              flex: 1,
+              height: '100%',
+            }}>
+              <Chart
+                options={options}
+                series={series}
+                type="area"
+                height={chartHeight}
+                width="100%"
+              />
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>

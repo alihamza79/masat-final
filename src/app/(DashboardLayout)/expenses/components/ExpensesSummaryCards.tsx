@@ -1,51 +1,117 @@
 'use client';
-import { Grid, Box, Card, Typography, Stack, useTheme, useMediaQuery } from '@mui/material';
+import { Grid, Box, Card, Typography, Stack, useTheme, useMediaQuery, Skeleton } from '@mui/material';
 import { IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react';
+import useExpenses from '@/lib/hooks/useExpenses';
+import useExpenseStats from '@/lib/hooks/useExpenseStats';
 
-type ExpenseSummary = {
-  title: string;
-  amount: number;
-  change: number;
-  type: 'increase' | 'decrease';
-};
+interface ExpensesSummaryCardsProps {
+  onlyFirstTwo?: boolean;
+  grid2x2?: boolean;
+  height?: number;
+}
 
-const summaryData: ExpenseSummary[] = [
-  {
-    title: 'One Time',
-    amount: 12500,
-    change: 2.5,
-    type: 'increase',
-  },
-  {
-    title: 'Monthly',
-    amount: 34200,
-    change: -1.8,
-    type: 'decrease',
-  },
-  {
-    title: 'Annually',
-    amount: 98500,
-    change: 5.2,
-    type: 'increase',
-  },
-  {
-    title: 'COGS',
-    amount: 45600,
-    change: -3.1,
-    type: 'decrease',
-  },
-];
-
-const ExpensesSummaryCards = ({ onlyFirstTwo = false, grid2x2 = false, height }: { onlyFirstTwo?: boolean, grid2x2?: boolean, height?: number }) => {
+const ExpensesSummaryCards: React.FC<ExpensesSummaryCardsProps> = ({ 
+  onlyFirstTwo = false, 
+  grid2x2 = false, 
+  height 
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Fetch all expense data
+  const { expenses, isLoading } = useExpenses();
+  
+  // Calculate expense statistics
+  const stats = useExpenseStats(expenses);
+
+  // Create cards data based on expense stats
+  const summaryData = [
+    {
+      title: 'One Time',
+      amount: stats.expensesByType['one-time'],
+      change: 8.4, // Sample value for now
+      type: 'increase' as const,
+    },
+    {
+      title: 'Monthly',
+      amount: stats.expensesByType['monthly'],
+      change: 5.6,
+      type: 'increase' as const,
+    },
+    {
+      title: 'Annually',
+      amount: stats.expensesByType['annually'],
+      change: 12.3,
+      type: 'decrease' as const,
+    },
+    {
+      title: 'COGS',
+      amount: stats.expensesByType['cogs'],
+      change: 3.2,
+      type: 'increase' as const,
+    },
+  ];
+
+  // Filter data based on props
   const data = onlyFirstTwo ? summaryData.slice(0, 2) : summaryData;
+  
+  // Render loading skeleton
+  if (isLoading) {
+    return (
+      <Grid container spacing={isMobile ? 2 : 3} sx={{ 
+        height: height && !isMobile ? `${height}px` : '100%', 
+        minHeight: height && !isMobile ? `${height}px` : undefined 
+      }}>
+        {Array(onlyFirstTwo ? 2 : 4).fill(0).map((_, index) => (
+          <Grid 
+            item 
+            xs={6} 
+            sm={6} 
+            md={grid2x2 ? 6 : 12} 
+            key={index} 
+            sx={{ 
+              display: 'flex', 
+              height: { 
+                md: height ? `calc(50% - ${isMobile ? 8 : 12}px)` : 'auto', 
+                xs: 'auto' 
+              } 
+            }}
+          >
+            <Card sx={{ 
+              p: isMobile ? 1.5 : 2.5, 
+              flex: 1, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'center', 
+              borderRadius: 2 
+            }}>
+              <Stack spacing={isMobile ? 0.3 : 1}>
+                <Skeleton variant="text" width={80} />
+                <Skeleton variant="text" width={120} height={40} />
+                <Skeleton variant="text" width={60} />
+                <Skeleton variant="text" width={90} />
+              </Stack>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
   
   if (grid2x2) {
     return (
-      <Grid container spacing={isMobile ? 2 : 3} sx={{ height: height && !isMobile ? `${height}px` : '100%', minHeight: height && !isMobile ? `${height}px` : undefined }}>
+      <Grid container spacing={isMobile ? 2 : 3} sx={{ 
+        height: height && !isMobile ? `${height}px` : '100%', 
+        minHeight: height && !isMobile ? `${height}px` : undefined 
+      }}>
         {data.map((item, index) => (
-          <Grid item xs={6} sm={6} md={6} key={index} sx={{ display: 'flex', height: { md: height ? `calc(50% - ${isMobile ? 8 : 12}px)` : 'auto', xs: 'auto' } }}>
+          <Grid item xs={6} sm={6} md={6} key={index} sx={{ 
+            display: 'flex', 
+            height: { 
+              md: height ? `calc(50% - ${isMobile ? 8 : 12}px)` : 'auto', 
+              xs: 'auto' 
+            } 
+          }}>
             <Card sx={{ 
               p: isMobile ? 1.5 : 2.5, 
               flex: 1, 
@@ -107,9 +173,16 @@ const ExpensesSummaryCards = ({ onlyFirstTwo = false, grid2x2 = false, height }:
   }
   
   return (
-    <Grid container spacing={isMobile ? 2 : 3} sx={{ height: height && !isMobile ? `${height}px` : '100%', minHeight: height && !isMobile ? `${height}px` : undefined }}>
+    <Grid container spacing={isMobile ? 2 : 3} sx={{ 
+      height: height && !isMobile ? `${height}px` : '100%', 
+      minHeight: height && !isMobile ? `${height}px` : undefined 
+    }}>
       {data.map((item, index) => (
-        <Grid item xs={6} sm={6} md={12} key={index} sx={{ flex: 1, display: 'flex', height: height ? `calc(50% - ${isMobile ? 8 : 12}px)` : 'auto' }}>
+        <Grid item xs={6} sm={6} md={12} key={index} sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          height: height ? `calc(50% - ${isMobile ? 8 : 12}px)` : 'auto' 
+        }}>
           <Card sx={{ 
             p: isMobile ? 1.5 : 2.5, 
             flex: 1, 
