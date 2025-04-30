@@ -180,6 +180,26 @@ const ProductImage = ({ product, size = 'small' }: { product: any, size?: 'small
   );
 };
 
+// Add helper to highlight matched substrings in option text
+const getHighlightedText = (text: string, highlight: string) => {
+  if (!highlight) return text;
+  const escapedHighlight = highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escapedHighlight})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.toLowerCase() === highlight.toLowerCase() ? (
+          <Box component="span" key={index} sx={{ backgroundColor: theme => theme.palette.warning.light, px: 0.5 }}>
+            {part}
+          </Box>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+};
+
 const ExpenseDialog = ({ 
   open, 
   onClose, 
@@ -359,6 +379,7 @@ const ExpenseDialog = ({
         onChange={(_, newValue) => handleProductSelect(newValue)}
         getOptionLabel={(option) => option.name || ''}
         options={filteredProducts}
+        filterOptions={(options) => options}
         loading={productsLoading}
         noOptionsText={searchQuery ? "No products found" : "Type to search"}
         renderInput={(params) => (
@@ -396,17 +417,17 @@ const ExpenseDialog = ({
               
               <Stack spacing={0.5} flex={1}>
                 <Typography variant="body1" fontWeight={500}>
-                  {option.name}
+                  {getHighlightedText(option.name, searchQuery)}
                 </Typography>
                 <Stack direction="row" spacing={1}>
                   {option.part_number && (
                     <Typography variant="caption" color="text.secondary">
-                      SKU: {option.part_number}
+                      SKU: {getHighlightedText(option.part_number, searchQuery)}
                     </Typography>
                   )}
                   {option.part_number_key && (
                     <Typography variant="caption" color="text.secondary">
-                      PNK: {option.part_number_key}
+                      PNK: {getHighlightedText(option.part_number_key, searchQuery)}
                     </Typography>
                   )}
                 </Stack>
