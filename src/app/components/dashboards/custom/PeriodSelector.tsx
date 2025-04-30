@@ -174,14 +174,16 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         variant="outlined"
         endIcon={<IconChevronDown size={16} />}
         startIcon={<IconCalendarTime size={18} />}
+        size="medium"
         sx={{
           py: 1,
           px: 2,
-          borderRadius: 2,
+          borderRadius: 1,
           textTransform: 'none',
           fontWeight: 500,
           color: theme.palette.text.primary,
           borderColor: theme.palette.divider,
+          height: '36.5px',
           '&:hover': {
             borderColor: theme.palette.text.primary
           }

@@ -65,14 +65,29 @@ export interface DashboardData {
  * Get dashboard data
  * @param startDate Start date in YYYY-MM-DD format
  * @param endDate End date in YYYY-MM-DD format
+ * @param integrationIds Optional array of integration IDs to filter by
  */
-export async function getDashboardData(startDate: string, endDate: string): Promise<{
+export async function getDashboardData(
+  startDate: string, 
+  endDate: string,
+  integrationIds?: string[]
+): Promise<{
   success: boolean;
   data?: DashboardData;
   error?: string;
 }> {
   try {
-    const response = await axios.get(`/api/dashboard?startDate=${startDate}&endDate=${endDate}`);
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('startDate', startDate);
+    params.append('endDate', endDate);
+    
+    // Add integration IDs if provided
+    if (integrationIds && integrationIds.length > 0) {
+      integrationIds.forEach(id => params.append('integrationIds', id));
+    }
+    
+    const response = await axios.get(`/api/dashboard?${params.toString()}`);
     
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to fetch dashboard data');
