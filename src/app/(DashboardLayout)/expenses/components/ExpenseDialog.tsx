@@ -21,6 +21,9 @@ import {
   Paper,
   CircularProgress,
   Tooltip,
+  Divider,
+  Chip,
+  Grid,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -369,79 +372,122 @@ const ExpenseDialog = ({
   };
 
   const renderCogsFields = () => (
-    <Stack spacing={3}>
-      <Typography variant="subtitle1" sx={{ mt: 2 }}>
-        Product Details
-      </Typography>
-      
-      <Autocomplete
-        value={selectedProduct}
-        onChange={(_, newValue) => handleProductSelect(newValue)}
-        getOptionLabel={(option) => option.name || ''}
-        options={filteredProducts}
-        filterOptions={(options) => options}
-        loading={productsLoading}
-        noOptionsText={searchQuery ? "No products found" : "Type to search"}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Search Product"
-            onChange={(e) => setSearchQuery(e.target.value)}
-            error={Boolean(errors.product)}
-            helperText={errors.product || "Search by name, SKU (part_number) or PNK (part_number_key)"}
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <>
-                  <InputAdornment position="start">
-                    <IconSearch size={20} />
-                  </InputAdornment>
-                  {params.InputProps.startAdornment}
-                </>
-              ),
-              endAdornment: (
-                <>
-                  {productsLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+    <Stack spacing={3} sx={{ mt: 0 }}>
+      {/* Fields without container */}
+      <Stack spacing={3}>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DatePicker
+            label="Purchase Date"
+            value={date}
+            onChange={(newDate) => {
+              if (newDate) {
+                const dt = newDate as Date;
+                setDate(dt);
+                if (errors.date) {
+                  const newErrors = { ...errors };
+                  delete newErrors.date;
+                  setErrors(newErrors);
+                }
+              }
             }}
-            fullWidth
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                fullWidth
+                required
+                error={Boolean(errors.date)}
+                helperText={errors.date}
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconCalendar size={20} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
           />
-        )}
-        renderOption={(props, option) => (
-          <li {...props}>
-            <Stack direction="row" spacing={1.5} width="100%" alignItems="center">
-              {/* Small product image in dropdown */}
-              <ProductImage product={option} size="small" />
-              
-              <Stack spacing={0.5} flex={1}>
-                <Typography variant="body1" fontWeight={500}>
-                  {getHighlightedText(option.name, searchQuery)}
-                </Typography>
-                <Stack direction="row" spacing={1}>
-                  {option.part_number && (
-                    <Typography variant="caption" color="text.secondary">
-                      SKU: {getHighlightedText(option.part_number, searchQuery)}
-                    </Typography>
-                  )}
-                  {option.part_number_key && (
-                    <Typography variant="caption" color="text.secondary">
-                      PNK: {getHighlightedText(option.part_number_key, searchQuery)}
-                    </Typography>
-                  )}
+        </LocalizationProvider>
+        
+        <Autocomplete
+          value={selectedProduct}
+          onChange={(_, newValue) => handleProductSelect(newValue)}
+          getOptionLabel={(option) => option.name || ''}
+          options={filteredProducts}
+          filterOptions={(options) => options}
+          loading={productsLoading}
+          noOptionsText={searchQuery ? "No products found" : "Type to search"}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Search Product"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              error={Boolean(errors.product)}
+              helperText={errors.product || "Search by name, SKU or PNK"}
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <>
+                    <InputAdornment position="start">
+                      <IconSearch size={20} />
+                    </InputAdornment>
+                    {params.InputProps.startAdornment}
+                  </>
+                ),
+                endAdornment: (
+                  <>
+                    {productsLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+              fullWidth
+            />
+          )}
+          renderOption={(props, option) => (
+            <li {...props}>
+              <Stack direction="row" spacing={1.5} width="100%" alignItems="center">
+                {/* Small product image in dropdown */}
+                <ProductImage product={option} size="small" />
+                
+                <Stack spacing={0.5} flex={1}>
+                  <Typography variant="body1" fontWeight={500}>
+                    {getHighlightedText(option.name, searchQuery)}
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    {option.part_number && (
+                      <Typography variant="caption" color="text.secondary">
+                        SKU: {getHighlightedText(option.part_number, searchQuery)}
+                      </Typography>
+                    )}
+                    {option.part_number_key && (
+                      <Typography variant="caption" color="text.secondary">
+                        PNK: {getHighlightedText(option.part_number_key, searchQuery)}
+                      </Typography>
+                    )}
+                  </Stack>
                 </Stack>
               </Stack>
-            </Stack>
-          </li>
-        )}
-        PaperComponent={(props) => (
-          <Paper {...props} elevation={6} sx={{ mt: 0.5 }} />
-        )}
-      />
+            </li>
+          )}
+          PaperComponent={(props) => (
+            <Paper {...props} elevation={6} sx={{ mt: 0.5 }} />
+          )}
+        />
+      </Stack>
 
       {selectedProduct && (
-        <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'action.hover' }}>
+        <Paper 
+          variant="outlined"
+          sx={{ 
+            p: 2, 
+            borderRadius: 1,
+            borderColor: 'divider',
+            bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.800' : 'background.paper',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+          }}
+        >
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
               {/* Product Image Container - Fixed width container for large size */}
@@ -455,9 +501,11 @@ const ExpenseDialog = ({
               
               {/* Product Details */}
               <Stack spacing={1} width="100%">
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {selectedProduct.name}
-                </Typography>
+                <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    {selectedProduct.name}
+                  </Typography>
+                </Stack>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                   {selectedProduct.part_number && (
                     <Typography variant="body2">
@@ -472,55 +520,72 @@ const ExpenseDialog = ({
                 </Stack>
                 
                 {/* Quantity and Cost fields within the product details */}
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mt={1.5}>
-                  <TextField
-                    label="Number of Units"
-                    type="number"
-                    value={unitsCount}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setUnitsCount(value);
-                      if (errors.unitsCount) {
-                        const newErrors = { ...errors };
-                        delete newErrors.unitsCount;
-                        setErrors(newErrors);
-                      }
-                    }}
-                    fullWidth
-                    size="small"
-                    error={Boolean(errors.unitsCount)}
-                    helperText={errors.unitsCount}
-                    InputProps={{
-                      inputProps: { min: 0 },
-                    }}
-                  />
-                  <TextField
-                    label="Cost per Unit"
-                    type="number"
-                    value={costPerUnit}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setCostPerUnit(value);
-                      if (errors.costPerUnit) {
-                        const newErrors = { ...errors };
-                        delete newErrors.costPerUnit;
-                        setErrors(newErrors);
-                      }
-                    }}
-                    fullWidth
-                    size="small"
-                    error={Boolean(errors.costPerUnit)}
-                    helperText={errors.costPerUnit}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">RON</InputAdornment>,
-                      inputProps: { min: 0 },
-                    }}
-                  />
-                </Stack>
+                <Box sx={{ 
+                  mt: 2,
+                  p: 1.5, 
+                  bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
+                  borderRadius: 1
+                }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Purchase Details
+                  </Typography>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      label="Number of Units"
+                      type="number"
+                      value={unitsCount}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setUnitsCount(value);
+                        if (errors.unitsCount) {
+                          const newErrors = { ...errors };
+                          delete newErrors.unitsCount;
+                          setErrors(newErrors);
+                        }
+                      }}
+                      fullWidth
+                      size="small"
+                      error={Boolean(errors.unitsCount)}
+                      helperText={errors.unitsCount}
+                      InputProps={{
+                        inputProps: { min: 0 },
+                      }}
+                    />
+                    <TextField
+                      label="Cost per Unit"
+                      type="number"
+                      value={costPerUnit}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setCostPerUnit(value);
+                        if (errors.costPerUnit) {
+                          const newErrors = { ...errors };
+                          delete newErrors.costPerUnit;
+                          setErrors(newErrors);
+                        }
+                      }}
+                      fullWidth
+                      size="small"
+                      error={Boolean(errors.costPerUnit)}
+                      helperText={errors.costPerUnit}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">RON</InputAdornment>,
+                        inputProps: { min: 0 },
+                      }}
+                    />
+                  </Stack>
+                  {Number(unitsCount) > 0 && Number(costPerUnit) > 0 && (
+                    <Box sx={{ mt: 2, textAlign: 'right' }}>
+                      <Typography variant="subtitle2">
+                        Total: <strong>{(Number(unitsCount) * Number(costPerUnit)).toLocaleString()} RON</strong>
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               </Stack>
             </Stack>
           </Stack>
-        </Box>
+        </Paper>
       )}
     </Stack>
   );
@@ -536,121 +601,189 @@ const ExpenseDialog = ({
         {mode === 'add' ? 'Add New Expense' : 'Edit Expense'}
       </DialogTitle>
       <DialogContent>
-        <Stack spacing={3} sx={{ mt: 2 }}>
-          <FormControl fullWidth>
-            <InputLabel>Type</InputLabel>
-            <Select
-              value={type}
-              label="Type"
-              onChange={(e) => setType(e.target.value as ExpenseType)}
-              disabled={mode === 'edit'} // Don't allow changing type when editing
-            >
-              <MenuItem value="one-time">One Time</MenuItem>
-              <MenuItem value="monthly">Monthly</MenuItem>
-              <MenuItem value="annually">Annually</MenuItem>
-              <MenuItem value="cogs">COGS</MenuItem>
-            </Select>
-          </FormControl>
+        <Stack spacing={4} sx={{ mt: 2 }}>
+          {/* Expense Type Selection - using visual toggle buttons instead of dropdown */}
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Expense Type {mode === 'edit' && '(cannot be changed)'}
+            </Typography>
+            <Grid container spacing={1.5}>
+              {[
+                { value: 'one-time', label: 'One Time', icon: <IconCalendar size={18} /> },
+                { value: 'monthly', label: 'Monthly', icon: <IconCalendar size={18} /> },
+                { value: 'annually', label: 'Annually', icon: <IconCalendar size={18} /> },
+                { value: 'cogs', label: 'COGS', icon: <IconPackage size={18} /> },
+              ].map((option) => (
+                <Grid item xs={6} sm={3} key={option.value}>
+                  <Paper
+                    onClick={() => !mode || mode !== 'edit' ? setType(option.value as ExpenseType) : null}
+                    sx={{
+                      p: 1.5,
+                      textAlign: 'center',
+                      cursor: mode === 'edit' ? 'default' : 'pointer',
+                      border: '1px solid',
+                      borderColor: type === option.value 
+                        ? 'primary.main' 
+                        : 'divider',
+                      bgcolor: type === option.value 
+                        ? 'primary.lighter'
+                        : 'background.paper',
+                      color: type === option.value 
+                        ? 'primary.main' 
+                        : 'text.primary',
+                      opacity: mode === 'edit' ? 0.7 : 1,
+                      transition: 'all 0.2s',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      '&:hover': {
+                        borderColor: mode === 'edit' ? undefined : (type === option.value ? 'primary.main' : 'grey.400'),
+                        boxShadow: mode === 'edit' ? undefined : '0 2px 8px rgba(0,0,0,0.08)',
+                      }
+                    }}
+                  >
+                    <Stack spacing={1} alignItems="center">
+                      {option.icon}
+                      <Typography variant="body2" fontWeight={type === option.value ? 600 : 400}>
+                        {option.label}
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
 
-          {type !== 'cogs' && (
-            <TextField
-              label="Description"
-              value={description}
-              onChange={(e) => {
-                const value = e.target.value;
-                setDescription(value);
-                if (errors.description) {
-                  const newErrors = { ...errors };
-                  delete newErrors.description;
-                  setErrors(newErrors);
-                }
-              }}
-              fullWidth
-              required
-              error={Boolean(errors.description)}
-              helperText={errors.description}
-            />
-          )}
+          {/* Divider with label */}
+          <Box sx={{ position: 'relative', my: 1 }}>
+            <Divider sx={{ '&::before, &::after': { borderColor: 'divider' } }}>
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ px: 1 }}
+              >
+                Expense Details
+              </Typography>
+            </Divider>
+          </Box>
 
-          {type !== 'cogs' && (
-            <TextField
-              label="Amount"
-              type="number"
-              value={amount}
-              onChange={(e) => {
-                const value = e.target.value;
-                setAmount(value);
-                if (errors.amount) {
-                  const newErrors = { ...errors };
-                  delete newErrors.amount;
-                  setErrors(newErrors);
-                }
-              }}
-              fullWidth
-              required
-              error={Boolean(errors.amount)}
-              helperText={errors.amount}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">RON</InputAdornment>,
-                inputProps: { min: 0 },
-              }}
-            />
-          )}
-
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="Date"
-              value={date}
-              onChange={(newDate) => {
-                if (newDate) {
-                  const dt = newDate as Date;
-                  setDate(dt);
-                  if (errors.date) {
+          {/* Expense details section */}
+          <Stack spacing={3}>
+            {type !== 'cogs' && (
+              <TextField
+                label="Description"
+                value={description}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setDescription(value);
+                  if (errors.description) {
                     const newErrors = { ...errors };
-                    delete newErrors.date;
+                    delete newErrors.description;
                     setErrors(newErrors);
                   }
-                }
-              }}
-              renderInput={(params) => (
+                }}
+                fullWidth
+                required
+                error={Boolean(errors.description)}
+                helperText={errors.description}
+                inputProps={{ style: { textAlign: 'center' } }}
+              />
+            )}
+
+            {/* Date and Amount in a row for better space usage */}
+            {type !== 'cogs' && (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
-                  {...params}
+                  label="Amount"
+                  type="number"
+                  value={amount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAmount(value);
+                    if (errors.amount) {
+                      const newErrors = { ...errors };
+                      delete newErrors.amount;
+                      setErrors(newErrors);
+                    }
+                  }}
                   fullWidth
                   required
-                  error={Boolean(errors.date)}
-                  helperText={errors.date}
+                  error={Boolean(errors.amount)}
+                  helperText={errors.amount}
                   InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconCalendar size={20} />
-                      </InputAdornment>
-                    ),
+                    endAdornment: <InputAdornment position="end">RON</InputAdornment>,
+                    inputProps: { min: 0 },
                   }}
                 />
-              )}
-            />
-          </LocalizationProvider>
+                
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Date"
+                    value={date}
+                    onChange={(newDate) => {
+                      if (newDate) {
+                        const dt = newDate as Date;
+                        setDate(dt);
+                        if (errors.date) {
+                          const newErrors = { ...errors };
+                          delete newErrors.date;
+                          setErrors(newErrors);
+                        }
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        required
+                        error={Boolean(errors.date)}
+                        helperText={errors.date}
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <IconCalendar size={20} />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+              </Stack>
+            )}
 
-          {(type === 'monthly' || type === 'annually') && (
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isRecurring}
-                  onChange={(e) => setIsRecurring(e.target.checked)}
+            {/* Recurring expenses option - made more visual */}
+            {(type === 'monthly' || type === 'annually') && (
+              <Paper sx={{ p: 1.5, border: '1px solid', borderColor: 'divider' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isRecurring}
+                      onChange={(e) => setIsRecurring(e.target.checked)}
+                      color="success"
+                    />
+                  }
+                  label={
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography>{`Recurring ${type === 'monthly' ? 'Monthly' : 'Annually'}`}</Typography>
+                    </Stack>
+                  }
                 />
-              }
-              label={`Recurring ${type === 'monthly' ? 'Monthly' : 'Annually'}`}
-            />
-          )}
-
-          {type === 'cogs' && renderCogsFields()}
+              </Paper>
+            )}
+          
+            {/* COGS specific fields */}
+            {type === 'cogs' && renderCogsFields()}
+          </Stack>
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, py: 2, bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50' }}>
         <Button 
           onClick={onClose}
           disabled={isSaving}
+          variant="outlined"
         >
           Cancel
         </Button>
