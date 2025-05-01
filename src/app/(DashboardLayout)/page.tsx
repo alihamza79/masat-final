@@ -573,7 +573,13 @@ export default function Dashboard() {
                 title="Channel Distribution"
                 subtitle="Orders by integration"
               >
-                <Box sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%'
+                }}>
                   <OrdersByIntegration
                     data={dashboardData ? dashboardData.salesByIntegration : []}
                     isLoading={isLoading}

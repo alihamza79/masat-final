@@ -137,20 +137,28 @@ const OrdersByIntegration: React.FC<OrdersByIntegrationProps> = ({
           height: 350, 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'center'
+          justifyContent: 'center',
+          width: '100%'
         }}
       >
         {isLoading ? (
           <Box>Loading...</Box>
         ) : (
           data.length > 0 ? (
-            <Chart
-              options={chartOptions}
-              series={orderCounts}
-              type="pie"
-              height="350"
-              width="100%"
-            />
+            <Box sx={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%'
+            }}>
+              <Chart
+                options={chartOptions}
+                series={orderCounts}
+                type="pie"
+                height="350"
+                width="100%"
+              />
+            </Box>
           ) : (
             <Box>No data available</Box>
           )

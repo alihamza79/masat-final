@@ -717,6 +717,48 @@ export async function GET(req: NextRequest) {
     // Add chart totals to the response
     dashboardData.chartTotals = chartTotals;
 
+    // Get real data for orders by integration
+    try {
+      // Perform aggregation to count orders by integration
+      const ordersByIntegration = await Order.aggregate([
+        { $match: queryFilter },
+        {
+          $group: {
+            _id: "$integrationId",
+            ordersCount: { $sum: 1 }
+          }
+        }
+      ]);
+      
+      console.log(`Found orders for ${ordersByIntegration.length} integrations`);
+      
+      // Create a map of integration names by ID
+      const integrationMap = new Map();
+      userIntegrations.forEach(integration => {
+        integrationMap.set(integration._id.toString(), integration.accountName);
+      });
+      
+      // Map integration IDs to names and format for the response
+      const salesByIntegration = ordersByIntegration.map(item => {
+        const integrationId = item._id.toString();
+        return {
+          integrationName: integrationMap.get(integrationId) || `Integration ${integrationId.substr(0, 6)}`,
+          ordersCount: item.ordersCount
+        };
+      });
+      
+      // Sort by orders count descending
+      salesByIntegration.sort((a, b) => b.ordersCount - a.ordersCount);
+      
+      console.log(`Mapped ${salesByIntegration.length} integrations with their account names`);
+      
+      // Add to dashboard data
+      dashboardData.salesByIntegration = salesByIntegration;
+    } catch (error) {
+      console.error('Error getting orders by integration:', error);
+      // Keep using mock data for this section if there's an error
+    }
+
     return NextResponse.json({ 
       success: true, 
       data: dashboardData
