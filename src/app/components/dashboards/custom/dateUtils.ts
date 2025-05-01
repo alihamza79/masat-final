@@ -1,5 +1,5 @@
 import { PeriodType } from './PeriodSelector';
-import { startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from 'date-fns';
+import { startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subQuarters, subMonths } from 'date-fns';
 
 export interface DateRange {
   startDate: Date;
@@ -61,17 +61,43 @@ export function calculateDateRange(
       };
     }
     
-    case 'thisQuarter':
+    case 'thisQuarter': {
+      // Custom 4-month quarter calculation
+      const month = now.getMonth();
+      // Determine the start month of the 4-month quarter (0, 4, 8)
+      const startMonth = Math.floor(month / 4) * 4;
+      const startQuarterDate = new Date(now.getFullYear(), startMonth, 1);
+      
       return {
-        startDate: startOfQuarter(now),
+        startDate: startOfDay(startQuarterDate),
         endDate: endOfDay(now)
       };
+    }
       
     case 'lastQuarter': {
-      const lastQuarter = subDays(startOfQuarter(now), 1);
+      // Custom 4-month quarter calculation for previous quarter
+      const month = now.getMonth();
+      const startMonth = Math.floor(month / 4) * 4;
+      
+      // If we're in the first quarter, go to last year's last quarter
+      let prevQuarterStartMonth, prevQuarterYear;
+      
+      if (startMonth === 0) {
+        // If in first quarter (months 0-3), go to previous year's last quarter (months 8-11)
+        prevQuarterStartMonth = 8;
+        prevQuarterYear = now.getFullYear() - 1;
+      } else {
+        // Otherwise, go to previous quarter in same year
+        prevQuarterStartMonth = startMonth - 4;
+        prevQuarterYear = now.getFullYear();
+      }
+      
+      const prevQuarterStart = new Date(prevQuarterYear, prevQuarterStartMonth, 1);
+      const prevQuarterEnd = new Date(prevQuarterYear, prevQuarterStartMonth + 4, 0);
+      
       return {
-        startDate: startOfQuarter(lastQuarter),
-        endDate: endOfQuarter(lastQuarter)
+        startDate: startOfDay(prevQuarterStart),
+        endDate: endOfDay(prevQuarterEnd)
       };
     }
     

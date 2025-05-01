@@ -364,6 +364,332 @@ export async function GET(req: NextRequest) {
     console.log(`Static Value: 15 RON`);
     console.log(`Profit = ${grossRevenue} - ${realCogs} - ${realOtherExpenses} - ${shippingRevenue} - 15 = ${profit} RON`);
     console.log(`========== END DEBUG ==========`);
+    
+    // Get sales data over time for the chart
+    console.log(`Calculating daily revenue and profit data for chart...`);
+    
+    // Group orders by date
+    const dailyOrderStats = await Order.aggregate([
+      { $match: queryFilter },
+      {
+        $group: {
+          _id: { $substr: ["$date", 0, 10] }, // Group by date (YYYY-MM-DD)
+          dailyRevenue: {
+            $sum: {
+              $add: [
+                // Product price × quantity
+                {
+                  $cond: [
+                    { $isArray: "$products" },
+                    {
+                      $reduce: {
+                        input: "$products",
+                        initialValue: 0,
+                        in: {
+                          $add: [
+                            "$$value",
+                            {
+                              $multiply: [
+                                { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
+                                { $ifNull: ["$$this.quantity", 1] }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                // Include shipping tax
+                { $ifNull: ["$shipping_tax", 0] }
+              ]
+            }
+          },
+          dailyShippingRevenue: { $sum: { $ifNull: ["$shipping_tax", 0] } },
+          ordersCount: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } } // Sort by date ascending
+    ]);
+    
+    console.log(`Found ${dailyOrderStats.length} days with orders`);
+    
+    // Group expenses by date
+    const dailyExpensesStats = await Expense.aggregate([
+      {
+        $match: {
+          $expr: { $eq: [{ $toString: "$userId" }, session.user.id.toString()] },
+          ...(Object.keys(expenseDateFilter).length > 0 ? expenseDateFilter : {})
+        }
+      },
+      {
+        $group: {
+          _id: { 
+            date: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+            type: "$type"
+          },
+          totalAmount: { $sum: "$amount" }
+        }
+      },
+      { $sort: { "_id.date": 1 } }
+    ]);
+    
+    console.log(`Found ${dailyExpensesStats.length} days with expenses`);
+    
+    // Organize expenses by date and type
+    const expensesByDate: Record<string, { cogs: number, other: number }> = {};
+    
+    dailyExpensesStats.forEach(expense => {
+      const date = expense._id.date;
+      const type = expense._id.type;
+      const amount = expense.totalAmount;
+      
+      if (!expensesByDate[date]) {
+        expensesByDate[date] = { cogs: 0, other: 0 };
+      }
+      
+      if (type === 'cogs') {
+        expensesByDate[date].cogs += amount;
+      } else {
+        expensesByDate[date].other += amount;
+      }
+    });
+    
+    // Combine order and expense data to calculate daily profit
+    const dailySalesData = dailyOrderStats.map(day => {
+      const date = day._id;
+      const dayExpenses = expensesByDate[date] || { cogs: 0, other: 0 };
+      const dailyRevenue = Math.round(day.dailyRevenue || 0);
+      const dailyShipping = Math.round(day.dailyShippingRevenue || 0);
+      const dailyCogs = Math.round(dayExpenses.cogs || 0);
+      const dailyOtherExpenses = Math.round(dayExpenses.other || 0);
+      
+      // Calculate daily profit using same formula
+      // Profit = Revenue - COGS - Other Expenses - Shipping - Daily static cost
+      // Static cost of 15 RON is divided by the number of days in the period
+      const daysInPeriod = Math.max(1, dailyOrderStats.length);
+      const dailyStaticCost = 15 / daysInPeriod;
+      
+      const dailyProfit = dailyRevenue - dailyCogs - dailyOtherExpenses - dailyShipping - dailyStaticCost;
+      
+      return {
+        date,
+        revenue: dailyRevenue,
+        profit: Math.round(dailyProfit),
+        costOfGoods: dailyCogs,
+        ordersCount: day.ordersCount || 0
+      };
+    });
+    
+    // Determine appropriate aggregation level based on date range
+    let aggregationLevel = 'daily';
+    
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      
+      console.log(`Date range spans ${diffDays} days`);
+      
+      if (diffDays > 365 * 2) {
+        aggregationLevel = 'quarterly'; // For periods longer than 2 years
+      } else if (diffDays > 90) {
+        aggregationLevel = 'monthly'; // For periods longer than 3 months
+      } else if (diffDays > 31) {
+        aggregationLevel = 'weekly';  // For periods longer than a month
+      }
+      
+      console.log(`Using ${aggregationLevel} aggregation for chart data`);
+    }
+    
+    // Helper function to get week, month or quarter from date string
+    const getAggregationKey = (dateStr: string, level: string): string => {
+      const date = new Date(dateStr);
+      if (level === 'weekly') {
+        // Get year and week number
+        const oneJan = new Date(date.getFullYear(), 0, 1);
+        const weekNum = Math.ceil((((date.getTime() - oneJan.getTime()) / 86400000) + oneJan.getDay() + 1) / 7);
+        return `${date.getFullYear()}-W${weekNum}`;
+      } else if (level === 'monthly') {
+        // Get year and month
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      } else if (level === 'quarterly') {
+        // Use 4-month quarters (0-3, 4-7, 8-11)
+        const quarter = Math.floor(date.getMonth() / 4) + 1;
+        return `${date.getFullYear()}-Q${quarter}`;
+      }
+      return dateStr; // For daily, return as is
+    };
+    
+    // Helper function to format aggregation key for display
+    const formatAggregationKey = (key: string, level: string): string => {
+      if (level === 'weekly') {
+        // Format: 2023-W1 -> 2023-W1
+        return key;
+      } else if (level === 'monthly') {
+        // Format: 2023-01 -> 2023-01
+        return key;
+      } else if (level === 'quarterly') {
+        // Format: 2023-Q1 -> 2023-Q1
+        return key;
+      }
+      return key;
+    };
+    
+    // Aggregate the data based on determined level
+    let aggregatedData: any[] = [];
+    
+    if (aggregationLevel === 'daily') {
+      // For daily view, use data as is, but ensure proper date formatting
+      aggregatedData = dailySalesData.map(item => ({
+        ...item,
+        date: item.date // Keep date as is for daily view
+      }));
+    } else {
+      // For weekly or monthly, aggregate the values
+      const aggregated: Record<string, any> = {};
+      
+      dailySalesData.forEach(item => {
+        const key = getAggregationKey(item.date, aggregationLevel);
+        
+        if (!aggregated[key]) {
+          aggregated[key] = {
+            date: formatAggregationKey(key, aggregationLevel),
+            revenue: 0,
+            profit: 0,
+            costOfGoods: 0,
+            ordersCount: 0,
+            dayCount: 0
+          };
+        }
+        
+        aggregated[key].revenue += item.revenue;
+        aggregated[key].profit += item.profit;
+        aggregated[key].costOfGoods += item.costOfGoods;
+        aggregated[key].ordersCount += item.ordersCount;
+        aggregated[key].dayCount += 1;
+      });
+      
+      // Convert to array and sort by date
+      aggregatedData = Object.values(aggregated).sort((a, b) => {
+        return a.date.localeCompare(b.date);
+      });
+    }
+    
+    // Handle outliers and smoothing for better visualization
+    if (aggregatedData.length > 0) {
+      // Calculate stats for outlier detection
+      const revenueValues = aggregatedData.map(item => item.revenue);
+      const avgRevenue = revenueValues.reduce((sum, val) => sum + val, 0) / revenueValues.length;
+      const stdDevRevenue = Math.sqrt(
+        revenueValues.reduce((sum, val) => sum + Math.pow(val - avgRevenue, 2), 0) / revenueValues.length
+      );
+      
+      // Cap extreme outliers (beyond 3 standard deviations)
+      const revenueUpperLimit = avgRevenue + (3 * stdDevRevenue);
+      
+      console.log(`Revenue stats - Avg: ${avgRevenue}, StdDev: ${stdDevRevenue}, UpperLimit: ${revenueUpperLimit}`);
+      
+      // Apply caps to extreme outliers while maintaining proportions
+      aggregatedData = aggregatedData.map(item => {
+        if (item.revenue > revenueUpperLimit) {
+          console.log(`Capping outlier: ${item.date} revenue ${item.revenue} -> ${revenueUpperLimit}`);
+          const ratio = item.revenue ? revenueUpperLimit / item.revenue : 1;
+          return {
+            ...item,
+            revenue: Math.round(revenueUpperLimit),
+            profit: Math.round(item.profit * ratio),
+            costOfGoods: Math.round(item.costOfGoods * ratio)
+          };
+        }
+        return item;
+      });
+    }
+    
+    // Final data for the chart
+    const salesOverTime = aggregatedData;
+    
+    console.log(`Generated ${salesOverTime.length} data points for chart using ${aggregationLevel} aggregation`);
+    
+    // If no data for the period, provide empty array
+    if (salesOverTime.length === 0 && startDate && endDate) {
+      console.log(`No data found for date range, creating empty entries`);
+      
+      // Create appropriate entries based on aggregation level
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const dateArray = [];
+      
+      if (aggregationLevel === 'quarterly') {
+        // Create quarterly entries for 4-month quarters
+        let currentQuarter = new Date(start.getFullYear(), Math.floor(start.getMonth() / 4) * 4, 1);
+        while (currentQuarter <= end) {
+          const quarter = Math.floor(currentQuarter.getMonth() / 4) + 1;
+          const quarterKey = `${currentQuarter.getFullYear()}-Q${quarter}`;
+          
+          // Log quarterly date creation for debugging
+          console.log(`Creating empty quarterly entry: ${quarterKey} for date ${currentQuarter.toISOString().split('T')[0]}`);
+          
+          dateArray.push({
+            date: quarterKey,
+            revenue: 0,
+            profit: 0,
+            costOfGoods: 0
+          });
+          // Move to next 4-month quarter
+          currentQuarter.setMonth(currentQuarter.getMonth() + 4);
+        }
+      } else if (aggregationLevel === 'monthly') {
+        // Create monthly entries
+        let currentMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+        while (currentMonth <= end) {
+          const monthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+          dateArray.push({
+            date: monthKey,
+            revenue: 0,
+            profit: 0,
+            costOfGoods: 0
+          });
+          currentMonth.setMonth(currentMonth.getMonth() + 1);
+        }
+      } else if (aggregationLevel === 'weekly') {
+        // Create weekly entries (simplified)
+        let currentDate = new Date(start);
+        while (currentDate <= end) {
+          const year = currentDate.getFullYear();
+          const oneJan = new Date(year, 0, 1);
+          const weekNum = Math.ceil((((currentDate.getTime() - oneJan.getTime()) / 86400000) + oneJan.getDay() + 1) / 7);
+          const weekKey = `${year}-W${weekNum}`;
+          
+          dateArray.push({
+            date: weekKey,
+            revenue: 0,
+            profit: 0,
+            costOfGoods: 0
+          });
+          
+          // Move to next week
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+      } else {
+        // Daily entries (as before)
+        let currentDate = new Date(start);
+        while (currentDate <= end) {
+          const dateString = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          dateArray.push({
+            date: dateString,
+            revenue: 0,
+            profit: 0,
+            costOfGoods: 0
+          });
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      }
+      
+      console.log(`Created ${dateArray.length} empty entries for ${aggregationLevel} view`);
+      salesOverTime.push(...dateArray);
+    }
 
     // Merge real metrics with mock data
     const dashboardData = {
@@ -373,8 +699,23 @@ export async function GET(req: NextRequest) {
         ...stats,
         costOfGoods: realCogs,
         profitMargin: profit // Use actual profit value in RON instead of percentage
-      }
+      },
+      salesOverTime: salesOverTime.map(item => ({
+        ...item,
+        // Don't distribute COGS - only show on the actual date it occurred
+        costOfGoods: typeof item.costOfGoods === 'number' ? item.costOfGoods : 0
+      }))
     };
+    
+    // Calculate exact totals that will be used in the chart summary to match top stats cards
+    const chartTotals = {
+      revenue: stats.grossRevenue,
+      profit: profit,
+      costOfGoods: realCogs
+    };
+    
+    // Add chart totals to the response
+    dashboardData.chartTotals = chartTotals;
 
     return NextResponse.json({ 
       success: true, 

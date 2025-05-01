@@ -59,6 +59,11 @@ export interface DashboardData {
     emagCommission: number;
     profitMargin: number;
   }>;
+  chartTotals?: {
+    revenue: number;
+    profit: number;
+    costOfGoods: number;
+  };
 }
 
 /**

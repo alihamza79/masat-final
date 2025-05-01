@@ -564,6 +564,7 @@ export default function Dashboard() {
               <RevenueChart
                 data={dashboardData ? dashboardData.salesOverTime : []}
                 isLoading={isLoading}
+                chartTotals={dashboardData?.chartTotals}
               />
             </Grid>
             
