@@ -1,6 +1,7 @@
 "use client";
 import PageContainer from "@/app/components/container/PageContainer";
-import { Alert, Box, Grid, Stack, Typography, CircularProgress } from "@mui/material";
+import { useIntegrations } from "@/lib/hooks/useIntegrations";
+import { Alert, Box, CircularProgress, Grid, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   IconCash,
@@ -11,16 +12,16 @@ import {
   IconReportMoney,
   IconShoppingCart,
   IconTimeline,
-  IconTruckDelivery
+  IconTruckDelivery,
+  IconCoin
 } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
-import { useIntegrations } from "@/lib/hooks/useIntegrations";
-import { Integration } from "@/lib/services/integrationService";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Custom components
 import EnhancedDistributionChart from "@/app/components/dashboards/custom/EnhancedDistributionChart";
+import IntegrationFilter from "@/app/components/dashboards/custom/IntegrationFilter";
 import OrdersByIntegration from "@/app/components/dashboards/custom/OrdersByIntegration";
 import PeriodSelector, { PeriodType } from "@/app/components/dashboards/custom/PeriodSelector";
 import ProductOffersTable from "@/app/components/dashboards/custom/ProductOffersTable";
@@ -28,7 +29,6 @@ import ProductPerformanceChart from "@/app/components/dashboards/custom/ProductP
 import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
 import TopStatsCard from "@/app/components/dashboards/custom/TopStatsCard";
 import DashboardCard from "@/app/components/shared/DashboardCard";
-import IntegrationFilter from "@/app/components/dashboards/custom/IntegrationFilter";
 
 // Services and utilities
 import { calculateDateRange, formatDateForAPI } from "@/app/components/dashboards/custom/dateUtils";
@@ -527,9 +527,9 @@ export default function Dashboard() {
               </Grid>
               <Grid item xs={12} sm={6} md={4} lg={2}>
                 <TopStatsCard
-                  title="Profit Margin"
-                  value={dashboardData ? `${dashboardData.orderStats.profitMargin.toFixed(1)}%` : "0%"}
-                  icon={<IconPercentage />}
+                  title="Profit"
+                  value={dashboardData ? formatCurrency(dashboardData.orderStats.profitMargin) : "RON 0"}
+                  icon={<IconCoin />}
                   colorScheme="warning"
                 />
               </Grid>
