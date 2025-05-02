@@ -6,6 +6,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { IconCalendar } from '@tabler/icons-react';
 import React from 'react';
 import { ExpenseType } from '@/lib/hooks/useExpenses';
+import { useTheme } from '@mui/material/styles';
 
 interface RegularExpenseFieldsProps {
   type: ExpenseType;
@@ -34,6 +35,8 @@ const RegularExpenseFields = ({
   errors,
   setErrors
 }: RegularExpenseFieldsProps) => {
+  const theme = useTheme();
+
   return (
     <Stack spacing={3}>
       {type !== 'cogs' && (
@@ -53,7 +56,21 @@ const RegularExpenseFields = ({
           required
           error={Boolean(errors.description)}
           helperText={errors.description}
-          inputProps={{ style: { textAlign: 'center' } }}
+          InputProps={{
+            sx: { 
+              '& input': { 
+                padding: '14px 14px'
+              } 
+            }
+          }}
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+              '&:hover fieldset': {
+                borderColor: theme.palette.primary.main,
+              }
+            }
+          }}
         />
       )}
 
