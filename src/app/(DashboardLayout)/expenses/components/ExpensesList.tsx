@@ -34,6 +34,7 @@ import ExpenseDialog from './ExpenseDialog';
 import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
 import useExpenses, { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
 import { format } from 'date-fns';
+import { ProductImage } from './expense-components';
 
 const ExpensesList = () => {
   const theme = useTheme();
@@ -302,24 +303,33 @@ const ExpensesList = () => {
               <Table size={isMobile ? "small" : "medium"}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Description</TableCell>
-                    {!isMobile && <TableCell>Type</TableCell>}
-                    <TableCell>Amount</TableCell>
-                    {!isMobile && <TableCell>Date</TableCell>}
-                    {!isMobile && <TableCell>Status</TableCell>}
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell sx={{ minWidth: 280, maxWidth: 400 }} align="left">Description</TableCell>
+                    {!isMobile && <TableCell sx={{ width: 120 }} align="center">Type</TableCell>}
+                    <TableCell sx={{ width: 120 }} align="center">Amount</TableCell>
+                    {!isMobile && <TableCell sx={{ width: 120 }} align="center">Date</TableCell>}
+                    {!isMobile && <TableCell sx={{ width: 100 }} align="center">Status</TableCell>}
+                    <TableCell align="right" sx={{ width: 70 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {expenses.map((expense: Expense) => (
                     <TableRow key={expense._id}>
-                      <TableCell>
-                        {expense.description}
+                      <TableCell align="left">
+                        {expense.type === 'cogs' && expense.product ? (
+                          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-start">
+                            <Box sx={{ width: 32, height: 32, flexShrink: 0 }}>
+                              <ProductImage product={expense.product} size="small" />
+                            </Box>
+                            <Typography variant="body2">{expense.description}</Typography>
+                          </Stack>
+                        ) : (
+                          expense.description
+                        )}
                         {isMobile && (
                           <>
-                            <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: "flex-start" }}>
                               <Chip
-                                label={expense.type.toUpperCase()}
+                                label={expense.type === 'one-time' ? 'ONE-TIME' : expense.type.toUpperCase()}
                                 color={
                                   expense.type === 'cogs'
                                     ? 'warning'
@@ -340,9 +350,9 @@ const ExpensesList = () => {
                         )}
                       </TableCell>
                       {!isMobile && (
-                        <TableCell>
+                        <TableCell align="center">
                           <Chip
-                            label={expense.type.toUpperCase()}
+                            label={expense.type === 'one-time' ? 'ONE-TIME' : expense.type.toUpperCase()}
                             color={
                               expense.type === 'cogs'
                                 ? 'warning'
@@ -354,12 +364,14 @@ const ExpensesList = () => {
                           />
                         </TableCell>
                       )}
-                      <TableCell>{expense.amount.toLocaleString()} RON</TableCell>
-                      {!isMobile && <TableCell>{formatDate(expense.date)}</TableCell>}
+                      <TableCell align="center">{expense.amount.toLocaleString()} RON</TableCell>
+                      {!isMobile && <TableCell align="center">{formatDate(expense.date)}</TableCell>}
                       {!isMobile && (
-                        <TableCell>
-                          {expense.isRecurring && (
+                        <TableCell align="center">
+                          {expense.isRecurring ? (
                             <Chip label="Recurring" color="success" size="small" />
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">-</Typography>
                           )}
                         </TableCell>
                       )}
