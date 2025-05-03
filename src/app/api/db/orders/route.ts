@@ -83,14 +83,53 @@ export async function POST(request: NextRequest) {
     
     await connectToDatabase();
     
-    // Map the orders; for each order, remove the 'id' field and set 'emagOrderId' to that value,
-    // and include integrationId
+    // Map orders with ALL explicit fields to ensure MongoDB saves them
     const formattedOrders = orders.map(order => {
       const { id, ...orderData } = order;
+      
+      // Format all document fields explicitly with defaults
       return {
-        ...orderData,
         integrationId,
-        emagOrderId: id
+        emagOrderId: id,
+        
+        // Original fields (already in schema)
+        status: orderData.status || 0,
+        payment_mode_id: orderData.payment_mode_id || 0,
+        total_amount: orderData.total_amount || 0,
+        created: orderData.created || null,
+        date: orderData.date || null,
+        customer: orderData.customer || null,
+        delivery_mode: orderData.delivery_mode || null,
+        payment_mode: orderData.payment_mode || null,
+        products: orderData.products || [],
+        details: orderData.details || [],
+        
+        // Additional fields we want to save
+        vendor_name: orderData.vendor_name || null,
+        type: orderData.type || null,
+        parent_id: orderData.parent_id || null,
+        modified: orderData.modified || null,
+        payment_status: orderData.payment_status || null,
+        shipping_tax: orderData.shipping_tax || 0,
+        shipping_tax_voucher_split: orderData.shipping_tax_voucher_split || [],
+        vouchers: orderData.vouchers || [],
+        proforms: orderData.proforms || [],
+        attachments: orderData.attachments || [],
+        cashed_co: orderData.cashed_co || 0,
+        cashed_cod: orderData.cashed_cod || 0,
+        cancellation_request: orderData.cancellation_request || null,
+        has_editable_products: orderData.has_editable_products || 0,
+        refunded_amount: orderData.refunded_amount || "0",
+        is_complete: orderData.is_complete || 0,
+        reason_cancellation: orderData.reason_cancellation || null,
+        refund_status: orderData.refund_status || null,
+        maximum_date_for_shipment: orderData.maximum_date_for_shipment || null,
+        late_shipment: orderData.late_shipment || 0,
+        flags: orderData.flags || [],
+        emag_club: orderData.emag_club || 0,
+        finalization_date: orderData.finalization_date || null,
+        enforced_vendor_courier_accounts: orderData.enforced_vendor_courier_accounts || null,
+        weekend_delivery: orderData.weekend_delivery || 0
       };
     });
     
