@@ -1,8 +1,10 @@
 'use client';
 import { Grid, Box, Card, Typography, Stack, useTheme, useMediaQuery, Skeleton } from '@mui/material';
 import { IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react';
-import useExpenses from '@/lib/hooks/useExpenses';
+import useExpenses, { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
 import useExpenseStats from '@/lib/hooks/useExpenseStats';
+import { useMemo } from 'react';
+import { subYears, format, isWithinInterval } from 'date-fns';
 
 interface ExpensesSummaryCardsProps {
   onlyFirstTwo?: boolean;
@@ -24,31 +26,98 @@ const ExpensesSummaryCards: React.FC<ExpensesSummaryCardsProps> = ({
   // Calculate expense statistics
   const stats = useExpenseStats(expenses);
 
-  // Create cards data based on expense stats
+  // Calculate year-over-year percentages
+  const yearOverYearComparison = useMemo(() => {
+    const result = {
+      'one-time': 0,
+      'monthly': 0,
+      'annually': 0,
+      'cogs': 0
+    };
+    
+    if (!expenses || expenses.length === 0) {
+      return result;
+    }
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const lastYear = currentYear - 1;
+    
+    // Get expenses from this year and last year by comparing year values
+    const thisYearExpenses = expenses.filter((expense: Expense) => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate.getFullYear() === currentYear;
+    });
+    
+    const lastYearExpenses = expenses.filter((expense: Expense) => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate.getFullYear() === lastYear;
+    });
+    
+    // Calculate totals by expense type for this year and last year
+    const thisYearByType = {
+      'one-time': 0,
+      'monthly': 0,
+      'annually': 0,
+      'cogs': 0
+    };
+    
+    const lastYearByType = {
+      'one-time': 0,
+      'monthly': 0,
+      'annually': 0,
+      'cogs': 0
+    };
+    
+    thisYearExpenses.forEach((expense: Expense) => {
+      thisYearByType[expense.type as keyof typeof thisYearByType] += expense.amount;
+    });
+    
+    lastYearExpenses.forEach((expense: Expense) => {
+      lastYearByType[expense.type as keyof typeof lastYearByType] += expense.amount;
+    });
+    
+    // Calculate percentage change
+    Object.keys(result).forEach(type => {
+      const typedKey = type as keyof typeof result;
+      if (lastYearByType[typedKey] > 0) {
+        const change = ((thisYearByType[typedKey] - lastYearByType[typedKey]) / lastYearByType[typedKey]) * 100;
+        result[typedKey] = parseFloat(change.toFixed(1));
+      } else if (thisYearByType[typedKey] > 0) {
+        // If no expenses last year but some this year, show 100% increase
+        result[typedKey] = 100;
+      }
+    });
+
+    
+    return result;
+  }, [expenses]);
+
+  // Create cards data based on expense stats and year-over-year comparison
   const summaryData = [
     {
       title: 'One Time',
       amount: stats.expensesByType['one-time'],
-      change: 8.4, // Sample value for now
-      type: 'increase' as const,
+      change: yearOverYearComparison['one-time'],
+      type: yearOverYearComparison['one-time'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
     {
       title: 'Monthly',
       amount: stats.expensesByType['monthly'],
-      change: 5.6,
-      type: 'increase' as const,
+      change: yearOverYearComparison['monthly'],
+      type: yearOverYearComparison['monthly'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
     {
       title: 'Annually',
       amount: stats.expensesByType['annually'],
-      change: 12.3,
-      type: 'decrease' as const,
+      change: yearOverYearComparison['annually'],
+      type: yearOverYearComparison['annually'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
     {
       title: 'COGS',
       amount: stats.expensesByType['cogs'],
-      change: 3.2,
-      type: 'increase' as const,
+      change: yearOverYearComparison['cogs'],
+      type: yearOverYearComparison['cogs'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
   ];
 
