@@ -37,6 +37,7 @@ export interface DashboardData {
   paymentMethodStats: {
     card: number;
     cod: number;
+    bank: number;
   };
   salesOverTime: Array<{
     date: string;
@@ -58,6 +59,24 @@ export interface DashboardData {
     costOfGoods: number;
     emagCommission: number;
     profitMargin: number;
+    image?: string;
+  }>;
+  allProducts?: Array<{
+    id: string;
+    emagProductOfferId?: number | string;
+    name: string;
+    part_number: string;
+    part_number_key: string;
+    averagePrice: number;
+    sold: number;
+    refunded: number;
+    grossRevenue: number;
+    costOfGoods: number;
+    emagCommission: number;
+    profitMargin: number;
+    profit: number;
+    shipping: number;
+    image?: string;
   }>;
   chartTotals?: {
     revenue: number;
@@ -117,95 +136,26 @@ export async function getDashboardData(
 export function getMockDashboardData(): DashboardData {
   return {
     orderStats: {
-      totalOrders: 83,
-      grossRevenue: 23680,
-      profitMargin: 15.2,
-      costOfGoods: 16520,
-      refundedOrders: 7,
-      shippingRevenue: 1640
+      totalOrders: 0,
+      grossRevenue: 0,
+      profitMargin: 0,
+      costOfGoods: 0,
+      refundedOrders: 0,
+      shippingRevenue: 0
     },
     deliveryMethodStats: {
-      home: 34,
-      locker: 12
+      home: 0,
+      locker: 0
     },
     paymentMethodStats: {
-      card: 28,
-      cod: 18
+      card: 0,
+      cod: 0,
+      bank: 0
     },
-    salesOverTime: [
-      { date: '2023-01-01', revenue: 12500, profit: 3750, costOfGoods: 7500 },
-      { date: '2023-01-02', revenue: 11000, profit: 3300, costOfGoods: 6600 },
-      { date: '2023-01-03', revenue: 15000, profit: 4500, costOfGoods: 9000 },
-      { date: '2023-01-04', revenue: 16800, profit: 5040, costOfGoods: 10080 },
-      { date: '2023-01-05', revenue: 14200, profit: 4260, costOfGoods: 8520 },
-      { date: '2023-01-06', revenue: 19500, profit: 5850, costOfGoods: 11700 },
-      { date: '2023-01-07', revenue: 21000, profit: 6300, costOfGoods: 12600 },
-      { date: '2023-01-08', revenue: 18200, profit: 5460, costOfGoods: 10920 },
-      { date: '2023-01-09', revenue: 17900, profit: 5370, costOfGoods: 10740 },
-      { date: '2023-01-10', revenue: 22500, profit: 6750, costOfGoods: 13500 }
-    ],
-    salesByIntegration: [
-      { integrationName: 'eMAG Romania', ordersCount: 156 },
-      { integrationName: 'eMAG Bulgaria', ordersCount: 94 },
-      { integrationName: 'eMAG Hungary', ordersCount: 78 }
-    ],
-    productStats: [
-      {
-        id: 'PROD-1',
-        name: 'Baby Carrier Ergonomic',
-        averagePrice: 320,
-        sold: 14,
-        refunded: 1,
-        grossRevenue: 4480,
-        costOfGoods: 2800,
-        emagCommission: 358,
-        profitMargin: 29.5
-      },
-      {
-        id: 'PROD-2',
-        name: 'Baby Monitor Smart',
-        averagePrice: 450,
-        sold: 10,
-        refunded: 0,
-        grossRevenue: 4500,
-        costOfGoods: 2700,
-        emagCommission: 360,
-        profitMargin: 32.0
-      },
-      {
-        id: 'PROD-3',
-        name: 'Silicon Feeding Set',
-        averagePrice: 89,
-        sold: 28,
-        refunded: 2,
-        grossRevenue: 2492,
-        costOfGoods: 1400,
-        emagCommission: 199,
-        profitMargin: 35.8
-      },
-      {
-        id: 'PROD-4',
-        name: 'Baby Crib Premium',
-        averagePrice: 780,
-        sold: 6,
-        refunded: 1,
-        grossRevenue: 4680,
-        costOfGoods: 3000,
-        emagCommission: 374,
-        profitMargin: 28.0
-      },
-      {
-        id: 'PROD-5',
-        name: 'Stroller Compact Foldable',
-        averagePrice: 520,
-        sold: 8,
-        refunded: 1,
-        grossRevenue: 4160,
-        costOfGoods: 2800,
-        emagCommission: 333,
-        profitMargin: 24.7
-      }
-    ]
+    salesOverTime: [],
+    salesByIntegration: [],
+    productStats: [],
+    allProducts: []
   };
 }
 

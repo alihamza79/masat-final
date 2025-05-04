@@ -11,13 +11,10 @@ const OrderSchema = new mongoose.Schema({
   emagOrderId: { type: String, required: true },
   status: { type: Number },
   payment_mode_id: { type: Number },
+  payment_mode: { type: String },
   products: { type: Array },
-  customer: {
-    date: { type: String },
-    delivery_mode: { type: String },
-    payment_mode: { type: String }
-  },
   shipping_tax: { type: Number, default: 0 },
+  delivery_mode: { type: String },
   cancellation_request: { type: String },
   refunded_amount: { type: String, default: "0" },
   date: { type: String }, // Add top-level date field
@@ -93,7 +90,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ 
         success: true, 
         data: {
-          ...getMockDashboardData(),
           orderStats: {
             totalOrders: 0,
             grossRevenue: 0,
@@ -101,7 +97,20 @@ export async function GET(req: NextRequest) {
             refundedOrders: 0,
             profitMargin: 0,
             costOfGoods: 0
-          }
+          },
+          deliveryMethodStats: {
+            home: 0,
+            locker: 0
+          },
+          paymentMethodStats: {
+            card: 0,
+            cod: 0,
+            bank: 0
+          },
+          salesOverTime: [],
+          salesByIntegration: [],
+          productStats: [],
+          allProducts: []
         }
       });
     }
@@ -759,6 +768,418 @@ export async function GET(req: NextRequest) {
       // Keep using mock data for this section if there's an error
     }
 
+    // Get real data for delivery methods
+    try {
+      const deliveryMethodStats = await Order.aggregate([
+        { $match: queryFilter },
+        {
+          $group: {
+            _id: "$delivery_mode",
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+      
+      console.log(`Found delivery methods:`, deliveryMethodStats);
+      
+      // Map delivery_mode values to expected frontend values
+      // pickup -> locker, courier -> home
+      let homeCount = 0;
+      let lockerCount = 0;
+      
+      deliveryMethodStats.forEach(stat => {
+        if (stat._id === "courier") {
+          homeCount = stat.count;
+        } else if (stat._id === "pickup") {
+          lockerCount = stat.count;
+        }
+      });
+      
+      console.log(`Delivery methods mapped: home=${homeCount}, locker=${lockerCount}`);
+      
+      // Add to dashboard data - only if we found real data
+      if (deliveryMethodStats.length > 0) {
+        dashboardData.deliveryMethodStats = {
+          home: homeCount,
+          locker: lockerCount
+        };
+      } else {
+        // Set to empty values instead of mock data
+        dashboardData.deliveryMethodStats = {
+          home: 0,
+          locker: 0
+        };
+      }
+    } catch (error) {
+      console.error('Error getting delivery method stats:', error);
+      // Set to empty values instead of using mock data
+      dashboardData.deliveryMethodStats = {
+        home: 0,
+        locker: 0
+      };
+    }
+
+    // Get real data for payment methods
+    try {
+      const paymentMethodStats = await Order.aggregate([
+        { $match: queryFilter },
+        {
+          $group: {
+            _id: "$payment_mode",
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+      
+      console.log(`Found payment methods:`, paymentMethodStats);
+      
+      // Initialize counters for each payment type
+      let cardCount = 0;
+      let codCount = 0;
+      let bankCount = 0;
+      
+      // Categorize payment methods based on text values
+      paymentMethodStats.forEach(stat => {
+        const paymentMode = stat._id ? stat._id.toString().toUpperCase() : '';
+        
+        if (paymentMode.includes('CARD') || paymentMode === '1') {
+          // CARD online or payment_mode_id === 1
+          cardCount += stat.count;
+        } else if (paymentMode.includes('RAMBURS')) {
+          // RAMBURS (Cash on Delivery)
+          codCount += stat.count;
+        } else if (paymentMode.includes('ORDIN') || paymentMode.includes('PLATA')) {
+          // Ordin de Plata (Bank Payment)
+          bankCount += stat.count;
+        } else if (!paymentMode || paymentMode === 'NULL') {
+          // For orders with no payment mode, distribute evenly between card and COD
+          // or use some other logic based on your business rules
+          codCount += stat.count;
+        } else {
+          // Other payment methods - consider as COD by default
+          codCount += stat.count;
+        }
+      });
+      
+      console.log(`Payment methods categorized: card=${cardCount}, cod=${codCount}, bank=${bankCount}`);
+      
+      // Add to dashboard data - only if we found real data
+      if (paymentMethodStats.length > 0) {
+        dashboardData.paymentMethodStats = {
+          card: cardCount,
+          cod: codCount,
+          bank: bankCount
+        };
+      } else {
+        // Set to empty values instead of mock data
+        dashboardData.paymentMethodStats = {
+          card: 0,
+          cod: 0,
+          bank: 0
+        };
+      }
+    } catch (error) {
+      console.error('Error getting payment method stats:', error);
+      // Set to empty values instead of using mock data
+      dashboardData.paymentMethodStats = {
+        card: 0,
+        cod: 0,
+        bank: 0
+      };
+    }
+
+    // Get real data for top products by revenue - UPDATED APPROACH
+    try {
+      console.log('Calculating product performance data...');
+      
+      // Define ProductOffer schema to fetch user's product offers
+      const ProductOfferSchema = new mongoose.Schema({
+        integrationId: { type: mongoose.Schema.Types.ObjectId, required: true },
+        emagProductOfferId: { type: Number, required: true },
+        name: { type: String, required: true },
+        sale_price: { type: Number },
+        part_number: { type: String },
+        part_number_key: { type: String },
+        images: { type: Array },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now }
+      });
+      
+      // Create or retrieve the ProductOffer model
+      const ProductOffer = mongoose.models.ProductOffer || mongoose.model('ProductOffer', ProductOfferSchema);
+      
+      // 1. First fetch all product offers for the user's integrations
+      const userProductOffers = await ProductOffer.find({
+        integrationId: { $in: userIntegrationIds }
+      }).select('_id emagProductOfferId name sale_price part_number part_number_key images');
+      
+      console.log(`Found ${userProductOffers.length} product offers for user's integrations`);
+      
+      // Extract product IDs for orders lookup
+      const productIds = userProductOffers.map(product => ({
+        emagProductOfferId: product.emagProductOfferId,
+        part_number_key: product.part_number_key
+      }));
+      
+      console.log(`Extracting data for ${productIds.length} unique products`);
+      
+      // Adjust query filter for product filtering
+      let orderProductFilter = { ...queryFilter };
+      
+      // 2. Get order data for these products
+      const orderProductStats = await Order.aggregate([
+        { $match: orderProductFilter },
+        // Unwind products array to work with individual products
+        { $unwind: "$products" },
+        // Group by product identifiers
+        {
+          $group: {
+            _id: {
+              part_number_key: "$products.part_number_key"
+            },
+            totalSold: { 
+              $sum: { 
+                $convert: { 
+                  input: "$products.quantity", 
+                  to: "int",
+                  onError: 1,
+                  onNull: 1
+                } 
+              }
+            },
+            totalRefunded: {
+              $sum: {
+                $cond: [
+                  { $ne: ["$cancellation_request", null] },
+                  { 
+                    $convert: { 
+                      input: "$products.quantity", 
+                      to: "int",
+                      onError: 0,
+                      onNull: 0
+                    } 
+                  },
+                  0
+                ]
+              }
+            },
+            totalRevenue: {
+              $sum: {
+                $multiply: [
+                  { $toDouble: { $ifNull: ["$products.sale_price", "0"] } },
+                  { 
+                    $convert: { 
+                      input: "$products.quantity", 
+                      to: "int",
+                      onError: 1,
+                      onNull: 1
+                    } 
+                  }
+                ]
+              }
+            },
+            totalShipping: {
+              $sum: { $ifNull: ["$shipping_tax", 0] }
+            },
+            totalOrders: { $sum: 1 },
+            prices: {
+              $push: {
+                price: { $toDouble: { $ifNull: ["$products.sale_price", "0"] } },
+                quantity: { 
+                  $convert: { 
+                    input: "$products.quantity", 
+                    to: "int",
+                    onError: 1,
+                    onNull: 1
+                  } 
+                }
+              }
+            }
+          }
+        }
+      ]);
+      
+      console.log(`Found order data for ${orderProductStats.length} products`);
+      
+      // Create a map of product stats by part_number_key for easy lookup
+      const productStatsMap = new Map();
+      orderProductStats.forEach(stats => {
+        productStatsMap.set(stats._id.part_number_key, stats);
+      });
+      
+      // 3. Get COGS data from expenses
+      const Expense = mongoose.models.Expense || mongoose.model('Expense', ExpenseSchema);
+      
+      // Build expense date filter based on the same parameters as orders
+      let expenseDateFilter = {};
+      if (startDate && endDate) {
+        try {
+          const startDateObj = new Date(startDate);
+          const endDateObj = new Date(endDate);
+          
+          // Set end date to end of day for inclusive comparison
+          endDateObj.setHours(23, 59, 59, 999);
+          
+          expenseDateFilter = {
+            date: {
+              $gte: startDateObj,
+              $lte: endDateObj
+            }
+          };
+          
+          console.log(`Applying date filter to expenses: ${startDate} to ${endDate}`);
+        } catch (error) {
+          console.error('Error creating expense date filter:', error);
+        }
+      }
+      
+      // Fetch all COGS expenses for this user
+      const cogsExpenses = await Expense.find({
+        userId: session.user.id,
+        type: 'cogs',
+        ...(Object.keys(expenseDateFilter).length > 0 ? expenseDateFilter : {})
+      });
+      
+      console.log(`Found ${cogsExpenses.length} COGS expenses for the user in the selected period`);
+      
+      // Create a map of COG expenses by product identifier
+      const cogsExpensesMap = new Map();
+      
+      cogsExpenses.forEach(expense => {
+        if (expense.product && expense.product.emagProductOfferId) {
+          // Use emagProductOfferId as the key
+          cogsExpensesMap.set(expense.product.emagProductOfferId.toString(), {
+            amount: expense.amount,
+            unitsCount: expense.product.unitsCount,
+            costPerUnit: expense.product.costPerUnit,
+            part_number_key: expense.product.part_number_key
+          });
+          
+          // Also map by part_number_key for alternative lookup
+          if (expense.product.part_number_key) {
+            cogsExpensesMap.set(expense.product.part_number_key, {
+              amount: expense.amount,
+              unitsCount: expense.product.unitsCount,
+              costPerUnit: expense.product.costPerUnit,
+              emagProductOfferId: expense.product.emagProductOfferId
+            });
+          }
+        }
+      });
+      
+      console.log(`Mapped ${cogsExpensesMap.size} unique product COG expenses`);
+      
+      // 4. Process all product offers and merge with order data
+      const processedProducts = userProductOffers.map(product => {
+        // Find order stats for this product
+        const stats = productStatsMap.get(product.part_number_key) || null;
+        
+        // Default values if no orders
+        let soldCount = 0;
+        let refundedCount = 0;
+        let grossRevenue = 0;
+        let shippingCost = 0;
+        let averagePrice = product.sale_price || 0;
+        
+        // If we have order stats, calculate metrics
+        if (stats) {
+          soldCount = stats.totalSold;
+          refundedCount = stats.totalRefunded;
+          grossRevenue = Math.round(stats.totalRevenue);
+          shippingCost = Math.round(stats.totalShipping);
+          
+          // Calculate average price from orders if available
+          let totalValue = 0;
+          let totalQty = 0;
+          stats.prices.forEach((p: any) => {
+            totalValue += p.price * p.quantity;
+            totalQty += p.quantity;
+          });
+          
+          if (totalQty > 0) {
+            averagePrice = Math.round((totalValue / totalQty) * 100) / 100;
+          }
+        }
+        
+        // Look for actual COG for this product
+        let actualCostOfGoods = 0; // Default to 0 instead of null
+        
+        // Try to find by emagProductOfferId first
+        const productOfferId = product.emagProductOfferId.toString();
+        if (cogsExpensesMap.has(productOfferId)) {
+          actualCostOfGoods = cogsExpensesMap.get(productOfferId).amount;
+        } 
+        // If not found, try part_number_key
+        else if (product.part_number_key && cogsExpensesMap.has(product.part_number_key)) {
+          actualCostOfGoods = cogsExpensesMap.get(product.part_number_key).amount;
+        }
+        
+        // Calculate profit: revenue - cog (no shipping)
+        const profit = grossRevenue - actualCostOfGoods;
+        
+        // Only calculate commission, not COG
+        const estimatedCommission = Math.round(grossRevenue * 0.08);
+        
+        // Fixed profit margin for demo purposes
+        const fixedProfitMargin = 32.0;
+        
+        // Get image from product
+        let imageUrl = '';
+        if (product.images && product.images.length > 0) {
+          const mainImage = product.images.find((img: any) => img.display_type === 1) || product.images[0];
+          if (mainImage && mainImage.url) {
+            imageUrl = mainImage.url;
+          }
+        }
+        
+        return {
+          id: product._id.toString(),
+          emagProductOfferId: product.emagProductOfferId,
+          name: product.name,
+          part_number: product.part_number || '',
+          part_number_key: product.part_number_key || '',
+          averagePrice: averagePrice,
+          sold: soldCount,
+          refunded: refundedCount,
+          grossRevenue: grossRevenue,
+          costOfGoods: actualCostOfGoods, // Use actual COG only
+          emagCommission: estimatedCommission,
+          profitMargin: fixedProfitMargin,
+          profit: profit,
+          shipping: shippingCost,
+          image: imageUrl || 'https://marketplace-static.emag.ro/resources/000/028/686/967/28686967.png'
+        };
+      });
+      
+      console.log(`Processed ${processedProducts.length} total products`);
+      
+      // Sort by revenue (descending) for display
+      processedProducts.sort((a, b) => b.grossRevenue - a.grossRevenue);
+      
+      // Use the full processed products list for the products table
+      dashboardData.allProducts = processedProducts;
+      
+      // Take top 5 products by revenue for the chart
+      const top5Products = processedProducts.slice(0, 5);
+      console.log('Top 5 products by revenue:', top5Products);
+      
+      // Add to dashboard data
+      dashboardData.productStats = top5Products;
+    } catch (error) {
+      console.error('Error calculating product performance data:', error);
+      // Return empty array instead of mock data
+      dashboardData.allProducts = [];
+      dashboardData.productStats = [];
+    }
+
+    // If we don't have product data yet, add an empty array
+    if (!dashboardData.allProducts) {
+      dashboardData.allProducts = [];
+    }
+    if (!dashboardData.productStats) {
+      dashboardData.productStats = [];
+    }
+
     return NextResponse.json({ 
       success: true, 
       data: dashboardData
@@ -766,10 +1187,32 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Error fetching dashboard data:', error);
     
-    // Return mock data on error
+    // Return empty data on error
     return NextResponse.json({ 
       success: true, 
-      data: getMockDashboardData()
+      data: {
+        orderStats: {
+          totalOrders: 0,
+          grossRevenue: 0,
+          shippingRevenue: 0,
+          refundedOrders: 0,
+          profitMargin: 0,
+          costOfGoods: 0
+        },
+        deliveryMethodStats: {
+          home: 0,
+          locker: 0
+        },
+        paymentMethodStats: {
+          card: 0,
+          cod: 0,
+          bank: 0
+        },
+        salesOverTime: [],
+        salesByIntegration: [],
+        productStats: [],
+        allProducts: []
+      }
     });
   }
 } 

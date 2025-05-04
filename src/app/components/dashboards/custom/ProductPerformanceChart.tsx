@@ -1,10 +1,9 @@
 import React from 'react';
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
-import { Box, Typography, useTheme, Chip, Stack } from '@mui/material';
-import { IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
+import { Box, Typography, useTheme, Stack } from '@mui/material';
+import { IconTrendingDown } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
-import { alpha } from '@mui/material/styles';
 
 interface ProductPerformanceProps {
   data: {
@@ -35,12 +34,16 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
       .slice(0, 5);
   }, [data]);
   
+  // Store both truncated and full product names
+  const productData = topProducts.map(item => ({
+    fullName: item.name,
+    displayName: item.name.length > 25 ? item.name.substring(0, 25) + '...' : item.name,
+    revenue: item.grossRevenue
+  }));
+
   // Extract data for chart
-  const productNames = topProducts.map(item => item.name.length > 15 
-    ? item.name.substring(0, 15) + '...' 
-    : item.name);
-  const revenueValues = topProducts.map(item => item.grossRevenue);
-  const profitValues = topProducts.map(item => item.grossRevenue * (item.profitMargin / 100));
+  const productNames = productData.map(item => item.displayName);
+  const revenueValues = productData.map(item => item.revenue);
   
   // Calculate totals
   const totalRevenue = revenueValues.reduce((acc, curr) => acc + curr, 0);
@@ -58,6 +61,19 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
     }).format(value);
   };
   
+  // Format currency for x-axis to avoid overlapping
+  const formatXAxisCurrency = (value: number) => {
+    if (value < 0) return '';
+    if (value >= 100000) {
+      return `${Math.round(value / 1000)}K`;
+    } else if (value >= 10000) {
+      return `${Math.round(value / 1000)}K`;
+    } else if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}K`;
+    }
+    return value.toString();
+  };
+  
   // Chart options
   const chartOptions: ApexOptions = {
     chart: {
@@ -68,60 +84,68 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
         show: false,
       },
       parentHeightOffset: 0,
-      offsetX: 0,
-      offsetY: -15,
       animations: {
         enabled: true,
         speed: 800,
-        animateGradually: {
-          enabled: true,
-          delay: 150
-        },
         dynamicAnimation: {
           enabled: true,
           speed: 350
         }
-      },
-      stacked: false,
+      }
     },
     plotOptions: {
       bar: {
         horizontal: true,
-        barHeight: '65%',
-        borderRadius: 6,
+        barHeight: '75%',
+        borderRadius: 3,
         distributed: false,
-        columnWidth: '70%',
         dataLabels: {
-          position: 'top',
+          position: 'bottom',
         },
       },
     },
     dataLabels: {
-      enabled: false,
+      enabled: false
     },
     stroke: {
-      show: true,
-      width: 2,
-      colors: ['transparent']
+      show: false
     },
     grid: {
+      show: true,
+      borderColor: theme.palette.divider,
+      strokeDashArray: 4,
+      position: 'back',
+      xaxis: {
+        lines: {
+          show: true
+        }
+      },
+      yaxis: {
+        lines: {
+          show: false
+        }
+      },
       padding: {
-        top: -25,
-        bottom: -20,
-        left: -5,
-        right: -5
+        top: 0,
+        right: 0,
+        bottom: 5,
+        left: 0
       }
     },
-    colors: [theme.palette.primary.main, alpha(theme.palette.success.main, 0.85)],
+    colors: [theme.palette.primary.main],
     xaxis: {
       categories: productNames,
       labels: {
         show: true,
-        trim: true,
+        formatter: function(val) {
+          // Format x-axis values as short currency
+          return formatXAxisCurrency(Number(val));
+        },
         style: {
-          fontSize: '13px',
+          fontSize: '12px',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         },
+        offsetY: 0
       },
       axisBorder: {
         show: false,
@@ -129,7 +153,12 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
       axisTicks: {
         show: false,
       },
-      min: 0
+      crosshairs: {
+        show: false
+      },
+      min: 0,
+      max: Math.ceil(Math.max(...revenueValues) * 1.15),
+      tickAmount: 5
     },
     yaxis: {
       labels: {
@@ -141,40 +170,32 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
       }
     },
     tooltip: {
+      enabled: true,
       theme: theme.palette.mode,
       x: { show: false },
-      y: {
-        formatter: (val) => formatCurrency(val),
-      },
+      marker: { show: false },
       style: {
         fontSize: '12px',
         fontFamily: theme.typography.fontFamily
-      }
+      },
+      y: {
+        formatter: function(val) {
+          return formatCurrency(val);
+        }
+      },
+      fixed: { enabled: false },
+      onDatasetHover: { highlightDataSeries: false }
     },
     legend: {
-      show: true,
-      position: 'top',
-      fontSize: '14px',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      offsetY: 0,
-      horizontalAlign: 'center',
-      markers: {
-        size: 8
-      },
-      itemMargin: {
-        horizontal: 15
-      }
+      show: false
     }
   };
   
+  // Simple series with only revenue
   const series = [
     {
       name: 'Revenue',
       data: revenueValues
-    },
-    {
-      name: 'Profit',
-      data: profitValues
     }
   ];
   
@@ -200,11 +221,7 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
             <Typography variant="h5" fontWeight={600} color={refundRate > 5 ? 'error.main' : 'success.main'}>
               {refundRate.toFixed(1)}%
             </Typography>
-            {refundRate > 5 ? (
-              <IconTrendingUp size={16} color={theme.palette.error.main} />
-            ) : (
-              <IconTrendingDown size={16} color={theme.palette.success.main} />
-            )}
+            <IconTrendingDown size={16} color={theme.palette.success.main} />
           </Stack>
         </Box>
       </Stack>
@@ -215,14 +232,13 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
         alignItems: 'center', 
         justifyContent: 'center', 
         width: '100%', 
-        minHeight: 320,
-        mx: -3,
+        minHeight: 350,
         position: 'relative',
-        maxWidth: {
-          xs: 'calc(100% + 24px)',
-          sm: 'calc(100% + 24px)',
-          md: 'calc(100% + 30px)'
-        }
+        pl: 0,
+        pr: 0,
+        pb: 4,
+        pt: 0,
+        mx: { xs: -4, sm: -5, md: -6 }
       }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
@@ -234,7 +250,7 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
             series={series}
             type="bar"
             height="100%"
-            width="120%"
+            width="135%"
           />
         ) : (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">

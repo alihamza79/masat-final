@@ -29,6 +29,7 @@ import ProductPerformanceChart from "@/app/components/dashboards/custom/ProductP
 import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
 import TopStatsCard from "@/app/components/dashboards/custom/TopStatsCard";
 import DashboardCard from "@/app/components/shared/DashboardCard";
+import ProductTable from "@/app/components/dashboards/custom/ProductTable";
 
 // Services and utilities
 import { calculateDateRange, formatDateForAPI } from "@/app/components/dashboards/custom/dateUtils";
@@ -301,13 +302,30 @@ export default function Dashboard() {
       console.error('Error fetching dashboard data:', err);
       setError(err.message || 'An error occurred while fetching dashboard data');
       
-      // For development, fall back to mock data
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Using mock data in development mode due to error');
-        setDashboardData(dashboardService.getMockDashboardData());
-      } else {
-        setDashboardData(null);
-      }
+      // Set empty data instead of mock data
+      setDashboardData({
+        orderStats: {
+          totalOrders: 0,
+          grossRevenue: 0,
+          shippingRevenue: 0,
+          refundedOrders: 0,
+          profitMargin: 0,
+          costOfGoods: 0
+        },
+        deliveryMethodStats: {
+          home: 0,
+          locker: 0
+        },
+        paymentMethodStats: {
+          card: 0,
+          cod: 0,
+          bank: 0
+        },
+        salesOverTime: [],
+        salesByIntegration: [],
+        productStats: [],
+        allProducts: [] // Empty array ensures no product items
+      });
     } finally {
       setIsLoading(false);
     }
@@ -361,7 +379,8 @@ export default function Dashboard() {
   
   const paymentMethodsData = dashboardData ? [
     { name: 'Card', value: dashboardData.paymentMethodStats.card },
-    { name: 'COD', value: dashboardData.paymentMethodStats.cod }
+    { name: 'COD', value: dashboardData.paymentMethodStats.cod },
+    { name: 'Bank', value: dashboardData.paymentMethodStats.bank }
   ] : [];
 
   // Get total orders count
@@ -594,8 +613,13 @@ export default function Dashboard() {
                 title="Orders Distribution"
                 subtitle="By delivery and payment methods"
               >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
+                <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
+                  <Grid item xs={12} sm={6} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    height: '100%'
+                  }}>
                     <EnhancedDistributionChart
                       title="Delivery Methods"
                       data={[
@@ -611,12 +635,22 @@ export default function Dashboard() {
                           icon: <IconTimeline size={16} />,
                           color: '#7987ff'
                         }
-                      ]}
+                      ].filter(item => 
+                        // Only include items with non-zero values, or include all if all are zero
+                        item.value > 0 || 
+                        ((dashboardData?.deliveryMethodStats.home || 0) + 
+                         (dashboardData?.deliveryMethodStats.locker || 0) === 0)
+                      )}
                       isLoading={isLoading}
-                      height={250}
+                      height={280}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={6} sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    height: '100%'
+                  }}>
                     <EnhancedDistributionChart
                       title="Payment Methods"
                       data={[
@@ -631,10 +665,22 @@ export default function Dashboard() {
                           value: dashboardData?.paymentMethodStats.cod || 0,
                           icon: <IconCash size={16} />,
                           color: '#ff9f40'
+                        },
+                        { 
+                          name: 'Bank', 
+                          value: dashboardData?.paymentMethodStats.bank || 0,
+                          icon: <IconReportMoney size={16} />,
+                          color: '#4fc3f7'
                         }
-                      ]}
+                      ].filter(item => 
+                        // Only include items with non-zero values, or include all if all are zero
+                        item.value > 0 || 
+                        ((dashboardData?.paymentMethodStats.card || 0) + 
+                         (dashboardData?.paymentMethodStats.cod || 0) + 
+                         (dashboardData?.paymentMethodStats.bank || 0) === 0)
+                      )}
                       isLoading={isLoading}
-                      height={250}
+                      height={280}
                     />
                   </Grid>
                 </Grid>
@@ -655,8 +701,8 @@ export default function Dashboard() {
           
             {/* Products table */}
             <Grid item xs={12}>
-              <ProductOffersTable
-                data={dashboardData ? dashboardData.productStats : []}
+              <ProductTable
+                data={dashboardData?.allProducts || []}
                 isLoading={isLoading}
               />
             </Grid>
