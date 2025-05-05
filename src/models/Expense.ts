@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 
 // Interface for Expense document
 export interface IExpense extends Document {
-  userId: Types.ObjectId | string; // Link to the user who created this expense
+  userId: Types.ObjectId; // Link to the user who created this expense - enforcing ObjectId type
   type: 'one-time' | 'monthly' | 'annually' | 'cogs';
   description: string;
   amount: number;

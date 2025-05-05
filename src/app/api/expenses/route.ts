@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const userId = session.user.id;
+    // Convert userId string to ObjectId for consistent querying
+    const userId = new mongoose.Types.ObjectId(session.user.id);
     
     // Get optional expense ID from query parameters
     const { searchParams } = new URL(request.url);
@@ -99,7 +100,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const userId = session.user.id;
+    // Convert userId string to ObjectId for consistency with MongoDB
+    const userId = new mongoose.Types.ObjectId(session.user.id);
+    
     const body = await request.json();
     const { type, description, amount, date, isRecurring, product } = body;
     
@@ -187,7 +190,9 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const userId = session.user.id;
+    // Convert userId string to ObjectId for consistency with MongoDB
+    const userId = new mongoose.Types.ObjectId(session.user.id);
+    
     const body = await request.json();
     const { id, type, description, amount, date, isRecurring, product } = body;
     
@@ -291,7 +296,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const userId = session.user.id;
+    // Convert userId string to ObjectId for consistency with MongoDB
+    const userId = new mongoose.Types.ObjectId(session.user.id);
     
     // Get expense ID from query parameters
     const { searchParams } = new URL(request.url);

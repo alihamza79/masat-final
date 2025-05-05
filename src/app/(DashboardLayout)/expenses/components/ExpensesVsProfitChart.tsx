@@ -1,24 +1,88 @@
 'use client';
-import { Card, CardContent, Typography, Box, useMediaQuery, Skeleton } from '@mui/material';
+import { Card, CardContent, Typography, Box, useMediaQuery, Skeleton, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
 import useExpenses, { Expense } from '@/lib/hooks/useExpenses';
-import { useMemo } from 'react';
-import { isThisYear, getMonth } from 'date-fns';
+import { useMemo, useState, useEffect } from 'react';
+import { isThisYear, getMonth, format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import dashboardService from '@/lib/services/dashboardService';
+import { useIntegrations } from '@/lib/hooks/useIntegrations';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: boolean, height?: number }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
+  // Get current year for the chart title
+  const currentYear = new Date().getFullYear();
+  
   // Fetch expense data
-  const { expenses, isLoading } = useExpenses();
+  const { expenses, isLoading: isLoadingExpenses } = useExpenses();
+  
+  // Fetch profit data from dashboard API
+  const [isLoadingProfit, setIsLoadingProfit] = useState(true);
+  const [profitData, setProfitData] = useState<number[]>(Array(12).fill(0));
+  const [revenueData, setRevenueData] = useState<number[]>(Array(12).fill(0));
+  const { integrations, isLoading: isLoadingIntegrations } = useIntegrations();
+  
+  // Fetch dashboard data to get profit information
+  useEffect(() => {
+    const fetchProfitData = async () => {
+      if (isLoadingIntegrations || !integrations || integrations.length === 0) {
+        return;
+      }
+      
+      setIsLoadingProfit(true);
+      try {
+        const currentYear = new Date().getFullYear();
+        // Get full year data
+        const startDate = format(new Date(currentYear, 0, 1), 'yyyy-MM-dd');
+        const endDate = format(new Date(currentYear, 11, 31), 'yyyy-MM-dd');
+        
+        // Get all integration IDs
+        const integrationIds = integrations.map(int => int._id as string);
+        
+        const response = await dashboardService.getDashboardData(startDate, endDate, integrationIds);
+        
+        if (response.success && response.data) {
+          // Initialize monthly arrays
+          const monthlyProfit = Array(12).fill(0);
+          const monthlyRevenue = Array(12).fill(0);
+          
+          // Process salesOverTime data to extract monthly profit
+          response.data.salesOverTime.forEach(item => {
+            try {
+              // Check if the date is a full date string (YYYY-MM-DD)
+              if (item.date && item.date.includes('-') && !item.date.includes('Q')) {
+                const date = parseISO(item.date);
+                const month = getMonth(date);
+                monthlyProfit[month] += item.profit;
+                monthlyRevenue[month] += item.revenue;
+              }
+            } catch (error) {
+              console.error('Error processing date:', item.date, error);
+            }
+          });
+          
+          setProfitData(monthlyProfit);
+          setRevenueData(monthlyRevenue);
+        }
+      } catch (error) {
+        console.error('Error fetching profit data:', error);
+      } finally {
+        setIsLoadingProfit(false);
+      }
+    };
+    
+    fetchProfitData();
+  }, [integrations, isLoadingIntegrations]);
+  
+  const isLoading = isLoadingExpenses || isLoadingProfit || isLoadingIntegrations;
 
   // Calculate monthly expenses for the current year
   const monthlyData = useMemo(() => {
     // Initialize arrays with zeros for all 12 months
     const expensesData = Array(12).fill(0);
-    const profitData = Array(12).fill(0); // We don't have real profit data yet
     
     // Process real expenses data
     if (expenses && expenses.length > 0) {
@@ -29,19 +93,16 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
         if (isThisYear(expenseDate)) {
           const month = getMonth(expenseDate);
           expensesData[month] += expense.amount;
-          
-          // For now, let's simulate profit as 1.2x expenses
-          // This should be replaced with real profit data when available
-          profitData[month] += expense.amount * 1.2;
         }
       });
     }
     
     return {
       expenses: expensesData,
-      profit: profitData
+      profit: profitData,
+      revenue: revenueData
     };
-  }, [expenses]);
+  }, [expenses, profitData, revenueData]);
 
   // Prepare chart data
   const series = [
@@ -52,13 +113,22 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
     {
       name: 'Profit',
       data: monthlyData.profit,
-    },
+    }
+  ];
+
+  // Original legend items
+  const legendItems = [
+    { name: 'Expenses', color: theme.palette.error.main },
+    { name: 'Profit', color: theme.palette.success.main }
   ];
 
   // Calculate min and max values for y-axis with some padding
   const allValues = [...monthlyData.expenses, ...monthlyData.profit];
   const maxValue = Math.max(...allValues, 10000) * 1.2; // Add 20% padding
-  const minValue = Math.max(0, Math.min(...allValues) * 0.8); // Don't go below zero
+  // Allow for negative values - find the minimum value and add 20% padding
+  const minValue = Math.min(...allValues) < 0 
+    ? Math.min(...allValues) * 1.2 // Add 20% padding for negative values
+    : 0; // Keep 0 as minimum if no negative values
 
   const options = {
     chart: {
@@ -106,6 +176,11 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
           show: false,
         },
       },
+      yaxis: {
+        lines: {
+          show: true,
+        },
+      },
     },
     xaxis: {
       categories: [
@@ -136,17 +211,37 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
           colors: theme.palette.text.secondary,
           fontSize: '12px',
         },
-        formatter: (value: number) => `${(value / 1000).toFixed(0)}k${isMobile ? '' : ' RON'}`,
+        formatter: (value: number) => {
+          // Handle negative values with appropriate formatting
+          const absValue = Math.abs(value);
+          const prefix = value < 0 ? '-' : '';
+          return `${prefix}${(absValue / 1000).toFixed(0)}k${isMobile ? '' : ' RON'}`;
+        },
         offsetX: -5,
       },
       tickAmount: 7,
       min: minValue,
       max: maxValue,
       forceNiceScale: true,
+      // Add a zero line if we have negative values
+      crosshairs: {
+        show: true,
+        position: 'back',
+        stroke: {
+          color: theme.palette.divider,
+          width: 1,
+          dashArray: 0,
+        },
+      },
     },
     tooltip: {
       y: {
-        formatter: (value: number) => `${value.toLocaleString()} RON`,
+        formatter: (value: number) => {
+          // Format with a minus sign for negative values
+          const absValue = Math.abs(value);
+          const prefix = value < 0 ? '-' : '';
+          return `${prefix}${absValue.toLocaleString()} RON`;
+        }
       },
       theme: theme.palette.mode,
       style: {
@@ -159,20 +254,7 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
     },
     colors: [theme.palette.error.main, theme.palette.success.main],
     legend: {
-      fontSize: '14px',
-      position: 'top' as const,
-      horizontalAlign: 'right' as const,
-      offsetY: 0,
-      itemMargin: {
-        horizontal: 10,
-        vertical: 0
-      },
-      labels: {
-        colors: theme.palette.text.primary
-      },
-      markers: {
-        strokeWidth: 0
-      }
+      show: false, // Hide default legend as we'll use custom one
     },
     responsive: [{
       breakpoint: 600,
@@ -225,16 +307,47 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
         pb: '0 !important',
         height: '100%',
       }}>
-        <Typography 
-          variant="h5" 
-          fontWeight={800} 
-          sx={{ 
-            mb: { xs: 2, sm: 2 },
-            fontSize: isMobile ? '1.1rem' : undefined
-          }}
-        >
-          Expenses vs Profit
-        </Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: { xs: 2, sm: 2 } 
+        }}>
+          <Typography 
+            variant="h5" 
+            fontWeight={800} 
+            sx={{ 
+              fontSize: isMobile ? '1.1rem' : undefined
+            }}
+          >
+            Expenses vs Profit {currentYear}
+          </Typography>
+          
+          {/* Custom legend */}
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 2
+          }}>
+            {legendItems.map((item, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: item.color
+                  }}
+                />
+                <Typography variant="caption" fontWeight={500}>
+                  {item.name}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
         <Box sx={{ 
           width: '100%', 
           flex: 1,
@@ -252,7 +365,16 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-              <Skeleton variant="rectangular" width="100%" height={chartHeight} animation="wave" />
+              <Skeleton 
+                variant="rectangular" 
+                width="100%" 
+                height={chartHeight} 
+                animation="wave"
+                sx={{
+                  borderRadius: 1,
+                  bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                }}
+              />
             </Box>
           ) : (
             <Box sx={{ 
