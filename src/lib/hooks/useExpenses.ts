@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Types } from 'mongoose';
+import { DASHBOARD_QUERY_KEY } from '@/lib/services/dashboardService';
 
 export type ExpenseType = 'one-time' | 'monthly' | 'annually' | 'cogs';
 
@@ -95,6 +96,8 @@ export const useExpenses = (type?: ExpenseType) => {
     mutationFn: createExpense,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
+      // Also invalidate dashboard data to refresh charts
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
       toast.success('Expense created successfully');
     },
     onError: (error: Error) => {
@@ -107,6 +110,8 @@ export const useExpenses = (type?: ExpenseType) => {
     mutationFn: updateExpense,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
+      // Also invalidate dashboard data to refresh charts
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
       toast.success('Expense updated successfully');
     },
     onError: (error: Error) => {
@@ -122,6 +127,8 @@ export const useExpenses = (type?: ExpenseType) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
+      // Also invalidate dashboard data to refresh charts
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
       toast.success('Expense deleted successfully');
       setIsDeleting(null);
     },

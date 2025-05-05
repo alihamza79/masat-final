@@ -4,6 +4,10 @@
  */
 import axios from 'axios';
 import { decryptResponse } from '@/lib/utils/responseEncryption';
+import { QueryClient } from '@tanstack/react-query';
+
+// Define a query key for dashboard data
+export const DASHBOARD_QUERY_KEY = ['dashboard-data'];
 
 // Create an HTTP client with response interceptor for auth errors
 const apiClient = axios.create();
@@ -86,6 +90,14 @@ export interface DashboardData {
 }
 
 /**
+ * Function to invalidate dashboard data queries when expenses change
+ * Use this after expense operations to refresh dashboard calculations
+ */
+export const invalidateDashboardData = (queryClient: QueryClient) => {
+  queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
+};
+
+/**
  * Get dashboard data
  * @param startDate Start date in YYYY-MM-DD format
  * @param endDate End date in YYYY-MM-DD format
@@ -161,5 +173,6 @@ export function getMockDashboardData(): DashboardData {
 
 export default {
   getDashboardData,
-  getMockDashboardData
+  getMockDashboardData,
+  invalidateDashboardData
 }; 
