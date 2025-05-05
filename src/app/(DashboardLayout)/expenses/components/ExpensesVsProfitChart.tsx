@@ -3,10 +3,11 @@ import { Card, CardContent, Typography, Box, useMediaQuery, Skeleton, CircularPr
 import { useTheme } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
 import useExpenses, { Expense } from '@/lib/hooks/useExpenses';
-import { useMemo, useState, useEffect } from 'react';
-import { isThisYear, getMonth, format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
-import dashboardService from '@/lib/services/dashboardService';
+import { useMemo, useState } from 'react';
+import { isThisYear, getMonth, format, parseISO } from 'date-fns';
+import dashboardService, { DASHBOARD_QUERY_KEY } from '@/lib/services/dashboardService';
 import { useIntegrations } from '@/lib/hooks/useIntegrations';
+import { useQuery } from '@tanstack/react-query';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: boolean, height?: number }) => {
@@ -19,65 +20,61 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
   // Fetch expense data
   const { expenses, isLoading: isLoadingExpenses } = useExpenses();
   
-  // Fetch profit data from dashboard API
-  const [isLoadingProfit, setIsLoadingProfit] = useState(true);
-  const [profitData, setProfitData] = useState<number[]>(Array(12).fill(0));
-  const [revenueData, setRevenueData] = useState<number[]>(Array(12).fill(0));
+  // Get integrations for dashboard data
   const { integrations, isLoading: isLoadingIntegrations } = useIntegrations();
   
-  // Fetch dashboard data to get profit information
-  useEffect(() => {
-    const fetchProfitData = async () => {
-      if (isLoadingIntegrations || !integrations || integrations.length === 0) {
-        return;
+  // Prepare date range for current year
+  const startDate = format(new Date(currentYear, 0, 1), 'yyyy-MM-dd');
+  const endDate = format(new Date(currentYear, 11, 31), 'yyyy-MM-dd');
+  
+  // Use React Query to fetch dashboard data
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, startDate, endDate, integrations ? integrations.map(i => i._id) : []],
+    queryFn: async () => {
+      if (!integrations || integrations.length === 0) {
+        return { success: true, data: { salesOverTime: [] } };
       }
       
-      setIsLoadingProfit(true);
-      try {
-        const currentYear = new Date().getFullYear();
-        // Get full year data
-        const startDate = format(new Date(currentYear, 0, 1), 'yyyy-MM-dd');
-        const endDate = format(new Date(currentYear, 11, 31), 'yyyy-MM-dd');
-        
-        // Get all integration IDs
-        const integrationIds = integrations.map(int => int._id as string);
-        
-        const response = await dashboardService.getDashboardData(startDate, endDate, integrationIds);
-        
-        if (response.success && response.data) {
-          // Initialize monthly arrays
-          const monthlyProfit = Array(12).fill(0);
-          const monthlyRevenue = Array(12).fill(0);
-          
-          // Process salesOverTime data to extract monthly profit
-          response.data.salesOverTime.forEach(item => {
-            try {
-              // Check if the date is a full date string (YYYY-MM-DD)
-              if (item.date && item.date.includes('-') && !item.date.includes('Q')) {
-                const date = parseISO(item.date);
-                const month = getMonth(date);
-                monthlyProfit[month] += item.profit;
-                monthlyRevenue[month] += item.revenue;
-              }
-            } catch (error) {
-              console.error('Error processing date:', item.date, error);
-            }
-          });
-          
-          setProfitData(monthlyProfit);
-          setRevenueData(monthlyRevenue);
-        }
-      } catch (error) {
-        console.error('Error fetching profit data:', error);
-      } finally {
-        setIsLoadingProfit(false);
-      }
-    };
-    
-    fetchProfitData();
-  }, [integrations, isLoadingIntegrations]);
+      // Get all integration IDs
+      const integrationIds = integrations.map(int => int._id as string);
+      
+      // Fetch dashboard data
+      return dashboardService.getDashboardData(startDate, endDate, integrationIds);
+    },
+    enabled: !isLoadingIntegrations && integrations && integrations.length > 0,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
   
-  const isLoading = isLoadingExpenses || isLoadingProfit || isLoadingIntegrations;
+  // Extract profit and revenue data from dashboard data
+  const { profitData, revenueData } = useMemo(() => {
+    // Initialize monthly arrays
+    const monthlyProfit = Array(12).fill(0);
+    const monthlyRevenue = Array(12).fill(0);
+    
+    if (dashboardData?.success && dashboardData.data?.salesOverTime) {
+      // Process salesOverTime data to extract monthly profit
+      dashboardData.data.salesOverTime.forEach(item => {
+        try {
+          // Check if the date is a full date string (YYYY-MM-DD)
+          if (item.date && item.date.includes('-') && !item.date.includes('Q')) {
+            const date = parseISO(item.date);
+            const month = getMonth(date);
+            monthlyProfit[month] += item.profit;
+            monthlyRevenue[month] += item.revenue;
+          }
+        } catch (error) {
+          console.error('Error processing date:', item.date, error);
+        }
+      });
+    }
+    
+    return {
+      profitData: monthlyProfit,
+      revenueData: monthlyRevenue
+    };
+  }, [dashboardData]);
+  
+  const isLoading = isLoadingExpenses || isLoadingDashboard || isLoadingIntegrations;
 
   // Calculate monthly expenses for the current year
   const monthlyData = useMemo(() => {

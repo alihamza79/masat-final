@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
+import { useQuery } from '@tanstack/react-query';
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Custom components
@@ -33,7 +34,7 @@ import ProductTable from "@/app/components/dashboards/custom/ProductTable";
 
 // Services and utilities
 import { calculateDateRange, formatDateForAPI } from "@/app/components/dashboards/custom/dateUtils";
-import dashboardService, { DashboardData } from "@/lib/services/dashboardService";
+import dashboardService, { DashboardData, DASHBOARD_QUERY_KEY } from "@/lib/services/dashboardService";
 
 // Create simple chart components that don't use DashboardCard wrapper
 interface DistributionData {
@@ -247,8 +248,6 @@ export default function Dashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('allTime');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedIntegrationIds, setSelectedIntegrationIds] = useState<string[]>([]);
   
@@ -262,89 +261,50 @@ export default function Dashboard() {
     }
   }, [integrations]);
   
-  // Fetch dashboard data based on selected period
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    // If no integrations are selected, don't fetch data
-    if (selectedIntegrationIds.length === 0) {
-      setDashboardData(null);
-      setIsLoading(false);
-      return;
-    }
-    
-    try {
-      // Calculate date range based on selected period
-      const dateRange = calculateDateRange(selectedPeriod, customStartDate, customEndDate);
-      const startDateStr = formatDateForAPI(dateRange.startDate);
-      const endDateStr = formatDateForAPI(dateRange.endDate);
-      
-      // Only use selected integration IDs
-      const integrationIds = selectedIntegrationIds;
-      
-      console.log(`Fetching dashboard data for period: ${selectedPeriod}`, {
-        startDate: startDateStr,
-        endDate: endDateStr,
-        integrationIds
-      });
-      
-      // Call the dashboard API with date range and integration IDs
-      const response = await dashboardService.getDashboardData(startDateStr, endDateStr, integrationIds);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.error || 'Failed to fetch dashboard data');
+  // Calculate date range based on selected period
+  const dateRange = calculateDateRange(selectedPeriod, customStartDate, customEndDate);
+  const startDateStr = formatDateForAPI(dateRange.startDate);
+  const endDateStr = formatDateForAPI(dateRange.endDate);
+  
+  // Use React Query to fetch dashboard data
+  const { 
+    data: dashboardResponse, 
+    isLoading,
+  } = useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, startDateStr, endDateStr, selectedIntegrationIds],
+    queryFn: async () => {
+      // If no integrations are selected, don't fetch data
+      if (selectedIntegrationIds.length === 0) {
+        return {
+          success: true,
+          data: dashboardService.getMockDashboardData()
+        };
       }
       
-      // Use the real data for specified metrics
-      setDashboardData(response.data);
-    } catch (err: any) {
-      console.error('Error fetching dashboard data:', err);
-      setError(err.message || 'An error occurred while fetching dashboard data');
-      
-      // Set empty data instead of mock data
-      setDashboardData({
-        orderStats: {
-          totalOrders: 0,
-          grossRevenue: 0,
-          shippingRevenue: 0,
-          refundedOrders: 0,
-          profitMargin: 0,
-          costOfGoods: 0
-        },
-        deliveryMethodStats: {
-          home: 0,
-          locker: 0
-        },
-        paymentMethodStats: {
-          card: 0,
-          cod: 0,
-          bank: 0
-        },
-        salesOverTime: [],
-        salesByIntegration: [],
-        productStats: [],
-        allProducts: [] // Empty array ensures no product items
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        console.log(`Fetching dashboard data for period: ${selectedPeriod}`, {
+          startDate: startDateStr,
+          endDate: endDateStr,
+          integrationIds: selectedIntegrationIds
+        });
+        
+        // Call the dashboard API with date range and integration IDs
+        return await dashboardService.getDashboardData(startDateStr, endDateStr, selectedIntegrationIds);
+      } catch (err: any) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err.message || 'An error occurred while fetching dashboard data');
+        return {
+          success: true,
+          data: dashboardService.getMockDashboardData()
+        };
+      }
+    },
+    enabled: !isLoadingIntegrations && selectedIntegrationIds.length > 0,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
   
-  // Initial data load - wait for integrations to load first
-  useEffect(() => {
-    if (!isLoadingIntegrations) {
-      fetchDashboardData();
-    }
-  }, [isLoadingIntegrations]);
-  
-  // Track period changes and fetch data when they change
-  useEffect(() => {
-    // Don't fetch on initial render or while integrations are still loading
-    if (selectedPeriod && !isLoadingIntegrations) {
-      fetchDashboardData();
-    }
-  }, [selectedPeriod, customStartDate, customEndDate, selectedIntegrationIds]);
+  // Extract dashboard data from response
+  const dashboardData = dashboardResponse?.success ? dashboardResponse.data : null;
   
   // Handle period selection
   const handlePeriodChange = (period: PeriodType, startDate?: string, endDate?: string) => {
@@ -353,7 +313,6 @@ export default function Dashboard() {
       setCustomStartDate(startDate);
       setCustomEndDate(endDate);
     }
-    // Data fetching is now handled by the useEffect that depends on these state variables
   };
   
   // Handle integration filter change
