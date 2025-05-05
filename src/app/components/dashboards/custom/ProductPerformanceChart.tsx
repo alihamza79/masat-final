@@ -54,11 +54,10 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
   // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'RON',
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(value) + ' RON';
   };
   
   // Format currency for x-axis to avoid overlapping

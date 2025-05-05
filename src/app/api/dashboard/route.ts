@@ -901,6 +901,7 @@ export async function GET(req: NextRequest) {
         part_number: { type: String },
         part_number_key: { type: String },
         images: { type: Array },
+        commission: { type: Number }, // Add commission field
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now }
       });
@@ -911,7 +912,7 @@ export async function GET(req: NextRequest) {
       // 1. First fetch all product offers for the user's integrations
       const userProductOffers = await ProductOffer.find({
         integrationId: { $in: userIntegrationIds }
-      }).select('_id emagProductOfferId name sale_price part_number part_number_key images');
+      }).select('_id emagProductOfferId name sale_price part_number part_number_key images commission');
       
       console.log(`Found ${userProductOffers.length} product offers for user's integrations`);
       
@@ -1117,8 +1118,16 @@ export async function GET(req: NextRequest) {
         // Calculate profit: revenue - cog (no shipping)
         const profit = grossRevenue - actualCostOfGoods;
         
-        // Only calculate commission, not COG
-        const estimatedCommission = Math.round(grossRevenue * 0.08);
+        // Get commission value - either from stored value or estimate
+        let commissionValue: number;
+        
+        if (product.commission !== undefined && product.commission !== null) {
+          // Use stored commission percentage and calculate the amount
+          commissionValue = Math.round((product.commission / 100) * grossRevenue);
+        } else {
+          // Use fallback 8% estimate if no stored value
+          commissionValue = Math.round(grossRevenue * 0.08);
+        }
         
         // Fixed profit margin for demo purposes
         const fixedProfitMargin = 32.0;
@@ -1142,8 +1151,8 @@ export async function GET(req: NextRequest) {
           sold: soldCount,
           refunded: refundedCount,
           grossRevenue: grossRevenue,
-          costOfGoods: actualCostOfGoods, // Use actual COG only
-          emagCommission: estimatedCommission,
+          costOfGoods: actualCostOfGoods,
+          emagCommission: commissionValue,
           profitMargin: fixedProfitMargin,
           profit: profit,
           shipping: shippingCost,

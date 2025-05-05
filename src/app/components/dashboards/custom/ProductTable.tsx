@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Table,
@@ -13,15 +13,17 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import { IconSearch, IconCurrencyRon } from '@tabler/icons-react';
+import { IconSearch, IconCurrencyRon, IconPercentage, IconInfoCircle } from '@tabler/icons-react';
 import DashboardCard from '../../shared/DashboardCard';
 
 // Define types for our product data
 interface ProductPerformanceData {
   id: string;
+  emagProductOfferId?: number | string;
   name: string;
   part_number: string;
   part_number_key: string;
@@ -33,6 +35,7 @@ interface ProductPerformanceData {
   actualCostOfGoods?: number;
   costOfGoods?: number;
   profit: number;
+  emagCommission?: number;
 }
 
 interface ProductTableProps {
@@ -60,9 +63,14 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const ProductTable = ({ data, isLoading }: ProductTableProps) => {
   const theme = useTheme();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Default to 5 per page
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredData, setFilteredData] = useState<ProductPerformanceData[]>([]);
+  const [commissionsLoading, setCommissionsLoading] = useState<Record<string, boolean>>({});
+  const [productCommissions, setProductCommissions] = useState<Record<string, number>>({});
+  
+  // Use a ref to track which products we've already requested
+  const requestedProductsRef = useRef<Set<string>>(new Set());
 
   // Handle search and filtering
   useEffect(() => {
@@ -88,6 +96,78 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
     setPage(0);
   }, [data, searchTerm]);
 
+  // Memoize current page products to prevent unnecessary recalculations
+  const currentPageProducts = useMemo(() => {
+    return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [filteredData, page, rowsPerPage]);
+
+  // Fetch commissions for current page products only
+  useEffect(() => {
+    const fetchCommissions = async () => {
+      // Only fetch for products with emagProductOfferId that don't already have commission data
+      // AND haven't been requested yet
+      const productsToFetch = currentPageProducts.filter(product => {
+        if (!product.emagProductOfferId) return false;
+        
+        const productId = product.emagProductOfferId.toString();
+        
+        // Skip if we already have data or have already sent a request
+        if (productCommissions[productId] !== undefined || requestedProductsRef.current.has(productId)) {
+          return false;
+        }
+        
+        // Mark as requested
+        requestedProductsRef.current.add(productId);
+        return true;
+      });
+      
+      if (productsToFetch.length === 0) return;
+      
+      console.log(`Fetching commissions for ${productsToFetch.length} products`);
+      
+      for (const product of productsToFetch) {
+        if (!product.emagProductOfferId) continue;
+        
+        const productId = product.emagProductOfferId.toString();
+        
+        try {
+          // Set loading state for this product
+          setCommissionsLoading(prev => ({ ...prev, [productId]: true }));
+          
+          // Call the commission API
+          const response = await fetch(`/api/v1/commission/estimate/${productId}`);
+          const data = await response.json();
+          
+          if (data.emagResponse?.data?.value !== undefined) {
+            // Format commission as percentage
+            let commission: number;
+            if (typeof data.emagResponse.data.value === 'string') {
+              commission = parseFloat(data.emagResponse.data.value);
+            } else {
+              commission = Number(data.emagResponse.data.value);
+            }
+            
+            // Convert to percentage if needed
+            const commissionPercentage = commission > 1 ? commission : commission * 100;
+            
+            setProductCommissions(prev => ({
+              ...prev,
+              [productId]: commissionPercentage
+            }));
+          }
+        } catch (error) {
+          console.error(`Error fetching commission for product ${productId}:`, error);
+        } finally {
+          setCommissionsLoading(prev => ({ ...prev, [productId]: false }));
+        }
+      }
+    };
+    
+    if (currentPageProducts.length > 0) {
+      fetchCommissions();
+    }
+  }, [page, rowsPerPage, filteredData, currentPageProducts]);
+
   // Handle pagination
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -101,11 +181,10 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
   // Format currency values
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'RON',
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(value) + ' RON';
   };
 
   return (
@@ -158,14 +237,25 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                     <TableCell sx={{ fontWeight: 600 }} align="right">Sold</TableCell>
                     <TableCell sx={{ fontWeight: 600 }} align="right">Refunded</TableCell>
                     <TableCell sx={{ fontWeight: 600 }} align="right">COG</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">
+                      <Tooltip title="Commission fee charged by eMAG marketplace">
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                          <span>eMAG Commission</span>
+                          <IconInfoCircle size={14} />
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600 }} align="right">Profit</TableCell>
                     <TableCell sx={{ fontWeight: 600 }} align="right">Gross Revenue</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredData
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((product) => (
+                  {currentPageProducts.map((product) => {
+                    const productId = product.emagProductOfferId?.toString() || '';
+                    const isLoadingCommission = commissionsLoading[productId];
+                    const commission = productCommissions[productId];
+                    
+                    return (
                       <StyledTableRow key={product.id}>
                         <TableCell>
                           <Box 
@@ -229,21 +319,39 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
+                          {isLoadingCommission ? (
+                            <CircularProgress size={16} />
+                          ) : commission !== undefined ? (
+                            <Typography 
+                              variant="body2" 
+                              fontWeight={500} 
+                              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+                            >
+                              {commission.toFixed(2)}%
+                            </Typography>
+                          ) : requestedProductsRef.current.has(productId) ? (
+                            // We've requested but not received data yet
+                            <CircularProgress size={16} />
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">-</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
                           <Typography 
                             variant="body2" 
-                            fontWeight={600} 
-                            color={product.profit >= 0 ? "success.main" : "error.main"}
+                            fontWeight={600}
                           >
                             {formatCurrency(product.profit)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2" fontWeight={600} color="primary.main">
+                          <Typography variant="body2" fontWeight={600}>
                             {formatCurrency(product.grossRevenue)}
                           </Typography>
                         </TableCell>
                       </StyledTableRow>
-                    ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>

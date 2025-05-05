@@ -43,10 +43,10 @@ interface ProductOffersTableProps {
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'RON',
-    minimumFractionDigits: 2
-  }).format(value);
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value) + ' RON';
 }
 
 function formatPercent(value: number): string {
