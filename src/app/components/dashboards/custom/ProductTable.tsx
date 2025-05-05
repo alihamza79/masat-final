@@ -17,7 +17,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import { IconSearch, IconCurrencyRon, IconPercentage, IconInfoCircle } from '@tabler/icons-react';
+import { IconSearch, IconCurrencyDollar, IconPercentage, IconInfoCircle } from '@tabler/icons-react';
 import DashboardCard from '../../shared/DashboardCard';
 
 // Define types for our product data
@@ -293,7 +293,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={500}>
-                            {formatCurrency(product.averagePrice)}
+                            {formatCurrency(product.averagePrice || 0)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
@@ -315,7 +315,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={500} color="text.secondary">
-                            {formatCurrency(product.costOfGoods)}
+                            {formatCurrency(product.costOfGoods || 0)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
@@ -341,12 +341,12 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                             variant="body2" 
                             fontWeight={600}
                           >
-                            {formatCurrency(product.profit)}
+                            {formatCurrency(product.profit || 0)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={600}>
-                            {formatCurrency(product.grossRevenue)}
+                            {formatCurrency(product.grossRevenue || 0)}
                           </Typography>
                         </TableCell>
                       </StyledTableRow>
