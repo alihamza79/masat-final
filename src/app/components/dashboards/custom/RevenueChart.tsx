@@ -5,10 +5,59 @@ import {
   Box, 
   Stack, 
   Typography, 
-  useTheme
+  useTheme,
+  Skeleton
 } from '@mui/material';
 import DashboardCard from '../../shared/DashboardCard';
 import { IconCalendar } from '@tabler/icons-react';
+
+// Add RevenueChartSkeleton component
+export const RevenueChartSkeleton = ({ height = 350 }: { height?: number }) => {
+  const theme = useTheme();
+
+  return (
+    <DashboardCard
+      title="Revenue & Profit"
+      subtitle="Sales performance"
+      action={
+        <Stack direction="row" spacing={3} alignItems="center">
+          {[1, 2, 3].map((item, index) => (
+            <Stack key={index} direction="row" spacing={1} alignItems="center">
+              <Skeleton variant="circular" width={10} height={10} />
+              <Skeleton variant="text" width={40} height={20} />
+            </Stack>
+          ))}
+        </Stack>
+      }
+    >
+      <Box sx={{ 
+        height: height, 
+        minHeight: "350px",
+        position: "relative", 
+        mt: 1, 
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Skeleton 
+          variant="rectangular" 
+          width="100%" 
+          height="100%" 
+          sx={{ 
+            borderRadius: 1,
+            mb: 1
+          }} 
+        />
+
+        {/* Simulate x-axis labels */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, px: 2 }}>
+          {Array(5).fill(0).map((_, i) => (
+            <Skeleton key={i} variant="text" width={30} height={16} />
+          ))}
+        </Box>
+      </Box>
+    </DashboardCard>
+  );
+};
 
 interface ChartData {
   date: string;

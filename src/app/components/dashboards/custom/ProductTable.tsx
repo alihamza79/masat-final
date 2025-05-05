@@ -14,7 +14,8 @@ import {
   InputAdornment,
   CircularProgress,
   Chip,
-  Tooltip
+  Tooltip,
+  Skeleton
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { IconSearch, IconCurrencyDollar, IconPercentage, IconInfoCircle } from '@tabler/icons-react';
@@ -60,17 +61,88 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+// ProductTableSkeleton component
+export const ProductTableSkeleton = () => {
+  const theme = useTheme();
+  
+  // Column headers
+  const columns = [
+    'Product', 'Price', 'Sold', 'Revenue', 'COGS', 'Commission', 'Profit'
+  ];
+  
+  return (
+    <DashboardCard
+      title="Products"
+      subtitle="All products performance"
+    >
+      <TableContainer>
+        <Table sx={{ whiteSpace: 'nowrap' }}>
+          <TableHead>
+            <TableRow>
+              {columns.map((column, index) => (
+                <TableCell key={index}>
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    {column}
+                  </Typography>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Array(5).fill(0).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Skeleton variant="rectangular" width={40} height={40} sx={{ borderRadius: 1, mr: 2 }} />
+                    <Box>
+                      <Skeleton variant="text" width={150} height={20} />
+                      <Skeleton variant="text" width={100} height={16} />
+                    </Box>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={60} height={20} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={40} height={20} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={80} height={20} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={70} height={20} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={70} height={20} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={70} height={20} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </DashboardCard>
+  );
+};
+
 const ProductTable = ({ data, isLoading }: ProductTableProps) => {
   const theme = useTheme();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Default to 5 per page
-  const [searchTerm, setSearchTerm] = useState('');
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState<ProductPerformanceData[]>([]);
   const [commissionsLoading, setCommissionsLoading] = useState<Record<string, boolean>>({});
   const [productCommissions, setProductCommissions] = useState<Record<string, number>>({});
   
   // Use a ref to track which products we've already requested
   const requestedProductsRef = useRef<Set<string>>(new Set());
+
+  // If loading, show skeleton
+  if (isLoading) {
+    return <ProductTableSkeleton />;
+  }
 
   // Handle search and filtering
   useEffect(() => {
@@ -79,7 +151,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
       return;
     }
 
-    const lowercaseSearch = searchTerm.toLowerCase().trim();
+    const lowercaseSearch = searchQuery.toLowerCase().trim();
     
     if (lowercaseSearch === '') {
       setFilteredData(data);
@@ -94,7 +166,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
     
     // Reset to first page when search changes
     setPage(0);
-  }, [data, searchTerm]);
+  }, [data, searchQuery]);
 
   // Memoize current page products to prevent unnecessary recalculations
   const currentPageProducts = useMemo(() => {
@@ -198,8 +270,8 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
             placeholder="Search products..."
             fullWidth
             variant="outlined"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -212,14 +284,10 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
       }
     >
       <Box sx={{ overflow: 'auto', width: '100%' }}>
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : filteredData.length === 0 ? (
+        {filteredData.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <Typography variant="body2" color="textSecondary">
-              {searchTerm.trim() ? 'No products matching your search' : 'No product data available'}
+              {searchQuery.trim() ? 'No products matching your search' : 'No product data available'}
             </Typography>
           </Box>
         ) : (

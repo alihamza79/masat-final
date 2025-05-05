@@ -1,11 +1,43 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, useTheme } from '@mui/material';
+import { Box, Card, Typography, Stack, useTheme, Skeleton } from '@mui/material';
 import { TablerIconsProps } from '@tabler/icons-react';
+
+// Add skeleton component
+export const SimplifiedStatsCardSkeleton = () => {
+  const theme = useTheme();
+  
+  return (
+    <Box 
+      sx={{ 
+        height: '100%',
+        p: 2,
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.palette.background.paper,
+        boxShadow: theme.shadows[1],
+        transition: 'box-shadow 0.3s ease-in-out'
+      }}
+    >
+      {/* Icon placeholder */}
+      <Skeleton variant="circular" width={36} height={36} sx={{ mb: 1 }} />
+      
+      {/* Value placeholder */}
+      <Skeleton variant="text" width="60%" height={32} sx={{ mb: 0.5 }} />
+      
+      {/* Title placeholder */}
+      <Skeleton variant="text" width="80%" height={24} />
+    </Box>
+  );
+};
 
 interface SimplifiedStatsCardProps {
   title: string;
   value: string | number;
   icon: React.ReactElement<TablerIconsProps>;
+  color?: string;
 }
 
 const SimplifiedStatsCard: React.FC<SimplifiedStatsCardProps> = ({

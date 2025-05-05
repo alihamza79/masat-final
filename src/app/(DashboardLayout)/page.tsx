@@ -28,9 +28,10 @@ import PeriodSelector, { PeriodType } from "@/app/components/dashboards/custom/P
 import ProductOffersTable from "@/app/components/dashboards/custom/ProductOffersTable";
 import ProductPerformanceChart from "@/app/components/dashboards/custom/ProductPerformanceChart";
 import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
-import SimplifiedStatsCard from "@/app/components/dashboards/custom/SimplifiedStatsCard";
+import SimplifiedStatsCard, { SimplifiedStatsCardSkeleton } from "@/app/components/dashboards/custom/SimplifiedStatsCard";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import ProductTable from "@/app/components/dashboards/custom/ProductTable";
+import DashboardSkeleton from "@/app/components/dashboards/custom/DashboardSkeleton";
 
 // Services and utilities
 import { calculateDateRange, formatDateForAPI } from "@/app/components/dashboards/custom/dateUtils";
@@ -440,9 +441,7 @@ export default function Dashboard() {
         
         {/* Show loading indicator while integrations are being loaded */}
         {isLoadingIntegrations && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
-            <CircularProgress />
-          </Box>
+          <DashboardSkeleton />
         )}
         
         {/* Only show "no integrations" warning when integrations have loaded but none are selected */}
@@ -461,7 +460,7 @@ export default function Dashboard() {
         
         {/* Main dashboard content */}
         {isLoadingIntegrations ? (
-          // Show nothing while loading integrations (already showing loading spinner above)
+          // Using the skeleton while loading integrations
           null
         ) : selectedIntegrationIds.length === 0 ? (
           // Empty state when no integrations selected
@@ -480,16 +479,8 @@ export default function Dashboard() {
             </Typography>
           </Box>
         ) : isLoading ? (
-          // Show loading state for dashboard data
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            p: 5,
-            my: 4
-          }}>
-            <CircularProgress />
-          </Box>
+          // Show skeleton loading state for dashboard data
+          <DashboardSkeleton />
         ) : (
           // Show dashboard when data is loaded
           <Box sx={{ mx: -1.5 }}>

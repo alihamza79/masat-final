@@ -1,7 +1,74 @@
 import React from 'react';
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
-import { Box, useTheme, Typography } from '@mui/material';
+import { Box, useTheme, Typography, Stack, Skeleton } from '@mui/material';
+
+// Create OrdersByIntegrationSkeleton component
+export const OrdersByIntegrationSkeleton = () => {
+  const theme = useTheme();
+  
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      width: '100%', 
+      height: '100%',
+      p: 1
+    }}>
+      {/* Main donut skeleton */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        width: '100%', 
+        mb: 2,
+        position: 'relative',
+        pt: 2
+      }}>
+        <Skeleton 
+          variant="circular" 
+          width={200} 
+          height={200} 
+          sx={{ position: 'relative' }} 
+        />
+        
+        {/* Center label */}
+        <Box 
+          sx={{ 
+            position: 'absolute', 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center'
+          }}
+        >
+          <Skeleton variant="text" width={50} height={30} sx={{ mx: 'auto' }} />
+          <Skeleton variant="text" width={80} height={20} sx={{ mx: 'auto' }} />
+        </Box>
+      </Box>
+      
+      {/* Legend items */}
+      <Stack direction="column" spacing={1} width="100%">
+        {Array(3).fill(0).map((_, i) => (
+          <Box 
+            key={i} 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              p: 1,
+              borderRadius: 1
+            }}
+          >
+            <Skeleton variant="circular" width={10} height={10} sx={{ mr: 1 }} />
+            <Skeleton variant="text" width={120} height={20} sx={{ flexGrow: 1 }} />
+            <Skeleton variant="text" width={30} height={20} />
+          </Box>
+        ))}
+      </Stack>
+    </Box>
+  );
+};
 
 interface OrdersByIntegrationProps {
   data: {
@@ -142,7 +209,7 @@ const OrdersByIntegration: React.FC<OrdersByIntegrationProps> = ({
         }}
       >
         {isLoading ? (
-          <Box>Loading...</Box>
+          <OrdersByIntegrationSkeleton />
         ) : (
           data.length > 0 ? (
             <Box sx={{ 

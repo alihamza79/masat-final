@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
-import { Box, Typography, useTheme, Stack } from '@mui/material';
+import { Box, Typography, useTheme, Stack, Avatar, Skeleton } from '@mui/material';
 import { IconTrendingDown } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
 
@@ -16,6 +16,7 @@ interface ProductPerformanceProps {
     costOfGoods: number;
     emagCommission: number;
     profitMargin: number;
+    image?: string;
   }[];
   isLoading?: boolean;
 }
@@ -257,6 +258,60 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
           </Box>
         )}
       </Box>
+    </Box>
+  );
+};
+
+// Add skeleton component
+export const ProductPerformanceChartSkeleton = () => {
+  const theme = useTheme();
+  
+  return (
+    <Box sx={{ width: '100%', p: 1 }}>
+      {Array(5).fill(0).map((_, i) => (
+        <Box 
+          key={i} 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            mb: 3, 
+            width: '100%'
+          }}
+        >
+          {/* Product image skeleton */}
+          <Skeleton 
+            variant="rectangular" 
+            width={48} 
+            height={48} 
+            sx={{ 
+              borderRadius: 1, 
+              flexShrink: 0, 
+              mr: 2 
+            }} 
+          />
+          
+          <Box sx={{ flexGrow: 1 }}>
+            {/* Product name skeleton */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <Skeleton variant="text" width="50%" height={20} sx={{ mr: 2 }} />
+              <Skeleton variant="text" width="15%" height={20} />
+            </Box>
+            
+            {/* Progress bar skeleton */}
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <Skeleton 
+                variant="rectangular" 
+                width="90%" 
+                height={12} 
+                sx={{ 
+                  borderRadius: 6
+                }}
+              />
+              <Skeleton variant="text" width="10%" height={16} sx={{ ml: 1 }} />
+            </Box>
+          </Box>
+        </Box>
+      ))}
     </Box>
   );
 };

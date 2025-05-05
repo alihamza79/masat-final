@@ -6,7 +6,8 @@ import {
   Typography, 
   useTheme, 
   Stack,
-  Chip
+  Chip,
+  Skeleton
 } from '@mui/material';
 
 interface DistributionData {
@@ -23,13 +24,63 @@ interface EnhancedDistributionChartProps {
   height?: number;
 }
 
+export const EnhancedDistributionChartSkeleton = ({ height = 280 }: { height?: number }) => {
+  const theme = useTheme();
+  
+  return (
+    <Box sx={{ 
+      width: '100%', 
+      height: height, 
+      display: 'flex', 
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative'
+    }}>
+      {/* Chart title */}
+      <Skeleton variant="text" width={120} height={24} sx={{ mb: 2 }} />
+      
+      {/* Donut chart */}
+      <Box sx={{ position: 'relative', height: '70%', width: '70%' }}>
+        <Skeleton variant="circular" width="100%" height="100%" />
+        
+        {/* Center label */}
+        <Box sx={{ 
+          position: 'absolute', 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center'
+        }}>
+          <Skeleton variant="text" width={40} height={30} sx={{ mx: 'auto' }} />
+        </Box>
+      </Box>
+      
+      {/* Legend */}
+      <Box sx={{ mt: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
+        {[1, 2].map(item => (
+          <Box key={item} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Skeleton variant="circular" width={12} height={12} sx={{ mr: 1 }} />
+            <Skeleton variant="text" width={40} height={16} />
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
 const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
   data,
   isLoading = false,
   title,
-  height = 220
+  height = 280
 }) => {
   const theme = useTheme();
+  
+  // Show skeleton loader when loading
+  if (isLoading) {
+    return <EnhancedDistributionChartSkeleton height={height} />;
+  }
   
   // Extract data for chart
   const labels = data.map(item => item.name);
