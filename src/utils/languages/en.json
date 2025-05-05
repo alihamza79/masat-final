@@ -217,6 +217,123 @@
             "currency": "lei"
         }
     },
+    "expenses": {
+        "title": "Expenses",
+        "pageDescription": "Manage your business expenses",
+        "summary": {
+            "oneTime": "One Time",
+            "monthly": "Monthly",
+            "annually": "Annually",
+            "cogs": "COGS",
+            "vsLastYear": "vs Last Year"
+        },
+        "chart": {
+            "title": "Expenses vs Profit",
+            "expenses": "Expenses",
+            "profit": "Profit"
+        },
+        "list": {
+            "title": "Expenses List",
+            "filterByType": "Filter by Type",
+            "all": "All",
+            "oneTime": "One Time",
+            "monthly": "Monthly",
+            "annually": "Annually",
+            "cogs": "COGS",
+            "noExpensesFound": "No expenses found.",
+            "addYourFirstExpense": "Add Your First Expense",
+            "addExpense": "Add Expense",
+            "edit": "Edit",
+            "delete": "Delete",
+            "recurring": "Recurring",
+            "invalidDate": "Invalid date",
+            "columns": {
+                "description": "Description",
+                "type": "Type",
+                "amount": "Amount",
+                "date": "Date",
+                "status": "Status",
+                "actions": "Actions"
+            },
+            "error": {
+                "loading": "Error loading expenses:",
+                "unknown": "Unknown error",
+                "reload": "Reload Page"
+            }
+        },
+        "dialog": {
+            "add": "Add Expense",
+            "edit": "Edit Expense",
+            "save": "Save",
+            "cancel": "Cancel",
+            "expenseType": "Expense Type",
+            "cannotBeChanged": "(cannot be changed)",
+            "oneTime": "One Time",
+            "monthly": "Monthly",
+            "annually": "Annually",
+            "cogs": "COGS (Cost of Goods Sold)",
+            "description": "Description",
+            "amount": "Amount",
+            "date": "Date",
+            "recurring": "Recurring {type}",
+            "expenseDetails": "Expense Details",
+            "purchaseDate": "Purchase Date",
+            "purchaseDetails": "Purchase Details",
+            "numberOfUnits": "Number of Units",
+            "costPerUnit": "Cost per Unit",
+            "total": "Total",
+            "searchProduct": "Search for a product...",
+            "searchBy": "Search by name, SKU or PNK",
+            "noProductsFound": "No products found",
+            "typeToSearch": "Type to search for products",
+            "sku": "SKU",
+            "pnk": "PNK",
+            "type": {
+                "label": "Expense Type",
+                "oneTime": "One Time",
+                "monthly": "Monthly",
+                "annually": "Annually",
+                "cogs": "COGS (Cost of Goods Sold)"
+            },
+            "fields": {
+                "description": "Description",
+                "descriptionPlaceholder": "Enter expense description",
+                "amount": "Amount",
+                "amountPlaceholder": "Enter amount in RON",
+                "date": "Date",
+                "isRecurring": "Is recurring expense?",
+                "product": "Product",
+                "searchProduct": "Search for a product...",
+                "noResults": "No results found",
+                "unitsCount": "Number of Units",
+                "unitsCountPlaceholder": "Enter number of units",
+                "costPerUnit": "Cost Per Unit",
+                "costPerUnitPlaceholder": "Enter cost per unit in RON"
+            },
+            "validation": {
+                "descriptionRequired": "Description is required",
+                "amountRequired": "Valid amount is required",
+                "dateRequired": "Date is required",
+                "productRequired": "Product selection is required",
+                "unitsCountRequired": "Units count must be greater than 0",
+                "costPerUnitRequired": "Cost per unit must be greater than 0"
+            }
+        },
+        "delete": {
+            "title": "Delete Expense",
+            "confirmation": "Are you sure you want to delete the expense \"{name}\"? This action cannot be undone."
+        },
+        "toast": {
+            "createSuccess": "Expense created successfully",
+            "createError": "Failed to create expense",
+            "updateSuccess": "Expense updated successfully",
+            "updateError": "Failed to update expense",
+            "deleteSuccess": "Expense deleted successfully",
+            "deleteError": "Failed to delete expense",
+            "fetchError": "Failed to fetch expenses",
+            "missingId": "Expense ID is required for update"
+        }
+    },
     "integrations": {
         "title": "eMAG Integrations",
         "addButton": "Add Integration",

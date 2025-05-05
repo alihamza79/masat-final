@@ -3,6 +3,7 @@ import { Box, Grid, Paper, Stack, Typography } from '@mui/material';
 import { IconCalendar, IconPackage } from '@tabler/icons-react';
 import React from 'react';
 import { ExpenseType } from '@/lib/hooks/useExpenses';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseTypeSelectorProps {
   type: ExpenseType;
@@ -11,17 +12,19 @@ interface ExpenseTypeSelectorProps {
 }
 
 const ExpenseTypeSelector = ({ type, setType, mode }: ExpenseTypeSelectorProps) => {
+  const { t } = useTranslation();
+  
   return (
     <Box>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Expense Type {mode === 'edit' && '(cannot be changed)'}
+        {t('expenses.dialog.type.label')} {mode === 'edit' && t('expenses.dialog.cannotBeChanged')}
       </Typography>
       <Grid container spacing={1.5}>
         {[
-          { value: 'one-time', label: 'One Time', icon: <IconCalendar size={18} /> },
-          { value: 'monthly', label: 'Monthly', icon: <IconCalendar size={18} /> },
-          { value: 'annually', label: 'Annually', icon: <IconCalendar size={18} /> },
-          { value: 'cogs', label: 'COGS', icon: <IconPackage size={18} /> },
+          { value: 'one-time', label: t('expenses.dialog.type.oneTime'), icon: <IconCalendar size={18} /> },
+          { value: 'monthly', label: t('expenses.dialog.type.monthly'), icon: <IconCalendar size={18} /> },
+          { value: 'annually', label: t('expenses.dialog.type.annually'), icon: <IconCalendar size={18} /> },
+          { value: 'cogs', label: t('expenses.dialog.type.cogs'), icon: <IconPackage size={18} /> },
         ].map((option) => (
           <Grid item xs={6} sm={3} key={option.value}>
             <Paper

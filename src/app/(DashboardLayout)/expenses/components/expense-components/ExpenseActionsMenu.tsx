@@ -2,6 +2,7 @@
 import { Menu, MenuItem, Typography } from '@mui/material';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseActionsMenuProps {
   anchorEl: HTMLElement | null;
@@ -16,6 +17,8 @@ const ExpenseActionsMenu = ({
   onEditClick, 
   onDeleteClick 
 }: ExpenseActionsMenuProps) => {
+  const { t } = useTranslation();
+  
   return (
     <Menu
       anchorEl={anchorEl}
@@ -24,11 +27,11 @@ const ExpenseActionsMenu = ({
     >
       <MenuItem onClick={onEditClick}>
         <IconPencil size={20} />
-        <Typography sx={{ ml: 1 }}>Edit</Typography>
+        <Typography sx={{ ml: 1 }}>{t('expenses.list.edit')}</Typography>
       </MenuItem>
       <MenuItem onClick={onDeleteClick} sx={{ color: 'error.main' }}>
         <IconTrash size={20} />
-        <Typography sx={{ ml: 1 }}>Delete</Typography>
+        <Typography sx={{ ml: 1 }}>{t('expenses.list.delete')}</Typography>
       </MenuItem>
     </Menu>
   );

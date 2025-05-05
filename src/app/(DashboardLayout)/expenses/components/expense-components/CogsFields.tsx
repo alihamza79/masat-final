@@ -7,6 +7,7 @@ import { InputAdornment, Stack, TextField } from '@mui/material';
 import React from 'react';
 import ProductSearchAutocomplete from './ProductSearchAutocomplete';
 import SelectedProductView from './SelectedProductView';
+import { useTranslation } from 'react-i18next';
 
 interface CogsFieldsProps {
   date: Date | null;
@@ -41,13 +42,15 @@ const CogsFields = ({
   errors,
   setErrors
 }: CogsFieldsProps) => {
+  const { t } = useTranslation();
+
   return (
     <Stack spacing={3} sx={{ mt: 0 }}>
       {/* Fields without container */}
       <Stack spacing={3}>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
-            label="Purchase Date"
+            label={t('expenses.dialog.purchaseDate')}
             value={date}
             onChange={(newDate) => {
               if (newDate) {

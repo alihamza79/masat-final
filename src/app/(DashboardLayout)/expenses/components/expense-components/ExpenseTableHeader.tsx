@@ -1,21 +1,24 @@
 'use client';
 import { TableCell, TableHead, TableRow } from '@mui/material';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseTableHeaderProps {
   isMobile: boolean;
 }
 
 const ExpenseTableHeader = ({ isMobile }: ExpenseTableHeaderProps) => {
+  const { t } = useTranslation();
+  
   return (
     <TableHead>
       <TableRow>
-        <TableCell sx={{ minWidth: 200, maxWidth: 300 }} align="left">Description</TableCell>
-        {!isMobile && <TableCell sx={{ width: 100 }} align="center">Type</TableCell>}
-        <TableCell sx={{ width: 100 }} align="center">Amount</TableCell>
-        {!isMobile && <TableCell sx={{ width: 100 }} align="center">Date</TableCell>}
-        {!isMobile && <TableCell sx={{ width: 90 }} align="center">Status</TableCell>}
-        <TableCell align="right" sx={{ width: 60 }}>Actions</TableCell>
+        <TableCell sx={{ minWidth: 200, maxWidth: 300 }} align="left">{t('expenses.list.columns.description')}</TableCell>
+        {!isMobile && <TableCell sx={{ width: 100 }} align="center">{t('expenses.list.columns.type')}</TableCell>}
+        <TableCell sx={{ width: 100 }} align="center">{t('expenses.list.columns.amount')}</TableCell>
+        {!isMobile && <TableCell sx={{ width: 100 }} align="center">{t('expenses.list.columns.date')}</TableCell>}
+        {!isMobile && <TableCell sx={{ width: 90 }} align="center">{t('expenses.list.columns.status')}</TableCell>}
+        <TableCell align="right" sx={{ width: 60 }}>{t('expenses.list.columns.actions')}</TableCell>
       </TableRow>
     </TableHead>
   );

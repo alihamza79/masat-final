@@ -1,20 +1,23 @@
 'use client';
 import { Alert, Button, Card, CardContent } from '@mui/material';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseErrorDisplayProps {
   error: Error | unknown;
 }
 
 const ExpenseErrorDisplay = ({ error }: ExpenseErrorDisplayProps) => {
+  const { t } = useTranslation();
+  
   return (
     <Card>
       <CardContent>
         <Alert severity="error" sx={{ mb: 3 }}>
-          Error loading expenses: {error instanceof Error ? error.message : 'Unknown error'}
+          {t('expenses.list.error.loading')} {error instanceof Error ? error.message : t('expenses.list.error.unknown')}
         </Alert>
         <Button variant="outlined" onClick={() => window.location.reload()}>
-          Reload Page
+          {t('expenses.list.error.reload')}
         </Button>
       </CardContent>
     </Card>

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Types } from 'mongoose';
 import { DASHBOARD_QUERY_KEY } from '@/lib/services/dashboardService';
+import { useTranslation } from 'react-i18next';
 
 export type ExpenseType = 'one-time' | 'monthly' | 'annually' | 'cogs';
 
@@ -33,14 +34,14 @@ export interface Expense {
 export const EXPENSES_QUERY_KEY = ['expenses'];
 
 // API functions
-const fetchExpenses = async (type?: ExpenseType) => {
+const fetchExpenses = async (type?: ExpenseType, t?: any) => {
   const url = type 
     ? `/api/expenses?type=${type}` 
     : '/api/expenses';
   
   const response = await axios.get(url);
   if (!response.data.success) {
-    throw new Error(response.data.error || 'Failed to fetch expenses');
+    throw new Error(response.data.error || (t ? t('expenses.toast.fetchError') : 'Failed to fetch expenses'));
   }
   return response.data.data.expenses;
 };
@@ -53,24 +54,24 @@ const createExpense = async (expense: Omit<Expense, '_id'>) => {
   return response.data.data.expense;
 };
 
-const updateExpense = async (expense: Expense) => {
+const updateExpense = async (expense: Expense, t?: any) => {
   // Ensure we send `id` instead of `_id` for the API
   const { _id, ...rest } = expense;
   if (!_id) {
-    throw new Error('Expense ID is required for update');
+    throw new Error(t ? t('expenses.toast.missingId') : 'Expense ID is required for update');
   }
   // Send `id` field for the PUT endpoint
   const response = await axios.put('/api/expenses', { id: _id, ...rest });
   if (!response.data.success) {
-    throw new Error(response.data.error || 'Failed to update expense');
+    throw new Error(response.data.error || (t ? t('expenses.toast.updateError') : 'Failed to update expense'));
   }
   return response.data.data.expense;
 };
 
-const deleteExpense = async (id: string) => {
+const deleteExpense = async (id: string, t?: any) => {
   const response = await axios.delete(`/api/expenses?id=${id}`);
   if (!response.data.success) {
-    throw new Error(response.data.error || 'Failed to delete expense');
+    throw new Error(response.data.error || (t ? t('expenses.toast.deleteError') : 'Failed to delete expense'));
   }
   return true;
 };
@@ -78,6 +79,7 @@ const deleteExpense = async (id: string) => {
 export const useExpenses = (type?: ExpenseType) => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Query for fetching expenses
   const { 
@@ -87,7 +89,7 @@ export const useExpenses = (type?: ExpenseType) => {
     refetch 
   } = useQuery({
     queryKey: [...EXPENSES_QUERY_KEY, type],
-    queryFn: () => fetchExpenses(type),
+    queryFn: () => fetchExpenses(type, t),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -98,30 +100,30 @@ export const useExpenses = (type?: ExpenseType) => {
       queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
       // Also invalidate dashboard data to refresh charts
       queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
-      toast.success('Expense created successfully');
+      toast.success(t('expenses.toast.createSuccess'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create expense');
+      toast.error(error.message || t('expenses.toast.createError'));
     },
   });
 
   // Mutation for updating expenses
   const updateMutation = useMutation({
-    mutationFn: updateExpense,
+    mutationFn: (expense: Expense) => updateExpense(expense, t),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
       // Also invalidate dashboard data to refresh charts
       queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
-      toast.success('Expense updated successfully');
+      toast.success(t('expenses.toast.updateSuccess'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update expense');
+      toast.error(error.message || t('expenses.toast.updateError'));
     },
   });
 
   // Mutation for deleting expenses
   const deleteMutation = useMutation({
-    mutationFn: deleteExpense,
+    mutationFn: (id: string) => deleteExpense(id, t),
     onMutate: (id: string) => {
       setIsDeleting(id);
     },
@@ -129,11 +131,11 @@ export const useExpenses = (type?: ExpenseType) => {
       queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY });
       // Also invalidate dashboard data to refresh charts
       queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
-      toast.success('Expense deleted successfully');
+      toast.success(t('expenses.toast.deleteSuccess'));
       setIsDeleting(null);
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete expense');
+      toast.error(error.message || t('expenses.toast.deleteError'));
       setIsDeleting(null);
     },
   });

@@ -8,9 +8,11 @@ import { isThisYear, getMonth, format, parseISO } from 'date-fns';
 import dashboardService, { DASHBOARD_QUERY_KEY } from '@/lib/services/dashboardService';
 import { useIntegrations } from '@/lib/hooks/useIntegrations';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: boolean, height?: number }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -104,19 +106,19 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
   // Prepare chart data
   const series = [
     {
-      name: 'Expenses',
+      name: t('expenses.chart.expenses'),
       data: monthlyData.expenses,
     },
     {
-      name: 'Profit',
+      name: t('expenses.chart.profit'),
       data: monthlyData.profit,
     }
   ];
 
   // Original legend items
   const legendItems = [
-    { name: 'Expenses', color: theme.palette.error.main },
-    { name: 'Profit', color: theme.palette.success.main }
+    { name: t('expenses.chart.expenses'), color: theme.palette.error.main },
+    { name: t('expenses.chart.profit'), color: theme.palette.success.main }
   ];
 
   // Calculate min and max values for y-axis with some padding
@@ -318,7 +320,7 @@ const ExpensesVsProfitChart = ({ fullHeight = false, height }: { fullHeight?: bo
               fontSize: isMobile ? '1.1rem' : undefined
             }}
           >
-            Expenses vs Profit {currentYear}
+            {t('expenses.chart.title')} {currentYear}
           </Typography>
           
           {/* Custom legend */}

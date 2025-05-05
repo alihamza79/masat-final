@@ -20,8 +20,10 @@ import { useTheme, useMediaQuery } from '@mui/material';
 import ExpenseDialog from './ExpenseDialog';
 import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 const ExpensesList = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedType, setSelectedType] = useState<ExpenseType | 'all'>('all');
@@ -173,8 +175,8 @@ const ExpensesList = () => {
           onClose={() => setIsDeleteDialogOpen(false)}
           onConfirm={handleConfirmDelete}
           integrationName={getExpenseName(selectedExpense)}
-          title="Delete Expense"
-          message={`Are you sure you want to delete the expense "${getExpenseName(selectedExpense)}"? This action cannot be undone.`}
+          title={t('expenses.delete.title')}
+          message={t('expenses.delete.confirmation', { name: getExpenseName(selectedExpense) })}
         />
       </CardContent>
     </Card>

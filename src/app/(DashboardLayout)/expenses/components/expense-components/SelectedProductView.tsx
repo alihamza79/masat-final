@@ -2,6 +2,7 @@
 import { Box, InputAdornment, Paper, Stack, TextField, Typography } from '@mui/material';
 import React from 'react';
 import ProductImage from './ProductImage';
+import { useTranslation } from 'react-i18next';
 
 interface SelectedProductViewProps {
   product: any;
@@ -22,6 +23,8 @@ const SelectedProductView = ({
   errors, 
   setErrors 
 }: SelectedProductViewProps) => {
+  const { t } = useTranslation();
+
   return (
     <Paper 
       variant="outlined"
@@ -54,12 +57,12 @@ const SelectedProductView = ({
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               {product.part_number && (
                 <Typography variant="body2">
-                  <strong>SKU:</strong> {product.part_number}
+                  <strong>{t('expenses.dialog.sku')}:</strong> {product.part_number}
                 </Typography>
               )}
               {product.part_number_key && (
                 <Typography variant="body2">
-                  <strong>PNK:</strong> {product.part_number_key}
+                  <strong>{t('expenses.dialog.pnk')}:</strong> {product.part_number_key}
                 </Typography>
               )}
             </Stack>
@@ -72,11 +75,11 @@ const SelectedProductView = ({
               borderRadius: 1
             }}>
               <Typography variant="subtitle2" gutterBottom>
-                Purchase Details
+                {t('expenses.dialog.purchaseDetails')}
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
-                  label="Number of Units"
+                  label={t('expenses.dialog.numberOfUnits')}
                   type="number"
                   value={unitsCount}
                   onChange={(e) => {
@@ -97,7 +100,7 @@ const SelectedProductView = ({
                   }}
                 />
                 <TextField
-                  label="Cost per Unit"
+                  label={t('expenses.dialog.costPerUnit')}
                   type="number"
                   value={costPerUnit}
                   onChange={(e) => {
@@ -122,7 +125,7 @@ const SelectedProductView = ({
               {Number(unitsCount) > 0 && Number(costPerUnit) > 0 && (
                 <Box sx={{ mt: 2, textAlign: 'right' }}>
                   <Typography variant="subtitle2">
-                    Total: <strong>{(Number(unitsCount) * Number(costPerUnit)).toLocaleString()} RON</strong>
+                    {t('expenses.dialog.total')}: <strong>{(Number(unitsCount) * Number(costPerUnit)).toLocaleString()} RON</strong>
                   </Typography>
                 </Box>
               )}

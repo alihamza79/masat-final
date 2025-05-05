@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import React from 'react';
 import { ProductImage } from './index';
 import { Expense } from '@/lib/hooks/useExpenses';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseRowProps {
   expense: Expense;
@@ -14,12 +15,14 @@ interface ExpenseRowProps {
 }
 
 const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowProps) => {
+  const { t } = useTranslation();
+
   // Format date in a readable format
   const formatDate = (dateString: string | Date) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy');
     } catch (error) {
-      return 'Invalid date';
+      return t('expenses.list.invalidDate');
     }
   };
 
@@ -54,7 +57,7 @@ const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowPro
           <>
             <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: "flex-start" }}>
               <Chip
-                label={expense.type === 'one-time' ? 'ONE-TIME' : expense.type.toUpperCase()}
+                label={expense.type === 'one-time' ? t('expenses.list.oneTime') : t(`expenses.list.${expense.type}`)}
                 color={
                   expense.type === 'cogs'
                     ? 'warning'
@@ -67,7 +70,7 @@ const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowPro
               />
               {expense.isRecurring && (
                 <Chip 
-                  label="Recurring" 
+                  label={t('expenses.list.recurring')} 
                   color="success" 
                   size="small"
                   sx={{ height: 24 }}
@@ -87,7 +90,7 @@ const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowPro
       {!isMobile && (
         <TableCell align="center">
           <Chip
-            label={expense.type === 'one-time' ? 'ONE-TIME' : expense.type.toUpperCase()}
+            label={expense.type === 'one-time' ? t('expenses.list.oneTime') : t(`expenses.list.${expense.type}`)}
             color={
               expense.type === 'cogs'
                 ? 'warning'
@@ -111,7 +114,7 @@ const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowPro
       {!isMobile && (
         <TableCell align="center">
           {expense.isRecurring ? (
-            <Chip label="Recurring" color="success" size="small" />
+            <Chip label={t('expenses.list.recurring')} color="success" size="small" />
           ) : (
             <Typography variant="body2" color="text.secondary">-</Typography>
           )}
