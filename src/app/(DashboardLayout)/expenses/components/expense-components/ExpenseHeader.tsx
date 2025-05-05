@@ -2,6 +2,7 @@
 import { Box, Button, Typography } from '@mui/material';
 import { IconPlus } from '@tabler/icons-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseHeaderProps {
   isMobile: boolean;
@@ -9,6 +10,8 @@ interface ExpenseHeaderProps {
 }
 
 const ExpenseHeader = ({ isMobile, onAddClick }: ExpenseHeaderProps) => {
+  const { t } = useTranslation();
+  
   return (
     <Box 
       sx={{ 
@@ -27,7 +30,7 @@ const ExpenseHeader = ({ isMobile, onAddClick }: ExpenseHeaderProps) => {
           textAlign: { xs: 'center', sm: 'left' },
         }}
       >
-        Expenses List
+        {t('expenses.list.title')}
       </Typography>
       {!isMobile && (
         <Button
@@ -40,7 +43,7 @@ const ExpenseHeader = ({ isMobile, onAddClick }: ExpenseHeaderProps) => {
             fontSize: { xs: '0.813rem', sm: '0.875rem' },
           }}
         >
-          Add Expense
+          {t('expenses.list.addExpense')}
         </Button>
       )}
     </Box>

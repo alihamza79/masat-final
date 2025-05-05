@@ -7,6 +7,7 @@ import { IconCalendar } from '@tabler/icons-react';
 import React from 'react';
 import { ExpenseType } from '@/lib/hooks/useExpenses';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 interface RegularExpenseFieldsProps {
   type: ExpenseType;
@@ -36,12 +37,13 @@ const RegularExpenseFields = ({
   setErrors
 }: RegularExpenseFieldsProps) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Stack spacing={3}>
       {type !== 'cogs' && (
         <TextField
-          label="Description"
+          label={t('expenses.dialog.description')}
           value={description}
           onChange={(e) => {
             const value = e.target.value;
@@ -78,7 +80,7 @@ const RegularExpenseFields = ({
       {type !== 'cogs' && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
-            label="Amount"
+            label={t('expenses.dialog.amount')}
             type="number"
             value={amount}
             onChange={(e) => {
@@ -102,7 +104,7 @@ const RegularExpenseFields = ({
           
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
-              label="Date"
+              label={t('expenses.dialog.date')}
               value={date}
               onChange={(newDate) => {
                 if (newDate) {
@@ -150,7 +152,9 @@ const RegularExpenseFields = ({
             }
             label={
               <Stack direction="row" spacing={1} alignItems="center">
-                <Typography>{`Recurring ${type === 'monthly' ? 'Monthly' : 'Annually'}`}</Typography>
+                <Typography>
+                  {t('expenses.dialog.recurring', { type: type === 'monthly' ? t('expenses.dialog.monthly') : t('expenses.dialog.annually') })}
+                </Typography>
               </Stack>
             }
           />

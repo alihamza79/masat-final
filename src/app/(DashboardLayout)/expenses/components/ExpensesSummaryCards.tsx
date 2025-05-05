@@ -5,6 +5,7 @@ import useExpenses, { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
 import useExpenseStats from '@/lib/hooks/useExpenseStats';
 import { useMemo } from 'react';
 import { subYears, format, isWithinInterval } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface ExpensesSummaryCardsProps {
   onlyFirstTwo?: boolean;
@@ -17,6 +18,7 @@ const ExpensesSummaryCards: React.FC<ExpensesSummaryCardsProps> = ({
   grid2x2 = false, 
   height 
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -96,25 +98,25 @@ const ExpensesSummaryCards: React.FC<ExpensesSummaryCardsProps> = ({
   // Create cards data based on expense stats and year-over-year comparison
   const summaryData = [
     {
-      title: 'One Time',
+      title: t('expenses.summary.oneTime'),
       amount: stats.expensesByType['one-time'],
       change: yearOverYearComparison['one-time'],
       type: yearOverYearComparison['one-time'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
     {
-      title: 'Monthly',
+      title: t('expenses.summary.monthly'),
       amount: stats.expensesByType['monthly'],
       change: yearOverYearComparison['monthly'],
       type: yearOverYearComparison['monthly'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
     {
-      title: 'Annually',
+      title: t('expenses.summary.annually'),
       amount: stats.expensesByType['annually'],
       change: yearOverYearComparison['annually'],
       type: yearOverYearComparison['annually'] >= 0 ? 'increase' as const : 'decrease' as const,
     },
     {
-      title: 'COGS',
+      title: t('expenses.summary.cogs'),
       amount: stats.expensesByType['cogs'],
       change: yearOverYearComparison['cogs'],
       type: yearOverYearComparison['cogs'] >= 0 ? 'increase' as const : 'decrease' as const,
@@ -231,7 +233,7 @@ const ExpensesSummaryCards: React.FC<ExpensesSummaryCardsProps> = ({
                   mt={isMobile ? 0 : 0.5}
                   fontSize={isMobile ? '0.7rem' : undefined}
                 >
-                  vs Last Year
+                  {t('expenses.summary.vsLastYear')}
                 </Typography>
               </Stack>
             </Card>
@@ -302,7 +304,7 @@ const ExpensesSummaryCards: React.FC<ExpensesSummaryCardsProps> = ({
                 mt={isMobile ? 0 : 0.5}
                 fontSize={isMobile ? '0.7rem' : undefined}
               >
-                vs Last Year
+                {t('expenses.summary.vsLastYear')}
               </Typography>
             </Stack>
           </Card>

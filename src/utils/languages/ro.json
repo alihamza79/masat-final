@@ -217,6 +217,123 @@
             "currency": "lei"
         }
     },
+    "expenses": {
+        "title": "Cheltuieli",
+        "pageDescription": "Gestionați cheltuielile afacerii dvs.",
+        "summary": {
+            "oneTime": "Unică",
+            "monthly": "Lunară",
+            "annually": "Anuală",
+            "cogs": "COGS",
+            "vsLastYear": "vs Anul Trecut"
+        },
+        "chart": {
+            "title": "Cheltuieli vs Profit",
+            "expenses": "Cheltuieli",
+            "profit": "Profit"
+        },
+        "list": {
+            "title": "Listă Cheltuieli",
+            "filterByType": "Filtrare după Tip",
+            "all": "Toate",
+            "oneTime": "Unică",
+            "monthly": "Lunară",
+            "annually": "Anuală",
+            "cogs": "COGS",
+            "noExpensesFound": "Nu s-au găsit cheltuieli.",
+            "addYourFirstExpense": "Adăugați Prima Cheltuială",
+            "addExpense": "Adaugă Cheltuială",
+            "edit": "Editează",
+            "delete": "Șterge",
+            "recurring": "Recurentă",
+            "invalidDate": "Dată invalidă",
+            "columns": {
+                "description": "Descriere",
+                "type": "Tip",
+                "amount": "Sumă",
+                "date": "Data",
+                "status": "Status",
+                "actions": "Acțiuni"
+            },
+            "error": {
+                "loading": "Eroare la încărcarea cheltuielilor:",
+                "unknown": "Eroare necunoscută",
+                "reload": "Reîncărcați Pagina"
+            }
+        },
+        "dialog": {
+            "add": "Adaugă Cheltuială",
+            "edit": "Editează Cheltuială",
+            "save": "Salvează",
+            "cancel": "Anulează",
+            "expenseType": "Tip Cheltuială",
+            "cannotBeChanged": "(nu poate fi modificat)",
+            "oneTime": "Unică",
+            "monthly": "Lunară",
+            "annually": "Anuală",
+            "cogs": "COGS (Cost al Bunurilor Vândute)",
+            "description": "Descriere",
+            "amount": "Sumă",
+            "date": "Data",
+            "recurring": "Recurentă {type}",
+            "expenseDetails": "Detalii Cheltuială",
+            "purchaseDate": "Data Achiziției",
+            "purchaseDetails": "Detalii Achiziție",
+            "numberOfUnits": "Număr de Unități",
+            "costPerUnit": "Cost pe Unitate",
+            "total": "Total",
+            "searchProduct": "Caută un produs...",
+            "searchBy": "Caută după nume, SKU sau PNK",
+            "noProductsFound": "Nu s-au găsit produse",
+            "typeToSearch": "Tastați pentru a căuta produse",
+            "sku": "SKU",
+            "pnk": "PNK",
+            "type": {
+                "label": "Tip Cheltuială",
+                "oneTime": "Unică",
+                "monthly": "Lunară",
+                "annually": "Anuală",
+                "cogs": "COGS (Cost al Bunurilor Vândute)"
+            },
+            "fields": {
+                "description": "Descriere",
+                "descriptionPlaceholder": "Introduceți descrierea cheltuielii",
+                "amount": "Sumă",
+                "amountPlaceholder": "Introduceți suma în RON",
+                "date": "Data",
+                "isRecurring": "Este cheltuială recurentă?",
+                "product": "Produs",
+                "searchProduct": "Căutați un produs...",
+                "noResults": "Nu s-au găsit rezultate",
+                "unitsCount": "Număr de Unități",
+                "unitsCountPlaceholder": "Introduceți numărul de unități",
+                "costPerUnit": "Cost pe Unitate",
+                "costPerUnitPlaceholder": "Introduceți costul pe unitate în RON"
+            },
+            "validation": {
+                "descriptionRequired": "Descrierea este obligatorie",
+                "amountRequired": "Suma validă este obligatorie",
+                "dateRequired": "Data este obligatorie",
+                "productRequired": "Selectarea produsului este obligatorie",
+                "unitsCountRequired": "Numărul de unități trebuie să fie mai mare de 0",
+                "costPerUnitRequired": "Costul pe unitate trebuie să fie mai mare de 0"
+            }
+        },
+        "delete": {
+            "title": "Șterge Cheltuială",
+            "confirmation": "Sigur doriți să ștergeți cheltuiala \"{name}\"? Această acțiune nu poate fi anulată."
+        },
+        "toast": {
+            "createSuccess": "Cheltuială adăugată cu succes",
+            "createError": "Eroare la adăugarea cheltuielii",
+            "updateSuccess": "Cheltuială actualizată cu succes",
+            "updateError": "Eroare la actualizarea cheltuielii",
+            "deleteSuccess": "Cheltuială ștearsă cu succes",
+            "deleteError": "Eroare la ștergerea cheltuielii",
+            "fetchError": "Eroare la încărcarea cheltuielilor",
+            "missingId": "ID-ul cheltuielii este necesar pentru actualizare"
+        }
+    },
     "integrations": {
         "title": "Integrări eMAG",
         "addButton": "Adaugă Integrare",

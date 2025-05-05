@@ -5,16 +5,18 @@ import ExpensesSummaryCards from './components/ExpensesSummaryCards';
 import ExpensesVsProfitChart from './components/ExpensesVsProfitChart';
 import ExpensesList from './components/ExpensesList';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const CARDS_CHART_HEIGHT = 420;
 
 const ExpensesPage = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   return (
-    <PageContainer title="Expenses" description="Manage your business expenses">
+    <PageContainer title={t('expenses.title')} description={t('expenses.pageDescription')}>
       <Box>
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -34,7 +36,7 @@ const ExpensesPage = () => {
                   width: '100%'
                 }}
               >
-                Expenses
+                {t('expenses.title')}
               </Typography>
             </Box>
           </Grid>

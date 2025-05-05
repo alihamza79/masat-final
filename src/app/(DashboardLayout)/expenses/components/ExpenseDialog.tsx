@@ -15,6 +15,7 @@ import {
 import { Expense, ExpenseType } from '@/lib/hooks/useExpenses';
 import { format } from 'date-fns';
 import useProducts from '@/lib/hooks/useProducts';
+import { useTranslation } from 'react-i18next';
 import { 
   ExpenseTypeSelector, 
   RegularExpenseFields, 
@@ -38,6 +39,7 @@ const ExpenseDialog = ({
   onSave,
   isSaving
 }: ExpenseDialogProps) => {
+  const { t } = useTranslation();
   // Validation error state
   const [errors, setErrors] = useState<Record<string,string>>({});
 
@@ -199,12 +201,12 @@ const ExpenseDialog = ({
   return (
     <Dialog 
       open={open} 
-      onClose={isSaving ? undefined : onClose} 
-      maxWidth="sm" 
+      onClose={onClose}
       fullWidth
+      maxWidth="sm"
     >
       <DialogTitle>
-        {mode === 'add' ? 'Add New Expense' : 'Edit Expense'}
+        {mode === 'add' ? t('expenses.dialog.add') : t('expenses.dialog.edit')}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={4} sx={{ mt: 2 }}>
@@ -223,7 +225,7 @@ const ExpenseDialog = ({
                 color="text.secondary"
                 sx={{ px: 1 }}
               >
-                Expense Details
+                {t('expenses.dialog.expenseDetails')}
               </Typography>
             </Divider>
           </Box>
@@ -263,22 +265,18 @@ const ExpenseDialog = ({
           )}
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2, bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50' }}>
-        <Button 
-          onClick={onClose}
-          disabled={isSaving}
-          variant="outlined"
-        >
-          Cancel
+      <DialogActions>
+        <Button onClick={onClose} color="inherit" disabled={isSaving}>
+          {t('expenses.dialog.cancel')}
         </Button>
         <Button 
           onClick={handleSubmit} 
           variant="contained" 
           color="primary"
           disabled={isSaving}
-          startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+          startIcon={isSaving ? <CircularProgress size={20} /> : null}
         >
-          {isSaving ? 'Saving...' : (mode === 'add' ? 'Add' : 'Save')}
+          {t('expenses.dialog.save')}
         </Button>
       </DialogActions>
     </Dialog>

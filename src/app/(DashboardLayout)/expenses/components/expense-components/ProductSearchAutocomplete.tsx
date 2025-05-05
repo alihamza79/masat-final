@@ -4,6 +4,7 @@ import { IconSearch } from '@tabler/icons-react';
 import React from 'react';
 import ProductImage from './ProductImage';
 import HighlightedText from './HighlightedText';
+import { useTranslation } from 'react-i18next';
 
 interface ProductSearchAutocompleteProps {
   selectedProduct: any | null;
@@ -24,6 +25,8 @@ const ProductSearchAutocomplete = ({
   productsLoading, 
   error 
 }: ProductSearchAutocompleteProps) => {
+  const { t } = useTranslation();
+
   return (
     <Autocomplete
       value={selectedProduct}
@@ -32,14 +35,14 @@ const ProductSearchAutocomplete = ({
       options={filteredProducts}
       filterOptions={(options) => options}
       loading={productsLoading}
-      noOptionsText={searchQuery ? "No products found" : "Type to search"}
+      noOptionsText={searchQuery ? t('expenses.dialog.noProductsFound') : t('expenses.dialog.typeToSearch')}
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Search Product"
+          label={t('expenses.dialog.searchProduct')}
           onChange={(e) => setSearchQuery(e.target.value)}
           error={Boolean(error)}
-          helperText={error || "Search by name, SKU or PNK"}
+          helperText={error || t('expenses.dialog.searchBy')}
           InputProps={{
             ...params.InputProps,
             startAdornment: (
@@ -73,12 +76,12 @@ const ProductSearchAutocomplete = ({
               <Stack direction="row" spacing={1}>
                 {option.part_number && (
                   <Typography variant="caption" color="text.secondary">
-                    SKU: <HighlightedText text={option.part_number} highlight={searchQuery} />
+                    {t('expenses.dialog.sku')}: <HighlightedText text={option.part_number} highlight={searchQuery} />
                   </Typography>
                 )}
                 {option.part_number_key && (
                   <Typography variant="caption" color="text.secondary">
-                    PNK: <HighlightedText text={option.part_number_key} highlight={searchQuery} />
+                    {t('expenses.dialog.pnk')}: <HighlightedText text={option.part_number_key} highlight={searchQuery} />
                   </Typography>
                 )}
               </Stack>
