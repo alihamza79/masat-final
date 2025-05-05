@@ -45,7 +45,7 @@ const Menuitems: MenuitemsType[] = [
     id: uniqueId(),
     title: "menu.dashboard",
     icon: IconChartLine,
-    href: "/dashboarfefd",
+    href: "/",
   },
   {
     id: uniqueId(),

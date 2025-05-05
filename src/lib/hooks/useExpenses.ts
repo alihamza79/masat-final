@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { Types } from 'mongoose';
 
 export type ExpenseType = 'one-time' | 'monthly' | 'annually' | 'cogs';
 
@@ -17,7 +18,7 @@ export interface ExpenseProduct {
 
 export interface Expense {
   _id?: string;
-  userId?: string;
+  userId?: Types.ObjectId | string; // Accept both for flexibility in frontend
   type: ExpenseType;
   description: string;
   amount: number;

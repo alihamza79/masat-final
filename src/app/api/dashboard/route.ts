@@ -24,7 +24,7 @@ const OrderSchema = new mongoose.Schema({
 
 // Define Integration schema to fetch user's integrations
 const IntegrationSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true },
   accountName: { type: String, required: true },
   username: { type: String, required: true },
   password: { type: String, required: true },
@@ -34,7 +34,7 @@ const IntegrationSchema = new mongoose.Schema({
 
 // Define Expense schema to fetch COGS data
 const ExpenseSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true },
   type: { type: String, enum: ['one-time', 'monthly', 'annually', 'cogs'], required: true },
   description: { type: String },
   amount: { type: Number, required: true },
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     const Integration = mongoose.models.Integration || mongoose.model('Integration', IntegrationSchema);
     
     // Get user's integrations
-    const userIntegrations = await Integration.find({ userId });
+    const userIntegrations = await Integration.find({ userId: new mongoose.Types.ObjectId(userId) });
     const userIntegrationIds = userIntegrations.map(integration => integration._id);
     
     if (userIntegrationIds.length === 0) {
@@ -276,7 +276,7 @@ export async function GET(req: NextRequest) {
     
     // First get a list of all expenses to verify we're finding them correctly
     const allExpenses = await Expense.find({ 
-      userId: session.user.id
+      userId: new mongoose.Types.ObjectId(session.user.id)
     }).sort({ date: -1 });
     
     console.log(`Total expenses found for user (all types): ${allExpenses.length}`);
@@ -323,7 +323,7 @@ export async function GET(req: NextRequest) {
     
     // Try with a direct find query to double-check
     const otherExpensesDirect = await Expense.find({
-      userId: session.user.id,
+      userId: new mongoose.Types.ObjectId(session.user.id),
       type: { $ne: 'cogs' },
       ...(Object.keys(expenseDateFilter).length > 0 ? expenseDateFilter : {})
     });
@@ -1035,7 +1035,7 @@ export async function GET(req: NextRequest) {
       
       // Fetch all COGS expenses for this user
       const cogsExpenses = await Expense.find({
-        userId: session.user.id,
+        userId: new mongoose.Types.ObjectId(session.user.id),
         type: 'cogs',
         ...(Object.keys(expenseDateFilter).length > 0 ? expenseDateFilter : {})
       });
