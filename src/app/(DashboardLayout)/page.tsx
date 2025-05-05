@@ -627,13 +627,13 @@ export default function Dashboard() {
                           name: 'Home', 
                           value: dashboardData?.deliveryMethodStats.home || 0, 
                           icon: <IconHome size={16} />,
-                          color: '#6870fa'
+                          color: '#7c86ff'
                         },
                         { 
                           name: 'Locker', 
                           value: dashboardData?.deliveryMethodStats.locker || 0,
                           icon: <IconTimeline size={16} />,
-                          color: '#7987ff'
+                          color: '#f06292'
                         }
                       ].filter(item => 
                         // Only include items with non-zero values, or include all if all are zero
@@ -658,19 +658,19 @@ export default function Dashboard() {
                           name: 'Card', 
                           value: dashboardData?.paymentMethodStats.card || 0,
                           icon: <IconCreditCard size={16} />,
-                          color: '#00c292'
+                          color: '#26c6a0'
                         },
                         { 
                           name: 'COD', 
                           value: dashboardData?.paymentMethodStats.cod || 0,
                           icon: <IconCash size={16} />,
-                          color: '#ff9f40'
+                          color: '#ffa55c'
                         },
                         { 
                           name: 'Bank', 
                           value: dashboardData?.paymentMethodStats.bank || 0,
                           icon: <IconReportMoney size={16} />,
-                          color: '#4fc3f7'
+                          color: '#55b9f3'
                         }
                       ].filter(item => 
                         // Only include items with non-zero values, or include all if all are zero

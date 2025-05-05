@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { 
@@ -324,15 +324,49 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
       }
     }
     
-    // Standard date format (YYYY-MM-DD)
+    // Special handling for dates in "May-Aug 2022" format from x-axis labels
+    const trimesterMatch = strValue.match(/([A-Za-z]+)-([A-Za-z]+)\s+(\d{4})/);
+    if (trimesterMatch) {
+      return strValue; // Return as-is if it's already in our custom format
+    }
+    
+    // Handle YYYY-MM-DD format with more robust validation
+    const dateMatch = strValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateMatch) {
+      const [_, year, month, day] = dateMatch;
+      // Validate date components
+      const numYear = parseInt(year, 10);
+      const numMonth = parseInt(month, 10) - 1; // 0-indexed month
+      const numDay = parseInt(day, 10);
+      
+      if (numYear > 1900 && numYear < 2100 && numMonth >= 0 && numMonth < 12 && numDay > 0 && numDay <= 31) {
+        const date = new Date(numYear, numMonth, numDay);
+        // Verify the date is valid (handles cases like Feb 30)
+        if (isFinite(date.getTime()) && date.getFullYear() === numYear && date.getMonth() === numMonth) {
+          return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+        }
+      }
+      // If invalid date, return the original string
+      return strValue;
+    }
+    
+    // Try standard Date parsing as a fallback, with validation
     try {
-      const date = new Date(strValue);
-      if (isFinite(date.getTime())) {
-        return date.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
+      // Use regex to detect if this looks like a date
+      if (/\d{1,4}[.\-/]\d{1,2}[.\-/]\d{1,4}/.test(strValue)) {
+        const date = new Date(strValue);
+        // Make sure the date is valid and recent (not defaulting to 1970 or 2001)
+        if (isFinite(date.getTime()) && date.getFullYear() > 2010) {
+          return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+        }
       }
     } catch (e) {
       // Not a valid date
@@ -349,12 +383,12 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
       type: 'area' as const,
       fontFamily: "'Plus Jakarta Sans', sans-serif",
       foreColor: theme.palette.mode === 'dark' ? '#adb0bb' : '#2A3547',
-        height: 350,
+      height: 350,
       toolbar: {
-          show: false
-        },
-        zoom: {
-          enabled: false
+        show: false
+      },
+      zoom: {
+        enabled: false
       },
       animations: {
         enabled: true,
@@ -375,7 +409,15 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
         left: 0,
         blur: 4,
         opacity: 0.1
-      }
+      },
+      // Add extra spacing for negative values
+      sparkline: {
+        enabled: false
+      },
+      stacked: false,
+      // Better handle negative values
+      redrawOnParentResize: true,
+      redrawOnWindowResize: true
     },
       // Add proper empty state message
       noData: {
@@ -396,6 +438,12 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
         intersect: false,
         x: {
           formatter: function(value: any) {
+            // Check if value is an x-axis label that's already properly formatted
+            if (typeof value === 'string' && dates.includes(value)) {
+              // For dates already in our x-axis, use the existing label format
+              // This ensures consistency between x-axis labels and tooltips
+              return formatDateLabel(value);
+            }
             return formatTooltipDate(value);
           }
         },
@@ -441,9 +489,30 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
             cssClass: 'apexcharts-yaxis-label',
           }
         },
-        min: (value: number) => Math.floor(value * 0.85),
-        max: (value: number) => Math.ceil(value * 1.15),
-        tickAmount: 5,
+        // Better scaling for all values including negative ones
+        min: function(min: number) {
+          // Check if we have extreme negative values
+          if (min < 0) {
+            // For negative values, provide good padding below
+            return Math.floor(min * 1.2); // 20% more space below negative values
+          }
+          return min;
+        },
+        max: function(max: number) {
+          // Check if we have extreme positive values
+          return Math.ceil(max * 1.1); // 10% more space above maximum values
+        },
+        // Force the y-axis to show 0 baseline
+        forceNiceScale: true,
+        // Increase tick amount for better scale distribution
+        tickAmount: 8,
+        // Ensure the chart adapts well to extreme values
+        logarithmic: false,
+        // Show zero crosshair for better orientation with negative values
+        crosshairs: {
+          show: true,
+          position: 'back'
+        }
       },
       grid: {
         borderColor: theme.palette.divider,
@@ -465,21 +534,33 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
           left: 10
         }
       },
+      // Add crosshairs for better data reading
+      crosshairs: {
+        show: true,
+        position: 'front' as const,
+        stroke: {
+          color: theme.palette.divider,
+          width: 1,
+          dashArray: 3
+        }
+      },
       // Keep original colors
       colors: [theme.palette.primary.main, theme.palette.success.main, theme.palette.warning.main],
       
       // Original markers with special handling for quarterly
       markers: hasQuarterlyData ? {
         size: 5,
-        strokeWidth: 2,
+        strokeWidth: 0,  // Remove border by setting stroke width to 0
         hover: {
-          size: 7
+          size: 7,
+          strokeWidth: 0
         }
       } : {
         size: 4,
-        strokeWidth: 1.5,
+        strokeWidth: 0,  // Remove border by setting stroke width to 0
         hover: {
-          size: 6
+          size: 6,
+          strokeWidth: 0
         }
       },
     stroke: {
