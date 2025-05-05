@@ -441,29 +441,24 @@ export default function Dashboard() {
           </Alert>
         )}
         
-        {/* Show loading indicator while integrations are being loaded */}
-        {isLoadingIntegrations && (
-          <DashboardSkeleton />
-        )}
-        
-        {/* Only show "no integrations" warning when integrations have loaded but none are selected */}
-        {!isLoadingIntegrations && selectedIntegrationIds.length === 0 && integrations && integrations.length > 0 && (
+        {/* Only show "no integrations" warning when ALL loading is complete */}
+        {!isLoadingIntegrations && !isLoading && selectedIntegrationIds.length === 0 && integrations && integrations.length > 0 && (
           <Alert severity="warning" sx={{ mb: 3 }}>
             {t('dashboard.noIntegrationsSelected')}
           </Alert>
         )}
         
-        {/* No integrations created yet */}
-        {!isLoadingIntegrations && integrations && integrations.length === 0 && (
+        {/* No integrations created yet - only show after ALL loading is complete */}
+        {!isLoadingIntegrations && !isLoading && integrations && integrations.length === 0 && (
           <Alert severity="info" sx={{ mb: 3 }}>
             {t('dashboard.noIntegrationsCreated')}
           </Alert>
         )}
         
         {/* Main dashboard content */}
-        {isLoadingIntegrations ? (
-          // Using the skeleton while loading integrations
-          null
+        {(isLoadingIntegrations || isLoading) ? (
+          // Show skeleton during any loading state
+          <DashboardSkeleton />
         ) : selectedIntegrationIds.length === 0 ? (
           // Empty state when no integrations selected
           <Box sx={{ 
@@ -480,9 +475,6 @@ export default function Dashboard() {
                 : t('dashboard.createToView')}
             </Typography>
           </Box>
-        ) : isLoading ? (
-          // Show skeleton loading state for dashboard data
-          <DashboardSkeleton />
         ) : (
           // Show dashboard when data is loaded
           <Box sx={{ mx: -1.5 }}>

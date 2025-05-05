@@ -201,31 +201,6 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
   
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Stack 
-        direction="row" 
-        spacing={3} 
-        justifyContent="space-between" 
-        alignItems="center"
-        mb={2}
-        px={1}
-      >
-        <Box>
-          <Typography variant="subtitle2" color="textSecondary">Total Revenue</Typography>
-          <Typography variant="h5" fontWeight={600}>
-            {formatCurrency(totalRevenue)}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant="subtitle2" color="textSecondary">Refund Rate</Typography>
-          <Stack direction="row" alignItems="center" spacing={0.5}>
-            <Typography variant="h5" fontWeight={600} color={refundRate > 5 ? 'error.main' : 'success.main'}>
-              {refundRate.toFixed(1)}%
-            </Typography>
-            <IconTrendingDown size={16} color={theme.palette.success.main} />
-          </Stack>
-        </Box>
-      </Stack>
-      
       <Box sx={{ 
         flexGrow: 1, 
         display: 'flex', 
@@ -236,8 +211,8 @@ const ProductPerformanceChart: React.FC<ProductPerformanceProps> = ({
         position: 'relative',
         pl: 0,
         pr: 0,
-        pb: 4,
-        pt: 0,
+        pb: 2,
+        pt: 1,
         mx: { xs: -4, sm: -5, md: -6 }
       }}>
         {isLoading ? (
@@ -267,7 +242,14 @@ export const ProductPerformanceChartSkeleton = () => {
   const theme = useTheme();
   
   return (
-    <Box sx={{ width: '100%', p: 1 }}>
+    <Box sx={{ 
+      width: '100%', 
+      p: 1,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center'
+    }}>
       {Array(5).fill(0).map((_, i) => (
         <Box 
           key={i} 

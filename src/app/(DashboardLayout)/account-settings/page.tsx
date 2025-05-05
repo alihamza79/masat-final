@@ -94,9 +94,6 @@ const AccountSetting = () => {
 
   return (
     <PageContainer title="Account Setting" description="this is Account Setting">
-      {/* breadcrumb */}
-      <Breadcrumb title="Account Setting" items={BCrumb} />
-      {/* end breadcrumb */}
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
