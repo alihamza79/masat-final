@@ -28,7 +28,7 @@ import PeriodSelector, { PeriodType } from "@/app/components/dashboards/custom/P
 import ProductOffersTable from "@/app/components/dashboards/custom/ProductOffersTable";
 import ProductPerformanceChart from "@/app/components/dashboards/custom/ProductPerformanceChart";
 import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
-import TopStatsCard from "@/app/components/dashboards/custom/TopStatsCard";
+import SimplifiedStatsCard from "@/app/components/dashboards/custom/SimplifiedStatsCard";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import ProductTable from "@/app/components/dashboards/custom/ProductTable";
 
@@ -323,11 +323,10 @@ export default function Dashboard() {
   // Format currency for display
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'RON',
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(value) + ' RON';
   };
   
   // Prepare delivery and payment methods data for charts
@@ -386,288 +385,293 @@ export default function Dashboard() {
   
   return (
     <PageContainer title="Dashboard" description="eMAG Seller Dashboard">
-      {/* Header with period selector */}
-      <Box
-        mb={3}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2,
-          pb: 2,
-          borderBottom: theme => `1px solid ${theme.palette.divider}`
-        }}
-      >
-        <Box>
-          <Typography variant="h3">Sales Dashboard</Typography>
-          <Typography variant="body2" color="textSecondary">
-            Your sales overview {getPeriodDisplayText()}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-          <PeriodSelector
-            selectedPeriod={selectedPeriod}
-            customStartDate={customStartDate}
-            customEndDate={customEndDate}
-            onPeriodChange={handlePeriodChange}
-          />
-          
-          {integrations && integrations.length > 0 && (
-            <IntegrationFilter
-              integrations={integrations}
-              selectedIntegrationIds={selectedIntegrationIds}
-              onChange={handleIntegrationFilterChange}
-            />
-          )}
-        </Box>
-      </Box>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {/* Show loading indicator while integrations are being loaded */}
-      {isLoadingIntegrations && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
-          <CircularProgress />
-        </Box>
-      )}
-      
-      {/* Only show "no integrations" warning when integrations have loaded but none are selected */}
-      {!isLoadingIntegrations && selectedIntegrationIds.length === 0 && integrations && integrations.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          No integrations selected. Please select at least one integration to view your dashboard data.
-        </Alert>
-      )}
-      
-      {/* No integrations created yet */}
-      {!isLoadingIntegrations && integrations && integrations.length === 0 && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          You don't have any integrations set up yet. Please create an integration to see your dashboard data.
-        </Alert>
-      )}
-      
-      {/* Main dashboard content */}
-      {isLoadingIntegrations ? (
-        // Show nothing while loading integrations (already showing loading spinner above)
-        null
-      ) : selectedIntegrationIds.length === 0 ? (
-        // Empty state when no integrations selected
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          p: 5, 
-          backgroundColor: 'background.paper',
-          borderRadius: 1
-        }}>
-          <Typography variant="h6" color="textSecondary">
-            {integrations && integrations.length > 0 
-              ? "Select at least one integration to view dashboard data"
-              : "Create an integration to view dashboard data"}
-          </Typography>
-        </Box>
-      ) : isLoading ? (
-        // Show loading state for dashboard data
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          p: 5,
-          my: 4
-        }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        // Show dashboard when data is loaded
-        <Box sx={{ mx: -1.5 }}>
-          <Grid container spacing={3} sx={{ px: 1.5 }}>
-            {/* Top stat cards row */}
-            <Grid container item spacing={3} sx={{ mb: 1 }}>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TopStatsCard
-                  title="Total Orders"
-                  value={dashboardData ? dashboardData.orderStats.totalOrders.toString() : "0"}
-                  icon={<IconShoppingCart />}
-                  colorScheme="primary"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TopStatsCard
-                  title="Gross Revenue"
-                  value={dashboardData ? formatCurrency(dashboardData.orderStats.grossRevenue) : "RON 0"}
-                  icon={<IconCash />}
-                  colorScheme="success"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TopStatsCard
-                  title="Profit"
-                  value={dashboardData ? formatCurrency(dashboardData.orderStats.profitMargin) : "RON 0"}
-                  icon={<IconCoin />}
-                  colorScheme="warning"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TopStatsCard
-                  title="Cost of Goods"
-                  value={dashboardData ? formatCurrency(dashboardData.orderStats.costOfGoods) : "RON 0"}
-                  icon={<IconReportMoney />}
-                  colorScheme="info"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TopStatsCard
-                  title="Refunded Orders"
-                  value={dashboardData ? dashboardData.orderStats.refundedOrders.toString() : "0"}
-                  icon={<IconRefresh />}
-                  colorScheme="error"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TopStatsCard
-                  title="Shipping Revenue"
-                  value={dashboardData ? formatCurrency(dashboardData.orderStats.shippingRevenue) : "RON 0"}
-                  icon={<IconTruckDelivery />}
-                  colorScheme="secondary"
-                />
-              </Grid>
-            </Grid>
-            
-            {/* Revenue chart and Channel Distribution */}
-            <Grid item xs={12} lg={8}>
-              <RevenueChart
-                data={dashboardData ? dashboardData.salesOverTime : []}
-                isLoading={isLoading}
-                chartTotals={dashboardData?.chartTotals}
-              />
-            </Grid>
-            
-            <Grid item xs={12} lg={4}>
-              <DashboardCard
-                title="Channel Distribution"
-                subtitle="Orders by integration"
-              >
-                <Box sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  justifyContent: 'center',
+      <Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box 
+              display="flex" 
+              alignItems="center" 
+              justifyContent="space-between" 
+              mb={3}
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+            >
+              <Typography 
+                variant="h2" 
+                sx={{ 
+                  fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
+                  textAlign: { xs: 'center', sm: 'left' },
                   width: '100%'
-                }}>
-                  <OrdersByIntegration
-                    data={dashboardData ? dashboardData.salesByIntegration : []}
+                }}
+              >
+                Sales Dashboard
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 2, 
+                flexWrap: 'nowrap', 
+                alignItems: 'center',
+                flexShrink: 0
+              }}>
+                <PeriodSelector
+                  selectedPeriod={selectedPeriod}
+                  customStartDate={customStartDate}
+                  customEndDate={customEndDate}
+                  onPeriodChange={handlePeriodChange}
+                />
+                
+                {integrations && integrations.length > 0 && (
+                  <IntegrationFilter
+                    integrations={integrations}
+                    selectedIntegrationIds={selectedIntegrationIds}
+                    onChange={handleIntegrationFilterChange}
+                  />
+                )}
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Show loading indicator while integrations are being loaded */}
+        {isLoadingIntegrations && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+            <CircularProgress />
+          </Box>
+        )}
+        
+        {/* Only show "no integrations" warning when integrations have loaded but none are selected */}
+        {!isLoadingIntegrations && selectedIntegrationIds.length === 0 && integrations && integrations.length > 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            No integrations selected. Please select at least one integration to view your dashboard data.
+          </Alert>
+        )}
+        
+        {/* No integrations created yet */}
+        {!isLoadingIntegrations && integrations && integrations.length === 0 && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            You don't have any integrations set up yet. Please create an integration to see your dashboard data.
+          </Alert>
+        )}
+        
+        {/* Main dashboard content */}
+        {isLoadingIntegrations ? (
+          // Show nothing while loading integrations (already showing loading spinner above)
+          null
+        ) : selectedIntegrationIds.length === 0 ? (
+          // Empty state when no integrations selected
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            p: 5, 
+            backgroundColor: 'background.paper',
+            borderRadius: 1
+          }}>
+            <Typography variant="h6" color="textSecondary">
+              {integrations && integrations.length > 0 
+                ? "Select at least one integration to view dashboard data"
+                : "Create an integration to view dashboard data"}
+            </Typography>
+          </Box>
+        ) : isLoading ? (
+          // Show loading state for dashboard data
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            p: 5,
+            my: 4
+          }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          // Show dashboard when data is loaded
+          <Box sx={{ mx: -1.5 }}>
+            <Grid container spacing={3} sx={{ px: 1.5 }}>
+              {/* Top stat cards row */}
+              <Grid container item spacing={3} sx={{ mb: 1 }}>
+                <Grid item xs={12} sm={6} md={4} lg={2}>
+                  <SimplifiedStatsCard
+                    title="Total Orders"
+                    value={dashboardData ? dashboardData.orderStats.totalOrders.toString() : "0"}
+                    icon={<IconShoppingCart />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4} lg={2}>
+                  <SimplifiedStatsCard
+                    title="Gross Revenue"
+                    value={dashboardData ? formatCurrency(dashboardData.orderStats.grossRevenue) : "0 RON"}
+                    icon={<IconCash />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4} lg={2}>
+                  <SimplifiedStatsCard
+                    title="Profit"
+                    value={dashboardData ? formatCurrency(dashboardData.orderStats.profitMargin) : "0 RON"}
+                    icon={<IconCoin />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4} lg={2}>
+                  <SimplifiedStatsCard
+                    title="Cost of Goods"
+                    value={dashboardData ? formatCurrency(dashboardData.orderStats.costOfGoods) : "0 RON"}
+                    icon={<IconReportMoney />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4} lg={2}>
+                  <SimplifiedStatsCard
+                    title="Refunded Orders"
+                    value={dashboardData ? dashboardData.orderStats.refundedOrders.toString() : "0"}
+                    icon={<IconRefresh />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4} lg={2}>
+                  <SimplifiedStatsCard
+                    title="Shipping Revenue"
+                    value={dashboardData ? formatCurrency(dashboardData.orderStats.shippingRevenue) : "0 RON"}
+                    icon={<IconTruckDelivery />}
+                  />
+                </Grid>
+              </Grid>
+              
+              {/* Revenue chart and Channel Distribution */}
+              <Grid item xs={12} lg={8}>
+                <RevenueChart
+                  data={dashboardData ? dashboardData.salesOverTime : []}
+                  isLoading={isLoading}
+                  chartTotals={dashboardData?.chartTotals}
+                />
+              </Grid>
+              
+              <Grid item xs={12} lg={4}>
+                <DashboardCard
+                  title="Channel Distribution"
+                  subtitle="Orders by integration"
+                >
+                  <Box sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%'
+                  }}>
+                    <OrdersByIntegration
+                      data={dashboardData ? dashboardData.salesByIntegration : []}
+                      isLoading={isLoading}
+                    />
+                  </Box>
+                </DashboardCard>
+              </Grid>
+              
+              {/* Orders Distribution and Product Performance */}
+              <Grid item xs={12} md={6}>
+                <DashboardCard
+                  title="Orders Distribution"
+                  subtitle="By delivery and payment methods"
+                >
+                  <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
+                    <Grid item xs={12} sm={6} sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      height: '100%'
+                    }}>
+                      <EnhancedDistributionChart
+                        title="Delivery Methods"
+                        data={[
+                          { 
+                            name: 'Home', 
+                            value: dashboardData?.deliveryMethodStats.home || 0, 
+                            icon: <IconHome size={16} />,
+                            color: '#7c86ff'
+                          },
+                          { 
+                            name: 'Locker', 
+                            value: dashboardData?.deliveryMethodStats.locker || 0,
+                            icon: <IconTimeline size={16} />,
+                            color: '#f06292'
+                          }
+                        ].filter(item => 
+                          // Only include items with non-zero values, or include all if all are zero
+                          item.value > 0 || 
+                          ((dashboardData?.deliveryMethodStats.home || 0) + 
+                           (dashboardData?.deliveryMethodStats.locker || 0) === 0)
+                        )}
+                        isLoading={isLoading}
+                        height={280}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      height: '100%'
+                    }}>
+                      <EnhancedDistributionChart
+                        title="Payment Methods"
+                        data={[
+                          { 
+                            name: 'Card', 
+                            value: dashboardData?.paymentMethodStats.card || 0,
+                            icon: <IconCreditCard size={16} />,
+                            color: '#26c6a0'
+                          },
+                          { 
+                            name: 'COD', 
+                            value: dashboardData?.paymentMethodStats.cod || 0,
+                            icon: <IconCash size={16} />,
+                            color: '#ffa55c'
+                          },
+                          { 
+                            name: 'Bank', 
+                            value: dashboardData?.paymentMethodStats.bank || 0,
+                            icon: <IconReportMoney size={16} />,
+                            color: '#55b9f3'
+                          }
+                        ].filter(item => 
+                          // Only include items with non-zero values, or include all if all are zero
+                          item.value > 0 || 
+                          ((dashboardData?.paymentMethodStats.card || 0) + 
+                           (dashboardData?.paymentMethodStats.cod || 0) + 
+                           (dashboardData?.paymentMethodStats.bank || 0) === 0)
+                        )}
+                        isLoading={isLoading}
+                        height={280}
+                      />
+                    </Grid>
+                  </Grid>
+                </DashboardCard>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <DashboardCard
+                  title="Product Performance"
+                  subtitle="Top 5 products by revenue"
+                >
+                  <ProductPerformanceChart
+                    data={dashboardData ? dashboardData.productStats : []}
                     isLoading={isLoading}
                   />
-                </Box>
-              </DashboardCard>
-            </Grid>
+                </DashboardCard>
+              </Grid>
             
-            {/* Orders Distribution and Product Performance */}
-            <Grid item xs={12} md={6}>
-              <DashboardCard
-                title="Orders Distribution"
-                subtitle="By delivery and payment methods"
-              >
-                <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
-                  <Grid item xs={12} sm={6} sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center',
-                    height: '100%'
-                  }}>
-                    <EnhancedDistributionChart
-                      title="Delivery Methods"
-                      data={[
-                        { 
-                          name: 'Home', 
-                          value: dashboardData?.deliveryMethodStats.home || 0, 
-                          icon: <IconHome size={16} />,
-                          color: '#7c86ff'
-                        },
-                        { 
-                          name: 'Locker', 
-                          value: dashboardData?.deliveryMethodStats.locker || 0,
-                          icon: <IconTimeline size={16} />,
-                          color: '#f06292'
-                        }
-                      ].filter(item => 
-                        // Only include items with non-zero values, or include all if all are zero
-                        item.value > 0 || 
-                        ((dashboardData?.deliveryMethodStats.home || 0) + 
-                         (dashboardData?.deliveryMethodStats.locker || 0) === 0)
-                      )}
-                      isLoading={isLoading}
-                      height={280}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center',
-                    height: '100%'
-                  }}>
-                    <EnhancedDistributionChart
-                      title="Payment Methods"
-                      data={[
-                        { 
-                          name: 'Card', 
-                          value: dashboardData?.paymentMethodStats.card || 0,
-                          icon: <IconCreditCard size={16} />,
-                          color: '#26c6a0'
-                        },
-                        { 
-                          name: 'COD', 
-                          value: dashboardData?.paymentMethodStats.cod || 0,
-                          icon: <IconCash size={16} />,
-                          color: '#ffa55c'
-                        },
-                        { 
-                          name: 'Bank', 
-                          value: dashboardData?.paymentMethodStats.bank || 0,
-                          icon: <IconReportMoney size={16} />,
-                          color: '#55b9f3'
-                        }
-                      ].filter(item => 
-                        // Only include items with non-zero values, or include all if all are zero
-                        item.value > 0 || 
-                        ((dashboardData?.paymentMethodStats.card || 0) + 
-                         (dashboardData?.paymentMethodStats.cod || 0) + 
-                         (dashboardData?.paymentMethodStats.bank || 0) === 0)
-                      )}
-                      isLoading={isLoading}
-                      height={280}
-                    />
-                  </Grid>
-                </Grid>
-              </DashboardCard>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <DashboardCard
-                title="Product Performance"
-                subtitle="Top 5 products by revenue"
-              >
-                <ProductPerformanceChart
-                  data={dashboardData ? dashboardData.productStats : []}
+              {/* Products table */}
+              <Grid item xs={12}>
+                <ProductTable
+                  data={dashboardData?.allProducts || []}
                   isLoading={isLoading}
                 />
-              </DashboardCard>
+              </Grid>
             </Grid>
-          
-            {/* Products table */}
-            <Grid item xs={12}>
-              <ProductTable
-                data={dashboardData?.allProducts || []}
-                isLoading={isLoading}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-      )}
+          </Box>
+        )}
+      </Box>
     </PageContainer>
   );
 }
