@@ -39,6 +39,105 @@
         "xScan": "X Scan",
         "reports": "Reports"
     },
+    "dashboard": {
+        "title": "Sales Dashboard",
+        "pageDescription": "eMAG Seller Dashboard",
+        "noIntegrationsSelected": "No integrations selected. Please select at least one integration to view your dashboard data.",
+        "noIntegrationsCreated": "You don't have any integrations set up yet. Please create an integration to see your dashboard data.",
+        "selectToView": "Select at least one integration to view dashboard data",
+        "createToView": "Create an integration to view dashboard data",
+        "stats": {
+            "totalOrders": "Total Orders",
+            "grossRevenue": "Gross Revenue",
+            "profit": "Profit",
+            "costOfGoods": "Cost of Goods",
+            "refundedOrders": "Refunded Orders",
+            "shippingRevenue": "Shipping Revenue"
+        },
+        "period": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "last7days": "Last 7 days",
+            "last30days": "Last 30 days",
+            "thisMonth": "Current month",
+            "lastMonth": "Previous month",
+            "thisQuarter": "Actual quarter",
+            "lastQuarter": "Previous quarter",
+            "thisYear": "Actual year",
+            "lastYear": "Last year",
+            "allTime": "All time",
+            "custom": "Custom period",
+            "select": "Select period",
+            "selectDateRange": "Select Date Range",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "cancel": "Cancel",
+            "apply": "Apply",
+            "customPeriod": "Custom period..."
+        },
+        "integrations": {
+            "allIntegrations": "All Integrations",
+            "oneIntegration": "1 Integration",
+            "multipleIntegrations": "{{count}} Integrations",
+            "filterByIntegration": "Filter by Integration",
+            "noIntegrationsFound": "No integrations found",
+            "atLeastOneRequired": "At least one integration must be selected",
+            "done": "Done"
+        },
+        "charts": {
+            "revenueProfit": {
+                "title": "Revenue & Profit",
+                "subtitle": "Sales performance",
+                "revenue": "Revenue",
+                "profit": "Profit",
+                "costOfGoods": "Cost of Goods",
+                "loading": "Loading chart data...",
+                "noData": "No data available for this period",
+                "trimesterView": "Trimester view (4-month periods)"
+            },
+            "channelDistribution": {
+                "title": "Channel Distribution",
+                "subtitle": "Orders by integration"
+            },
+            "ordersDistribution": {
+                "title": "Orders Distribution",
+                "subtitle": "By delivery and payment methods"
+            },
+            "productPerformance": {
+                "title": "Product Performance",
+                "subtitle": "Top 5 products by revenue"
+            },
+            "deliveryMethods": {
+                "title": "Delivery Methods",
+                "home": "Home",
+                "locker": "Locker"
+            },
+            "paymentMethods": {
+                "title": "Payment Methods",
+                "card": "Card",
+                "cod": "COD",
+                "bank": "Bank"
+            }
+        },
+        "products": {
+            "title": "Products",
+            "subtitle": "All products performance",
+            "searchProducts": "Search products...",
+            "noProductsFound": "No products matching your search",
+            "noProductData": "No product data available",
+            "columns": {
+                "product": "Product",
+                "avgPrice": "Avg. Price",
+                "sold": "Sold",
+                "refunded": "Refunded",
+                "cog": "COG",
+                "commission": "eMAG Commission",
+                "commissionTooltip": "Commission fee charged by eMAG marketplace",
+                "profit": "Profit",
+                "grossRevenue": "Gross Revenue"
+            }
+        }
+    },
     "calculator": {
         "tradeProfile": {
             "title": "Trade Profile",

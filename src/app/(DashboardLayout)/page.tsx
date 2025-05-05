@@ -18,6 +18,7 @@ import {
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from "react-i18next";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Custom components
@@ -246,6 +247,7 @@ const SimpleDistributionChart: React.FC<SimpleDistributionChartProps> = ({
 };
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('allTime');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
@@ -385,7 +387,7 @@ export default function Dashboard() {
   };
   
   return (
-    <PageContainer title="Dashboard" description="eMAG Seller Dashboard">
+    <PageContainer title={t('dashboard.title')} description={t('dashboard.pageDescription')}>
       <Box>
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -405,7 +407,7 @@ export default function Dashboard() {
                   width: '100%'
                 }}
               >
-                Sales Dashboard
+                {t('dashboard.title')}
               </Typography>
               <Box sx={{ 
                 display: 'flex', 
@@ -447,14 +449,14 @@ export default function Dashboard() {
         {/* Only show "no integrations" warning when integrations have loaded but none are selected */}
         {!isLoadingIntegrations && selectedIntegrationIds.length === 0 && integrations && integrations.length > 0 && (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            No integrations selected. Please select at least one integration to view your dashboard data.
+            {t('dashboard.noIntegrationsSelected')}
           </Alert>
         )}
         
         {/* No integrations created yet */}
         {!isLoadingIntegrations && integrations && integrations.length === 0 && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            You don't have any integrations set up yet. Please create an integration to see your dashboard data.
+            {t('dashboard.noIntegrationsCreated')}
           </Alert>
         )}
         
@@ -474,8 +476,8 @@ export default function Dashboard() {
           }}>
             <Typography variant="h6" color="textSecondary">
               {integrations && integrations.length > 0 
-                ? "Select at least one integration to view dashboard data"
-                : "Create an integration to view dashboard data"}
+                ? t('dashboard.selectToView')
+                : t('dashboard.createToView')}
             </Typography>
           </Box>
         ) : isLoading ? (
@@ -489,42 +491,42 @@ export default function Dashboard() {
               <Grid container item spacing={3} sx={{ mb: 1 }}>
                 <Grid item xs={12} sm={6} md={4} lg={2}>
                   <SimplifiedStatsCard
-                    title="Total Orders"
+                    title={t('dashboard.stats.totalOrders')}
                     value={dashboardData ? dashboardData.orderStats.totalOrders.toString() : "0"}
                     icon={<IconShoppingCart />}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4} lg={2}>
                   <SimplifiedStatsCard
-                    title="Gross Revenue"
+                    title={t('dashboard.stats.grossRevenue')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.grossRevenue) : "0 RON"}
                     icon={<IconCash />}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4} lg={2}>
                   <SimplifiedStatsCard
-                    title="Profit"
+                    title={t('dashboard.stats.profit')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.profitMargin) : "0 RON"}
                     icon={<IconCoin />}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4} lg={2}>
                   <SimplifiedStatsCard
-                    title="Cost of Goods"
+                    title={t('dashboard.stats.costOfGoods')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.costOfGoods) : "0 RON"}
                     icon={<IconReportMoney />}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4} lg={2}>
                   <SimplifiedStatsCard
-                    title="Refunded Orders"
+                    title={t('dashboard.stats.refundedOrders')}
                     value={dashboardData ? dashboardData.orderStats.refundedOrders.toString() : "0"}
                     icon={<IconRefresh />}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4} lg={2}>
                   <SimplifiedStatsCard
-                    title="Shipping Revenue"
+                    title={t('dashboard.stats.shippingRevenue')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.shippingRevenue) : "0 RON"}
                     icon={<IconTruckDelivery />}
                   />
@@ -537,13 +539,15 @@ export default function Dashboard() {
                   data={dashboardData ? dashboardData.salesOverTime : []}
                   isLoading={isLoading}
                   chartTotals={dashboardData?.chartTotals}
+                  title={t('dashboard.charts.revenueProfit.title')}
+                  subtitle={t('dashboard.charts.revenueProfit.subtitle')}
                 />
               </Grid>
               
               <Grid item xs={12} lg={4}>
                 <DashboardCard
-                  title="Channel Distribution"
-                  subtitle="Orders by integration"
+                  title={t('dashboard.charts.channelDistribution.title')}
+                  subtitle={t('dashboard.charts.channelDistribution.subtitle')}
                 >
                   <Box sx={{ 
                     height: '100%', 
@@ -563,8 +567,8 @@ export default function Dashboard() {
               {/* Orders Distribution and Product Performance */}
               <Grid item xs={12} md={6}>
                 <DashboardCard
-                  title="Orders Distribution"
-                  subtitle="By delivery and payment methods"
+                  title={t('dashboard.charts.ordersDistribution.title')}
+                  subtitle={t('dashboard.charts.ordersDistribution.subtitle')}
                 >
                   <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
                     <Grid item xs={12} sm={6} sx={{ 
@@ -574,16 +578,16 @@ export default function Dashboard() {
                       height: '100%'
                     }}>
                       <EnhancedDistributionChart
-                        title="Delivery Methods"
+                        title={t('dashboard.charts.deliveryMethods.title')}
                         data={[
                           { 
-                            name: 'Home', 
+                            name: t('dashboard.charts.deliveryMethods.home'), 
                             value: dashboardData?.deliveryMethodStats.home || 0, 
                             icon: <IconHome size={16} />,
                             color: '#7c86ff'
                           },
                           { 
-                            name: 'Locker', 
+                            name: t('dashboard.charts.deliveryMethods.locker'), 
                             value: dashboardData?.deliveryMethodStats.locker || 0,
                             icon: <IconTimeline size={16} />,
                             color: '#f06292'
@@ -605,22 +609,22 @@ export default function Dashboard() {
                       height: '100%'
                     }}>
                       <EnhancedDistributionChart
-                        title="Payment Methods"
+                        title={t('dashboard.charts.paymentMethods.title')}
                         data={[
                           { 
-                            name: 'Card', 
+                            name: t('dashboard.charts.paymentMethods.card'), 
                             value: dashboardData?.paymentMethodStats.card || 0,
                             icon: <IconCreditCard size={16} />,
                             color: '#26c6a0'
                           },
                           { 
-                            name: 'COD', 
+                            name: t('dashboard.charts.paymentMethods.cod'), 
                             value: dashboardData?.paymentMethodStats.cod || 0,
                             icon: <IconCash size={16} />,
                             color: '#ffa55c'
                           },
                           { 
-                            name: 'Bank', 
+                            name: t('dashboard.charts.paymentMethods.bank'), 
                             value: dashboardData?.paymentMethodStats.bank || 0,
                             icon: <IconReportMoney size={16} />,
                             color: '#55b9f3'
@@ -642,8 +646,8 @@ export default function Dashboard() {
               
               <Grid item xs={12} md={6}>
                 <DashboardCard
-                  title="Product Performance"
-                  subtitle="Top 5 products by revenue"
+                  title={t('dashboard.charts.productPerformance.title')}
+                  subtitle={t('dashboard.charts.productPerformance.subtitle')}
                 >
                   <ProductPerformanceChart
                     data={dashboardData ? dashboardData.productStats : []}

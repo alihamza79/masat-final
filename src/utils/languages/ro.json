@@ -39,6 +39,105 @@
         "xScan": "X Scan",
         "reports": "Rapoarte"
     },
+    "dashboard": {
+        "title": "Panou de Control Vânzări",
+        "pageDescription": "Panou de Control Vânzător eMAG",
+        "noIntegrationsSelected": "Nicio integrare selectată. Vă rugăm să selectați cel puțin o integrare pentru a vizualiza datele panoului de control.",
+        "noIntegrationsCreated": "Nu aveți integrări configurate încă. Vă rugăm să creați o integrare pentru a vizualiza datele panoului de control.",
+        "selectToView": "Selectați cel puțin o integrare pentru a vizualiza datele",
+        "createToView": "Creați o integrare pentru a vizualiza datele",
+        "stats": {
+            "totalOrders": "Total Comenzi",
+            "grossRevenue": "Venit Brut",
+            "profit": "Profit",
+            "costOfGoods": "Cost Produse",
+            "refundedOrders": "Comenzi Returnate",
+            "shippingRevenue": "Venit Transport"
+        },
+        "period": {
+            "today": "Astăzi",
+            "yesterday": "Ieri",
+            "last7days": "Ultimele 7 zile",
+            "last30days": "Ultimele 30 zile",
+            "thisMonth": "Luna curentă",
+            "lastMonth": "Luna precedentă",
+            "thisQuarter": "Trimestrul actual",
+            "lastQuarter": "Trimestrul precedent",
+            "thisYear": "Anul curent",
+            "lastYear": "Anul trecut",
+            "allTime": "Tot timpul",
+            "custom": "Perioadă personalizată",
+            "select": "Selectați perioada",
+            "selectDateRange": "Selectați Interval de Date",
+            "startDate": "Data de Început",
+            "endDate": "Data de Sfârșit",
+            "cancel": "Anulează",
+            "apply": "Aplică",
+            "customPeriod": "Perioadă personalizată..."
+        },
+        "integrations": {
+            "allIntegrations": "Toate Integrările",
+            "oneIntegration": "1 Integrare",
+            "multipleIntegrations": "{{count}} Integrări",
+            "filterByIntegration": "Filtrează după Integrare",
+            "noIntegrationsFound": "Nu s-au găsit integrări",
+            "atLeastOneRequired": "Trebuie selectată cel puțin o integrare",
+            "done": "Gata"
+        },
+        "charts": {
+            "revenueProfit": {
+                "title": "Venit și Profit",
+                "subtitle": "Performanța vânzărilor",
+                "revenue": "Venit",
+                "profit": "Profit",
+                "costOfGoods": "Cost Produse",
+                "loading": "Se încarcă datele graficului...",
+                "noData": "Nu există date disponibile pentru această perioadă",
+                "trimesterView": "Vizualizare trimestrială (perioade de 4 luni)"
+            },
+            "channelDistribution": {
+                "title": "Distribuție Canale",
+                "subtitle": "Comenzi după integrare"
+            },
+            "ordersDistribution": {
+                "title": "Distribuție Comenzi",
+                "subtitle": "După metode de livrare și plată"
+            },
+            "productPerformance": {
+                "title": "Performanță Produse",
+                "subtitle": "Top 5 produse după venit"
+            },
+            "deliveryMethods": {
+                "title": "Metode de Livrare",
+                "home": "La Domiciliu",
+                "locker": "Locker"
+            },
+            "paymentMethods": {
+                "title": "Metode de Plată",
+                "card": "Card",
+                "cod": "Ramburs",
+                "bank": "Bancă"
+            }
+        },
+        "products": {
+            "title": "Produse",
+            "subtitle": "Performanța tuturor produselor",
+            "searchProducts": "Caută produse...",
+            "noProductsFound": "Nu există produse care să corespundă căutării",
+            "noProductData": "Nu există date despre produse",
+            "columns": {
+                "product": "Produs",
+                "avgPrice": "Preț Mediu",
+                "sold": "Vândute",
+                "refunded": "Returnate",
+                "cog": "Cost Produse",
+                "commission": "Comision eMAG",
+                "commissionTooltip": "Comisionul perceput de marketplace-ul eMAG",
+                "profit": "Profit",
+                "grossRevenue": "Venit Brut"
+            }
+        }
+    },
     "calculator": {
         "tradeProfile": {
             "title": "Profil Comercial",

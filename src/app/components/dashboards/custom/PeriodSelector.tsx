@@ -23,6 +23,7 @@ import {
 } from '@tabler/icons-react';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { useTranslation } from 'react-i18next';
 
 export type PeriodType = 
   | 'today' 
@@ -52,6 +53,7 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   onPeriodChange
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [openDateDialog, setOpenDateDialog] = useState(false);
   const [tempStartDate, setTempStartDate] = useState<Date | null>(customStartDate ? new Date(customStartDate) : null);
   const [tempEndDate, setTempEndDate] = useState<Date | null>(customEndDate ? new Date(customEndDate) : null);
@@ -59,18 +61,18 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   const open = Boolean(anchorEl);
   
   const periodLabels: Record<PeriodType, string> = {
-    today: 'Today',
-    yesterday: 'Yesterday',
-    last7days: 'Last 7 days',
-    last30days: 'Last 30 days',
-    thisMonth: 'Current month',
-    lastMonth: 'Previous month',
-    thisQuarter: 'Actual quarter',
-    lastQuarter: 'Previous quarter',
-    thisYear: 'Actual year',
-    lastYear: 'Last year',
-    allTime: 'All time',
-    custom: 'Custom period'
+    today: t('dashboard.period.today'),
+    yesterday: t('dashboard.period.yesterday'),
+    last7days: t('dashboard.period.last7days'),
+    last30days: t('dashboard.period.last30days'),
+    thisMonth: t('dashboard.period.thisMonth'),
+    lastMonth: t('dashboard.period.lastMonth'),
+    thisQuarter: t('dashboard.period.thisQuarter'),
+    lastQuarter: t('dashboard.period.lastQuarter'),
+    thisYear: t('dashboard.period.thisYear'),
+    lastYear: t('dashboard.period.lastYear'),
+    allTime: t('dashboard.period.allTime'),
+    custom: t('dashboard.period.custom')
   };
   
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -112,18 +114,18 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
       return `${start} - ${end}`;
     }
     
-    return periodLabels[selectedPeriod] || 'Select period';
+    return periodLabels[selectedPeriod] || t('dashboard.period.select');
   };
   
   // Custom Dialog for date selection
   const CustomDateDialog = () => (
     <Dialog open={openDateDialog} onClose={handleDateDialogClose}>
-      <DialogTitle>Select Date Range</DialogTitle>
+      <DialogTitle>{t('dashboard.period.selectDateRange')}</DialogTitle>
       <DialogContent>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <DatePicker
-              label="Start Date"
+              label={t('dashboard.period.startDate')}
               value={tempStartDate}
               onChange={(newValue: Date | null) => setTempStartDate(newValue)}
               renderInput={(params) => (
@@ -135,7 +137,7 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               )}
             />
             <DatePicker
-              label="End Date"
+              label={t('dashboard.period.endDate')}
               value={tempEndDate}
               onChange={(newValue: Date | null) => setTempEndDate(newValue)}
               minDate={tempStartDate || undefined}
@@ -151,13 +153,13 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         </LocalizationProvider>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDateDialogClose}>Cancel</Button>
+        <Button onClick={handleDateDialogClose}>{t('dashboard.period.cancel')}</Button>
         <Button 
           onClick={handleDateDialogSubmit} 
           variant="contained" 
           disabled={!tempStartDate || !tempEndDate}
         >
-          Apply
+          {t('dashboard.period.apply')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -214,13 +216,13 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconClock size={18} />
           </ListItemIcon>
-          <ListItemText>Today</ListItemText>
+          <ListItemText>{t('dashboard.period.today')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handlePeriodSelect('yesterday')}>
           <ListItemIcon>
             <IconClock size={18} />
           </ListItemIcon>
-          <ListItemText>Yesterday</ListItemText>
+          <ListItemText>{t('dashboard.period.yesterday')}</ListItemText>
         </MenuItem>
         
         <Divider sx={{ my: 1 }} />
@@ -229,13 +231,13 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Last 7 days</ListItemText>
+          <ListItemText>{t('dashboard.period.last7days')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handlePeriodSelect('last30days')}>
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Last 30 days</ListItemText>
+          <ListItemText>{t('dashboard.period.last30days')}</ListItemText>
         </MenuItem>
         
         <Divider sx={{ my: 1 }} />
@@ -244,13 +246,13 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Current month</ListItemText>
+          <ListItemText>{t('dashboard.period.thisMonth')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handlePeriodSelect('lastMonth')}>
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Previous month</ListItemText>
+          <ListItemText>{t('dashboard.period.lastMonth')}</ListItemText>
         </MenuItem>
         
         <Divider sx={{ my: 1 }} />
@@ -259,13 +261,13 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Actual quarter</ListItemText>
+          <ListItemText>{t('dashboard.period.thisQuarter')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handlePeriodSelect('lastQuarter')}>
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Previous quarter</ListItemText>
+          <ListItemText>{t('dashboard.period.lastQuarter')}</ListItemText>
         </MenuItem>
         
         <Divider sx={{ my: 1 }} />
@@ -274,13 +276,13 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Actual year</ListItemText>
+          <ListItemText>{t('dashboard.period.thisYear')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handlePeriodSelect('lastYear')}>
           <ListItemIcon>
             <IconCalendar size={18} />
           </ListItemIcon>
-          <ListItemText>Last year</ListItemText>
+          <ListItemText>{t('dashboard.period.lastYear')}</ListItemText>
         </MenuItem>
         
         <Divider sx={{ my: 1 }} />
@@ -289,7 +291,7 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconCalendarTime size={18} />
           </ListItemIcon>
-          <ListItemText>All time</ListItemText>
+          <ListItemText>{t('dashboard.period.allTime')}</ListItemText>
         </MenuItem>
         
         <Divider sx={{ my: 1 }} />
@@ -298,7 +300,7 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <ListItemIcon>
             <IconCalendarTime size={18} />
           </ListItemIcon>
-          <ListItemText>Custom period...</ListItemText>
+          <ListItemText>{t('dashboard.period.customPeriod')}</ListItemText>
         </MenuItem>
       </Menu>
       

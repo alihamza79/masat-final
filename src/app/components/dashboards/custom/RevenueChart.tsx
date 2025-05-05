@@ -10,15 +10,17 @@ import {
 } from '@mui/material';
 import DashboardCard from '../../shared/DashboardCard';
 import { IconCalendar } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 // Add RevenueChartSkeleton component
 export const RevenueChartSkeleton = ({ height = 350 }: { height?: number }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <DashboardCard
-      title="Revenue & Profit"
-      subtitle="Sales performance"
+      title={t('dashboard.charts.revenueProfit.title')}
+      subtitle={t('dashboard.charts.revenueProfit.subtitle')}
       action={
         <Stack direction="row" spacing={3} alignItems="center">
           {[1, 2, 3].map((item, index) => (
@@ -100,12 +102,13 @@ interface ChartItem extends ChartData {
 const RevenueChart: React.FC<RevenueChartProps> = ({
   data,
   isLoading = false,
-  title = "Revenue & Profit",
-  subtitle = "Sales performance",
+  title,
+  subtitle,
   chartTotals
 }) => {
   const theme = useTheme();
   const chartRef = useRef<any>(null);
+  const { t } = useTranslation();
   
   // Pre-process dates to ensure they're in a format ApexCharts can handle
   const processedData = React.useMemo(() => {
@@ -672,34 +675,38 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   // Create chart series in original format
   const chartSeries = [
     {
-      name: 'Revenue',
+      name: t('dashboard.charts.revenueProfit.revenue'),
       data: revenue
     },
     {
-      name: 'Profit',
+      name: t('dashboard.charts.revenueProfit.profit'),
       data: profit
     },
     {
-      name: 'Cost of Goods',
+      name: t('dashboard.charts.revenueProfit.costOfGoods'),
       data: costOfGoods
     }
   ];
   
   // Original legend items
   const legendItems = [
-    { name: 'Revenue', color: theme.palette.primary.main },
-    { name: 'Profit', color: theme.palette.success.main },
-    { name: 'Cost of Goods', color: theme.palette.warning.main }
+    { name: t('dashboard.charts.revenueProfit.revenue'), color: theme.palette.primary.main },
+    { name: t('dashboard.charts.revenueProfit.profit'), color: theme.palette.success.main },
+    { name: t('dashboard.charts.revenueProfit.costOfGoods'), color: theme.palette.warning.main }
   ];
+  
+  // Get title and subtitle either from props or translations
+  const chartTitle = title || t('dashboard.charts.revenueProfit.title');
+  const chartSubtitle = subtitle || t('dashboard.charts.revenueProfit.subtitle');
   
   return (
     <DashboardCard
       title={
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="h5">{title}</Typography>
+          <Typography variant="h5">{chartTitle}</Typography>
         </Stack>
       }
-      subtitle={subtitle}
+      subtitle={chartSubtitle}
       action={
         <Stack direction="row" spacing={3} alignItems="center">
           {legendItems.map((item, index) => (
@@ -732,11 +739,11 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
       }}>
             {isLoading ? (
               <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                <Typography variant="body2">Loading chart data...</Typography>
+                <Typography variant="body2">{t('dashboard.charts.loading')}</Typography>
               </Box>
         ) : dates.length === 0 ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-            <Typography variant="body2">No data available for this period</Typography>
+            <Typography variant="body2">{t('dashboard.charts.noData')}</Typography>
           </Box>
         ) : (
           <>
@@ -752,7 +759,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 fontSize: '0.75rem'
               }}>
                 <Typography variant="caption">
-                  Trimester view (4-month periods)
+                  {t('dashboard.charts.revenueProfit.trimesterView')}
                 </Typography>
               </Box>
             )}

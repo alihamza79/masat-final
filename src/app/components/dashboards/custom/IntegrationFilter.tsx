@@ -16,6 +16,7 @@ import { Integration } from '@/lib/services/integrationService';
 import { IconFilter } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 interface IntegrationFilterProps {
   integrations: Integration[];
@@ -31,6 +32,7 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const theme = useTheme();
+  const { t } = useTranslation();
   
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -83,14 +85,14 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
   
   // Get text for button showing what's selected
   const getFilterText = () => {
-    if (allSelected) return "All Integrations";
+    if (allSelected) return t('dashboard.integrations.allIntegrations');
     if (selectedIntegrationIds.length === 1) {
       const selectedName = integrations.find(
         i => i._id === selectedIntegrationIds[0]
-      )?.accountName || "1 Integration";
+      )?.accountName || t('dashboard.integrations.oneIntegration');
       return selectedName;
     }
-    return `${selectedIntegrationIds.length} Integrations`;
+    return t('dashboard.integrations.multipleIntegrations', { count: selectedIntegrationIds.length });
   };
 
   return (
@@ -168,12 +170,12 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
         }}
       >
         <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-          Filter by Integration
+          {t('dashboard.integrations.filterByIntegration')}
         </Typography>
       
         {integrations.length === 0 ? (
           <Typography variant="body2" color="textSecondary">
-            No integrations found
+            {t('dashboard.integrations.noIntegrationsFound')}
           </Typography>
         ) : (
           <>
@@ -190,7 +192,7 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
                 }
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="body2" fontWeight={600}>All Integrations</Typography>
+                    <Typography variant="body2" fontWeight={600}>{t('dashboard.integrations.allIntegrations')}</Typography>
                     <Chip 
                       size="small" 
                       label={integrations.length} 
@@ -208,7 +210,7 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
                   control={
                     <Tooltip 
                       title={selectedIntegrationIds.length === 1 && selectedIntegrationIds.includes(integration._id as string) 
-                        ? "At least one integration must be selected" 
+                        ? t('dashboard.integrations.atLeastOneRequired')
                         : ""}
                     >
                       <span>
@@ -238,7 +240,7 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
                 onClick={handleClose}
                 variant="outlined"
               >
-                Done
+                {t('dashboard.integrations.done')}
               </Button>
             </Box>
           </>

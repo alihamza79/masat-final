@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, useTheme, Skeleton } from '@mui/material';
+import { Box, Card, Typography, Stack, useTheme, Skeleton, useMediaQuery } from '@mui/material';
 import { TablerIconsProps } from '@tabler/icons-react';
 
 // Add skeleton component
@@ -17,7 +17,7 @@ export const SimplifiedStatsCardSkeleton = () => {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: theme.palette.background.paper,
-        boxShadow: theme.shadows[1],
+        boxShadow: theme.shadows[2],
         transition: 'box-shadow 0.3s ease-in-out'
       }}
     >
@@ -46,18 +46,16 @@ const SimplifiedStatsCard: React.FC<SimplifiedStatsCardProps> = ({
   icon
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   return (
     <Card sx={{ 
-      p: 2.5, 
+      p: isMobile ? 1.5 : 2.5, 
       flex: 1, 
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'center', 
       borderRadius: 2,
-      height: '100%',
-      border: `1px solid ${theme.palette.divider}`,
-      boxShadow: 'none',
       position: 'relative'
     }}>
       <Box 
@@ -83,6 +81,11 @@ const SimplifiedStatsCard: React.FC<SimplifiedStatsCardProps> = ({
         <Typography 
           variant="h3" 
           fontWeight={600}
+          sx={{ 
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
         >
           {value}
         </Typography>

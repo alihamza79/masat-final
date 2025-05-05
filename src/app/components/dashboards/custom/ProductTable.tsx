@@ -20,6 +20,7 @@ import {
 import { styled, useTheme } from '@mui/material/styles';
 import { IconSearch, IconCurrencyDollar, IconPercentage, IconInfoCircle } from '@tabler/icons-react';
 import DashboardCard from '../../shared/DashboardCard';
+import { useTranslation } from 'react-i18next';
 
 // Define types for our product data
 interface ProductPerformanceData {
@@ -64,16 +65,23 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 // ProductTableSkeleton component
 export const ProductTableSkeleton = () => {
   const theme = useTheme();
+  const { t } = useTranslation();
   
   // Column headers
   const columns = [
-    'Product', 'Price', 'Sold', 'Revenue', 'COGS', 'Commission', 'Profit'
+    t('dashboard.products.columns.product'), 
+    t('dashboard.products.columns.avgPrice'), 
+    t('dashboard.products.columns.sold'), 
+    t('dashboard.products.columns.refunded'), 
+    t('dashboard.products.columns.cog'), 
+    t('dashboard.products.columns.commission'), 
+    t('dashboard.products.columns.profit')
   ];
   
   return (
     <DashboardCard
-      title="Products"
-      subtitle="All products performance"
+      title={t('dashboard.products.title')}
+      subtitle={t('dashboard.products.subtitle')}
     >
       <TableContainer>
         <Table sx={{ whiteSpace: 'nowrap' }}>
@@ -129,6 +137,7 @@ export const ProductTableSkeleton = () => {
 
 const ProductTable = ({ data, isLoading }: ProductTableProps) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
@@ -261,13 +270,13 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
 
   return (
     <DashboardCard 
-      title="Product Performance" 
-      subtitle="Sales and revenue by product"
+      title={t('dashboard.products.title')}
+      subtitle={t('dashboard.products.subtitle')}
       action={
         <Box sx={{ width: { xs: '100%', sm: 240 } }}>
           <TextField
             size="small"
-            placeholder="Search products..."
+            placeholder={t('dashboard.products.searchProducts')}
             fullWidth
             variant="outlined"
             value={searchQuery}
@@ -287,7 +296,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
         {filteredData.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <Typography variant="body2" color="textSecondary">
-              {searchQuery.trim() ? 'No products matching your search' : 'No product data available'}
+              {searchQuery.trim() ? t('dashboard.products.noProductsFound') : t('dashboard.products.noProductData')}
             </Typography>
           </Box>
         ) : (
@@ -300,21 +309,21 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
               <Table sx={{ minWidth: 650 }} aria-label="product performance table">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>Product</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">Avg. Price</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">Sold</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">Refunded</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">COG</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{t('dashboard.products.columns.product')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.avgPrice')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.sold')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.refunded')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.cog')}</TableCell>
                     <TableCell sx={{ fontWeight: 600 }} align="right">
-                      <Tooltip title="Commission fee charged by eMAG marketplace">
+                      <Tooltip title={t('dashboard.products.columns.commissionTooltip')}>
                         <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                          <span>eMAG Commission</span>
+                          <span>{t('dashboard.products.columns.commission')}</span>
                           <IconInfoCircle size={14} />
                         </Box>
                       </Tooltip>
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">Profit</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">Gross Revenue</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.profit')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.grossRevenue')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

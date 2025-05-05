@@ -2,6 +2,7 @@ import React from 'react';
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { Box, useTheme, Typography, Stack, Skeleton } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 // Create OrdersByIntegrationSkeleton component
 export const OrdersByIntegrationSkeleton = () => {
@@ -85,6 +86,7 @@ const OrdersByIntegration: React.FC<OrdersByIntegrationProps> = ({
   showTitle = false
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   
   // Extract data for chart
   const integrationNames = data.map(item => item.integrationName);
@@ -193,9 +195,9 @@ const OrdersByIntegration: React.FC<OrdersByIntegrationProps> = ({
     <Box>
       {showTitle && (
         <Box mb={2}>
-          <Typography variant="h5">Orders by Integration</Typography>
+          <Typography variant="h5">{t('dashboard.charts.channelDistribution.title')}</Typography>
           <Typography variant="subtitle2" color="textSecondary">
-            Distribution of orders across different integrations
+            {t('dashboard.charts.channelDistribution.subtitle')}
           </Typography>
         </Box>
       )}
@@ -227,7 +229,7 @@ const OrdersByIntegration: React.FC<OrdersByIntegrationProps> = ({
               />
             </Box>
           ) : (
-            <Box>No data available</Box>
+            <Box>{t('dashboard.products.noProductData')}</Box>
           )
         )}
       </Box>
