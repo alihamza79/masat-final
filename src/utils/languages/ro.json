@@ -37,7 +37,107 @@
         "listingOptimizer": "Optimizator Listări",
         "keywordTracker": "Urmăritor Cuvinte Cheie",
         "xScan": "X Scan",
-        "reports": "Rapoarte"
+        "reports": "Rapoarte",
+        "expenses": "Cheltuieli"
+    },
+    "dashboard": {
+        "title": "Panou de Control Vânzări",
+        "pageDescription": "Panou de Control Vânzător eMAG",
+        "noIntegrationsSelected": "Nicio integrare selectată. Vă rugăm să selectați cel puțin o integrare pentru a vizualiza datele panoului de control.",
+        "noIntegrationsCreated": "Nu aveți integrări configurate încă. Vă rugăm să creați o integrare pentru a vizualiza datele panoului de control.",
+        "selectToView": "Selectați cel puțin o integrare pentru a vizualiza datele",
+        "createToView": "Creați o integrare pentru a vizualiza datele",
+        "stats": {
+            "totalOrders": "Total Comenzi",
+            "grossRevenue": "Venit Brut",
+            "profit": "Profit",
+            "costOfGoods": "Cost Produse",
+            "refundedOrders": "Comenzi Returnate",
+            "shippingRevenue": "Venit Transport"
+        },
+        "period": {
+            "today": "Astăzi",
+            "yesterday": "Ieri",
+            "last7days": "Ultimele 7 zile",
+            "last30days": "Ultimele 30 zile",
+            "thisMonth": "Luna curentă",
+            "lastMonth": "Luna precedentă",
+            "thisQuarter": "Trimestrul actual",
+            "lastQuarter": "Trimestrul precedent",
+            "thisYear": "Anul curent",
+            "lastYear": "Anul trecut",
+            "allTime": "Tot timpul",
+            "custom": "Perioadă personalizată",
+            "select": "Selectați perioada",
+            "selectDateRange": "Selectați Interval de Date",
+            "startDate": "Data de Început",
+            "endDate": "Data de Sfârșit",
+            "cancel": "Anulează",
+            "apply": "Aplică",
+            "customPeriod": "Perioadă personalizată..."
+        },
+        "integrations": {
+            "allIntegrations": "Toate Integrările",
+            "oneIntegration": "1 Integrare",
+            "multipleIntegrations": "{{count}} Integrări",
+            "filterByIntegration": "Filtrează după Integrare",
+            "noIntegrationsFound": "Nu s-au găsit integrări",
+            "atLeastOneRequired": "Trebuie selectată cel puțin o integrare",
+            "done": "Gata"
+        },
+        "charts": {
+            "revenueProfit": {
+                "title": "Venit și Profit",
+                "subtitle": "Performanța vânzărilor",
+                "revenue": "Venit",
+                "profit": "Profit",
+                "costOfGoods": "Cost Produse",
+                "loading": "Se încarcă datele graficului...",
+                "noData": "Nu există date disponibile pentru această perioadă",
+                "trimesterView": "Vizualizare trimestrială (perioade de 4 luni)"
+            },
+            "channelDistribution": {
+                "title": "Distribuție Canale",
+                "subtitle": "Comenzi după integrare"
+            },
+            "ordersDistribution": {
+                "title": "Distribuție Comenzi",
+                "subtitle": "După metode de livrare și plată"
+            },
+            "productPerformance": {
+                "title": "Performanță Produse",
+                "subtitle": "Top 5 produse după venit"
+            },
+            "deliveryMethods": {
+                "title": "Metode de Livrare",
+                "home": "La Domiciliu",
+                "locker": "Locker"
+            },
+            "paymentMethods": {
+                "title": "Metode de Plată",
+                "card": "Card",
+                "cod": "Ramburs",
+                "bank": "Bancă"
+            }
+        },
+        "products": {
+            "title": "Produse",
+            "subtitle": "Performanța tuturor produselor",
+            "searchProducts": "Caută produse...",
+            "noProductsFound": "Nu există produse care să corespundă căutării",
+            "noProductData": "Nu există date despre produse",
+            "columns": {
+                "product": "Produs",
+                "avgPrice": "Preț Mediu",
+                "sold": "Vândute",
+                "refunded": "Returnate",
+                "cog": "Cost Produse",
+                "commission": "Comision eMAG",
+                "commissionTooltip": "Comisionul perceput de marketplace-ul eMAG",
+                "profit": "Profit",
+                "grossRevenue": "Venit Brut"
+            }
+        }
     },
     "calculator": {
         "tradeProfile": {
@@ -215,6 +315,123 @@
             "unitsSold": "Unități Vândute",
             "refunds": "Returnări",
             "currency": "lei"
+        }
+    },
+    "expenses": {
+        "title": "Cheltuieli",
+        "pageDescription": "Gestionați cheltuielile afacerii dvs.",
+        "summary": {
+            "oneTime": "Unică",
+            "monthly": "Lunară",
+            "annually": "Anuală",
+            "cogs": "COGS",
+            "vsLastYear": "vs Anul Trecut"
+        },
+        "chart": {
+            "title": "Cheltuieli vs Profit",
+            "expenses": "Cheltuieli",
+            "profit": "Profit"
+        },
+        "list": {
+            "title": "Listă Cheltuieli",
+            "filterByType": "Filtrare după Tip",
+            "all": "Toate",
+            "oneTime": "Unică",
+            "monthly": "Lunară",
+            "annually": "Anuală",
+            "cogs": "COGS",
+            "noExpensesFound": "Nu s-au găsit cheltuieli.",
+            "addYourFirstExpense": "Adăugați Prima Cheltuială",
+            "addExpense": "Adaugă Cheltuială",
+            "edit": "Editează",
+            "delete": "Șterge",
+            "recurring": "Recurentă",
+            "invalidDate": "Dată invalidă",
+            "columns": {
+                "description": "Descriere",
+                "type": "Tip",
+                "amount": "Sumă",
+                "date": "Data",
+                "status": "Status",
+                "actions": "Acțiuni"
+            },
+            "error": {
+                "loading": "Eroare la încărcarea cheltuielilor:",
+                "unknown": "Eroare necunoscută",
+                "reload": "Reîncărcați Pagina"
+            }
+        },
+        "dialog": {
+            "add": "Adaugă Cheltuială",
+            "edit": "Editează Cheltuială",
+            "save": "Salvează",
+            "cancel": "Anulează",
+            "expenseType": "Tip Cheltuială",
+            "cannotBeChanged": "(nu poate fi modificat)",
+            "oneTime": "Unică",
+            "monthly": "Lunară",
+            "annually": "Anuală",
+            "cogs": "COGS (Cost al Bunurilor Vândute)",
+            "description": "Descriere",
+            "amount": "Sumă",
+            "date": "Data",
+            "recurring": "Recurentă {type}",
+            "expenseDetails": "Detalii Cheltuială",
+            "purchaseDate": "Data Achiziției",
+            "purchaseDetails": "Detalii Achiziție",
+            "numberOfUnits": "Număr de Unități",
+            "costPerUnit": "Cost pe Unitate",
+            "total": "Total",
+            "searchProduct": "Caută un produs...",
+            "searchBy": "Caută după nume, SKU sau PNK",
+            "noProductsFound": "Nu s-au găsit produse",
+            "typeToSearch": "Tastați pentru a căuta produse",
+            "sku": "SKU",
+            "pnk": "PNK",
+            "type": {
+                "label": "Tip Cheltuială",
+                "oneTime": "Unică",
+                "monthly": "Lunară",
+                "annually": "Anuală",
+                "cogs": "COGS (Cost al Bunurilor Vândute)"
+            },
+            "fields": {
+                "description": "Descriere",
+                "descriptionPlaceholder": "Introduceți descrierea cheltuielii",
+                "amount": "Sumă",
+                "amountPlaceholder": "Introduceți suma în RON",
+                "date": "Data",
+                "isRecurring": "Este cheltuială recurentă?",
+                "product": "Produs",
+                "searchProduct": "Căutați un produs...",
+                "noResults": "Nu s-au găsit rezultate",
+                "unitsCount": "Număr de Unități",
+                "unitsCountPlaceholder": "Introduceți numărul de unități",
+                "costPerUnit": "Cost pe Unitate",
+                "costPerUnitPlaceholder": "Introduceți costul pe unitate în RON"
+            },
+            "validation": {
+                "descriptionRequired": "Descrierea este obligatorie",
+                "amountRequired": "Suma validă este obligatorie",
+                "dateRequired": "Data este obligatorie",
+                "productRequired": "Selectarea produsului este obligatorie",
+                "unitsCountRequired": "Numărul de unități trebuie să fie mai mare de 0",
+                "costPerUnitRequired": "Costul pe unitate trebuie să fie mai mare de 0"
+            }
+        },
+        "delete": {
+            "title": "Șterge Cheltuială",
+            "confirmation": "Sigur doriți să ștergeți cheltuiala \"{name}\"? Această acțiune nu poate fi anulată."
+        },
+        "toast": {
+            "createSuccess": "Cheltuială adăugată cu succes",
+            "createError": "Eroare la adăugarea cheltuielii",
+            "updateSuccess": "Cheltuială actualizată cu succes",
+            "updateError": "Eroare la actualizarea cheltuielii",
+            "deleteSuccess": "Cheltuială ștearsă cu succes",
+            "deleteError": "Eroare la ștergerea cheltuielii",
+            "fetchError": "Eroare la încărcarea cheltuielilor",
+            "missingId": "ID-ul cheltuielii este necesar pentru actualizare"
         }
     },
     "integrations": {

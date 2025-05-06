@@ -1,29 +1,30 @@
 'use client';
-import React, { useEffect } from 'react';
-import {
-  Box,
-  Stack,
-  Typography,
-  MenuItem,
-  InputAdornment,
-  IconButton,
-  Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
-  SelectChangeEvent,
-  CircularProgress
-} from '@mui/material';
 import CustomSelect from '@/app/components/forms/theme-elements/CustomSelect';
 import CustomTextField from '@/app/components/forms/theme-elements/CustomTextField';
-import { IconShoppingCart, IconInfoCircle } from '@tabler/icons-react';
-import { useCalculator } from '../context/CalculatorContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import {
+  Box,
+  CircularProgress,
+  InputAdornment,
+  MenuItem,
+  SelectChangeEvent,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import { IconInfoCircle } from '@tabler/icons-react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCalculator } from '../context/CalculatorContext';
 import { useCommissionLoading } from '../context/CommissionLoadingContext';
 
 const TradeProfiles = () => {
   const { t } = useTranslation();
   const { state, dispatch } = useCalculator();
   const { isLoading: commissionLoading } = useCommissionLoading();
+  const { userData, companyData } = useUserProfile();
 
   // State for form values
   const [profileType, setProfileType] = React.useState(state.profileType);
@@ -34,6 +35,25 @@ const TradeProfiles = () => {
   const [vatRateOfPurchase, setVatRateOfPurchase] = React.useState(state.vatRateOfPurchase);
   const [isEmagProductSelected, setIsEmagProductSelected] = React.useState(false);
   const [commissionSource, setCommissionSource] = React.useState<'default' | 'emag' | 'manual'>('default');
+
+  // Initialize tax rate and VAT profile from user settings
+  useEffect(() => {
+    if (companyData) {
+      // Update tax rate if company has taxRate set
+      if (companyData.taxRate !== undefined) {
+        const companyTaxRate = companyData.taxRate.toString();
+        setTaxRate(companyTaxRate);
+        dispatch({ type: 'SET_TAX_RATE', payload: Number(companyTaxRate) });
+      }
+
+      // Update profile type based on company's VAT payer status
+      if (companyData.isVatPayer !== undefined) {
+        const newProfileType = companyData.isVatPayer ? 'vat' : 'profile';
+        setProfileType(newProfileType);
+        dispatch({ type: 'SET_PROFILE_TYPE', payload: newProfileType });
+      }
+    }
+  }, [companyData, dispatch]);
 
   // Sync local state with context state
   useEffect(() => {

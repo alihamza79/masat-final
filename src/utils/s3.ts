@@ -140,4 +140,29 @@ export async function deleteFileFromS3(key: string): Promise<boolean> {
     console.error('Error deleting file from S3:', error);
     return false;
   }
+}
+
+/**
+ * Get a presigned URL for an image if it's a valid S3 path
+ * @param imagePath - The image path or S3 key
+ * @returns A presigned URL or null if the path is not an S3 path
+ */
+export async function getImageUrl(imagePath: string): Promise<string | null> {
+  try {
+    // Check if this is already a full URL
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    // Check if this is a valid S3 path
+    if (!imagePath || !imagePath.startsWith('products/')) {
+      return null;
+    }
+
+    // Generate a presigned URL
+    return await generatePresignedUrl(imagePath);
+  } catch (error) {
+    console.error('Error getting image URL:', error);
+    return null;
+  }
 } 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Stack, Typography } from '@mui/material';
 import { IconPackage, IconChevronRight } from '@tabler/icons-react';
 import ProductSelectionModal from './ProductSelectionModal';
@@ -23,10 +23,16 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   savedCalculationsError
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
-  const { products, isLoading: productsLoading } = useProducts();
+  const { products, isLoading: productsLoading, hasProducts, error: productsError } = useProducts();
+  
+  // Log when products update
+  useEffect(() => {
+    console.log('ProductSelector received products count:', products?.length || 0);
+  }, [products]);
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
   const handleProductSelect = (value: string) => {
+    console.log('Selected product value:', value);
     onSelectProduct(value);
     setOpenProductModal(false);
   };
@@ -88,9 +94,6 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         selectedProduct={selectedProduct}
         onSelectProduct={handleProductSelect}
         savedCalculations={savedCalculations}
-        loading={loadingSavedCalculations || productsLoading}
-        error={savedCalculationsError}
-        products={products}
       />
     </Stack>
   );

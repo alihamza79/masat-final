@@ -18,7 +18,8 @@ import {
   TextField,
   InputAdornment,
   Skeleton,
-  Tooltip
+  Tooltip,
+  Button
 } from '@mui/material';
 import { 
   IconX, 
@@ -36,11 +37,13 @@ import {
   IconDeviceDesktop,
   IconShirt,
   IconDeviceMobile,
-  IconTrash
+  IconTrash,
+  IconRefresh
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { SavedCalculation } from '../hooks/useSavedCalculations';
+import useProducts from '@/lib/hooks/useProducts';
 
 // TabPanel component for switching between tabs
 interface TabPanelProps {
@@ -71,50 +74,52 @@ interface ProductSelectionModalProps {
   selectedProduct: string;
   onSelectProduct: (value: string) => void;
   savedCalculations: SavedCalculation[];
-  loading: boolean;
-  error: string | null;
-  products: any[];
   integrationsData?: Record<string, any>;
+  // products, loading, and error are now provided by useProducts hook, so they're optional
+  products?: any[];
+  loading?: boolean;
+  error?: string | null;
 }
 
 export type { ProductSelectionModalProps };
 
-// Fallback static products in case no integrations data is available
+// Remove this entire static products object
 const staticProducts = {
   emag: [
     {
       id: 'emag-1',
-      name: 'iPhone 14 Pro Max',
+      name: 'Smartphone iPhone 15 Pro Max',
       category: 'Smartphones',
-      price: '6499.99',
+      price: '5999.99',
       brand: 'Apple',
       image: '/products/iphone.jpg'
     },
     {
       id: 'emag-2',
-      name: 'MacBook Air M2',
+      name: 'Gaming Laptop ROG Strix',
       category: 'Laptops',
-      price: '7299.99',
-      brand: 'Apple',
-      image: '/products/macbook.jpg'
+      price: '7499.99',
+      brand: 'ASUS',
+      image: '/products/laptop.jpg'
     },
     {
       id: 'emag-3',
-      name: 'AirPods Pro 2',
-      category: 'Audio',
-      price: '1299.99',
-      brand: 'Apple',
-      image: '/products/airpods.jpg'
+      name: 'Smart TV OLED 65"',
+      category: 'Televisions',
+      price: '3999.99',
+      brand: 'LG',
+      image: '/products/tv.jpg'
     },
     {
       id: 'emag-4',
-      name: 'iPad Pro 12.9"',
-      category: 'Tablets',
-      price: '5499.99',
-      brand: 'Apple',
-      image: '/products/ipad.jpg'
+      name: 'Wireless Headphones',
+      category: 'Audio',
+      price: '899.99',
+      brand: 'Sony',
+      image: '/products/headphones.jpg'
     }
   ],
+  
   created: [
     {
       id: 'created-1',
@@ -222,14 +227,24 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   selectedProduct,
   onSelectProduct,
   savedCalculations,
-  loading,
-  error,
-  products,
-  integrationsData
+  integrationsData,
+  // These props are now optional since we'll use the hook
+  products: propProducts,
+  loading: propLoading,
+  error: propError
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Use the products hook to get products data
+  const { products: hookProducts, isLoading: hookLoading, error: hookError, refetch } = useProducts();
+  
+  // Use hook data or fall back to props
+  const products = hookProducts?.length > 0 ? hookProducts : (propProducts || []);
+  const loading = hookLoading || propLoading;
+  const error = hookError ? String(hookError) : propError;
+  
   const [activeTab, setActiveTab] = useState(0);
   const [emagProducts, setEmagProducts] = useState<any[]>([]);
   const [filteredEmagProducts, setFilteredEmagProducts] = useState<any[]>([]);
@@ -240,42 +255,96 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   const [deletingCalculationId, setDeletingCalculationId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  // Refetch products when modal opens
+  useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
+
+  // Debug log when the modal opens or products change
+  
+  
+  // Helper function to process products consistently
+  const processProducts = (productsToProcess: any[]) => {
+    if (!Array.isArray(productsToProcess) || productsToProcess.length === 0) {
+      setEmagProducts([]);
+      setFilteredEmagProducts([]);
+      return;
+    }
+    
+    try {
+      console.log('Processing products, count:', productsToProcess.length);
+      
+      const allProducts = productsToProcess.map((product: any) => {
+        // Use emagProductOfferId or _id (database ID) if present
+        const productId = product.emagProductOfferId || (product._id ? product._id.toString() : null);
+        
+        if (!productId) {
+          return null; // Skip this product
+        }
+        
+        // Extract integration ID properly, handling different formats
+        let integrationIdStr;
+        if (typeof product.integrationId === 'object' && product.integrationId !== null) {
+          // If integrationId is a populated document
+          integrationIdStr = product.integrationId._id?.toString() || product.integrationId.id?.toString();
+        } else if (product.integrationId) {
+          // If integrationId is already a string or ID
+          integrationIdStr = product.integrationId.toString();
+        } else {
+          return null; // Skip products without integration ID
+        }
+        
+        if (!integrationIdStr) {
+          return null; // Skip this product
+        }
+        
+        return {
+          id: `emag-${integrationIdStr}-${productId}`,
+          name: product.name || `Product ${productId}`,
+          category: product.category || `Category ${product.category_id || 'Unknown'}`,
+          price: (product.sale_price?.toString() || product.price?.toString() || '0'),
+          brand: product.brand_name || product.brand || 'Unknown',
+          image: (product.images && product.images[0]?.url) || product.image || '',
+          originalData: product,
+          // Store raw IDs to help with matching
+          rawProductId: productId,
+          rawIntegrationId: integrationIdStr
+        };
+      }).filter(Boolean); // Remove null entries
+      
+      console.log('Processed product count:', allProducts.length);
+      
+      // Set the processed products
+      setEmagProducts(allProducts);
+      setFilteredEmagProducts(allProducts);
+    } catch (err) {
+      console.error('Error processing products:', err);
+      setEmagProducts([]);
+      setFilteredEmagProducts([]);
+    }
+  };
+
   // Extract and format eMAG product offers from integrations data
   useEffect(() => {
-    if (products.length > 0) {
+    console.log('Products array received in modal:', products);
+    console.log('Products length:', products?.length || 0);
+    
+    if (products && Array.isArray(products) && products.length > 0) {
       setLoadingEmagProducts(true);
       
       try {
-        console.log('Processing products from database:', products[0]);
-        
-        const allProducts = products.map((product: any) => {
-          // Use emagProductOfferId or _id (database ID) if present
-          const productId = product.emagProductOfferId || product._id;
-          
-          if (!productId) {
-            console.warn('Product without valid ID:', product);
-            return null; // Skip this product
-          }
-          
-          return {
-            id: `emag-${product.integrationId}-${productId}`,
-            name: product.name || `Product ${productId}`,
-            category: `Category ${product.category_id || 'Unknown'}`,
-            price: product.sale_price?.toString() || '0',
-            brand: product.brand_name || product.brand || 'Unknown',
-            image: product.images && product.images[0]?.url || '',
-            originalData: product
-          };
-        }).filter(Boolean); // Remove null entries
-        
-        console.log('Processed product count:', allProducts.length);
-        setEmagProducts(allProducts);
-        setFilteredEmagProducts(allProducts);
-      } catch (err) {
-        console.error('Error processing eMAG products:', err);
+        processProducts(products);
       } finally {
         setLoadingEmagProducts(false);
       }
+    } else {
+      console.log('No products to process, showing empty state');
+      // If products array is empty, set empty arrays
+      setEmagProducts([]);
+      setFilteredEmagProducts([]);
+      setLoadingEmagProducts(false);
     }
   }, [products]);
 
@@ -402,8 +471,20 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   const ProductCard = ({ product }: { product: any }) => (
     <Card
       onClick={() => {
-        console.log('Product selected in modal:', product.id);
-        onSelectProduct(product.id);
+        console.log('Product selected in modal:', product);
+        console.log('Product ID format:', product.id);
+        console.log('Raw IDs:', {
+          rawProductId: product.rawProductId,
+          rawIntegrationId: product.rawIntegrationId
+        });
+        console.log('Current selectedProduct value:', selectedProduct);
+        
+        // Make sure the ID format is correct: emag-[integrationId]-[productId]
+        const correctId = `emag-${product.rawIntegrationId}-${product.rawProductId}`;
+        console.log('Sending product ID:', correctId);
+        
+        // Use the correctly formatted ID
+        onSelectProduct(correctId);
       }}
       sx={{
         p: 2,
@@ -1087,7 +1168,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                 }}
               >
                 {/* Display products if loading */}
-                {loading ? (
+                {(loading || loadingEmagProducts) ? (
                   <Grid container spacing={1.5}>
                     {[...Array(8)].map((_, index) => (
                       <Grid item xs={12} sm={6} key={`skeleton-${index}`}>
@@ -1120,22 +1201,34 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                     </Typography>
                   </Box>
                 ) : (
-                  // Display "no products for your integrations" message when not searching
+                  // Display better empty state message when no products are available
                   <Box sx={{ 
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
                     py: 4,
+                    px: 3,
                     color: 'text.secondary'
                   }}>
-                    <IconAlertCircle size={32} />
-                    <Typography variant="body1" sx={{ mt: 1 }}>
-                      {t('calculator.productSelection.noProductsFound')}
+                    <IconAlertCircle size={48} color="#FF9800" />
+                    <Typography variant="h6" sx={{ mt: 2, color: 'text.primary', textAlign: 'center' }}>
+                      No eMAG Products Available
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center', maxWidth: '80%' }}>
-                      No products found for your integrations. Please add an integration in the Integrations page first.
-                    </Typography>
+                    
+                    <Button 
+                      variant="outlined" 
+                      color="primary" 
+                      size="small"
+                      startIcon={<IconRefresh size={16} />}
+                      sx={{ mt: 3 }}
+                      onClick={() => {
+                        // Force a full page reload to reset any stale caches
+                        window.location.reload();
+                      }}
+                    >
+                      Refresh Products
+                    </Button>
                   </Box>
                 )}
               </Box>

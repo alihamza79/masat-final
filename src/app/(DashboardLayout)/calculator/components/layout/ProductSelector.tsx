@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Stack, Typography } from '@mui/material';
-import { IconPackage, IconChevronRight } from '@tabler/icons-react';
+import { Button, Stack, Typography, Tooltip, CircularProgress } from '@mui/material';
+import { IconPackage, IconChevronRight, IconRefresh } from '@tabler/icons-react';
 import ProductSelectionModal from '../ProductSelectionModal';
 import { SavedCalculation } from '../../hooks/useSavedCalculations';
 import useProducts from '@/lib/hooks/useProducts';
@@ -13,6 +13,7 @@ interface ProductSelectorProps {
   loadingSavedCalculations: boolean;
   savedCalculationsError: string | null;
   integrationsData?: Record<string, any>;
+  onRefresh?: () => void;
 }
 
 const ProductSelector: React.FC<ProductSelectorProps> = ({
@@ -22,16 +23,70 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   savedCalculations,
   loadingSavedCalculations,
   savedCalculationsError,
-  integrationsData
+  integrationsData,
+  onRefresh
 }) => {
   const [openProductModal, setOpenProductModal] = useState(false);
-  const { products } = useProducts();
+  const { isLoading: productsLoading, error: productsError, refetch } = useProducts();
+  const [refreshing, setRefreshing] = useState(false);
 
   // Custom handler that calls the provided onSelectProduct and closes the modal
   const handleProductSelect = (value: string) => {
     onSelectProduct(value);
     setOpenProductModal(false);
   };
+
+  // Handler to refresh products
+  const handleRefreshProducts = async () => {
+    try {
+      setRefreshing(true);
+      console.log('Manually refreshing products...');
+      
+      // Use provided onRefresh if available
+      if (onRefresh) {
+        await onRefresh();
+      } else {
+        // Otherwise use react-query refetch
+        await refetch();
+      }
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const isLoading = productsLoading || refreshing;
+
+  // Memoize the product name calculation to reduce re-renders
+  const productDisplayName = React.useMemo(() => {
+    if (isLoading) {
+      return 'Loading products...';
+    }
+    
+    if (!selectedProduct) {
+      return 'Select Product';
+    }
+    
+    if (selectedProduct.startsWith('saved-')) {
+      const name = getProductNameByValue(selectedProduct, savedCalculations);
+      return name || 'Saved Calculation';
+    } 
+    
+    if (selectedProduct.startsWith('emag-')) {
+      const name = getProductNameByValue(selectedProduct, savedCalculations);
+      
+      // If no name was found, try to extract a simple product ID
+      if (!name && selectedProduct.split('-').length > 2) {
+        const productId = selectedProduct.split('-')[2];
+        return `eMAG Product ${productId}`;
+      }
+      
+      return name || 'eMAG Product';
+    }
+    
+    return getProductNameByValue(selectedProduct, savedCalculations) || 'Select Product';
+  }, [selectedProduct, savedCalculations, isLoading, getProductNameByValue]);
 
   return (
     <Stack 
@@ -43,9 +98,10 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
       <Button
         variant="outlined"
         onClick={() => setOpenProductModal(true)}
+        disabled={isLoading}
         sx={{ 
-          minWidth: { xs: '100%', sm: '320px', md: '380px' },
-          maxWidth: { xs: '100%', sm: '400px', md: '450px' },
+          minWidth: { xs: '100%', sm: '320px', md: '400px' },
+          maxWidth: { xs: '100%', sm: '450px', md: '520px' },
           height: { xs: '40px', sm: '35px' },
           justifyContent: 'space-between',
           px: { xs: 1.5, sm: 2 },
@@ -61,24 +117,21 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         }}
       >
         <Stack direction="row" spacing={1} alignItems="center">
-          <IconPackage size={18} />
+          {isLoading ? (
+            <CircularProgress size={18} />
+          ) : (
+            <IconPackage size={18} />
+          )}
           <Typography 
             sx={{ 
               fontSize: '13px',
-              maxWidth: { xs: 'calc(100vw - 120px)', sm: '280px', md: '340px' },
+              maxWidth: { xs: 'calc(100vw - 120px)', sm: '240px', md: '300px' },
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis'
             }}
           >
-            {selectedProduct ? 
-              // Check if it's a saved calculation
-              selectedProduct.startsWith('saved-') ? 
-                getProductNameByValue(selectedProduct, savedCalculations) || 'Saved Calculation' : 
-                // Get product name using the helper function
-                getProductNameByValue(selectedProduct, savedCalculations) || 
-                'Select Product' : 
-              'Select Product'}
+            {productDisplayName}
           </Typography>
         </Stack>
         <IconChevronRight size={18} />
@@ -90,10 +143,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
         selectedProduct={selectedProduct}
         onSelectProduct={handleProductSelect}
         savedCalculations={savedCalculations}
-        loading={loadingSavedCalculations}
-        error={savedCalculationsError}
         integrationsData={integrationsData}
-        products={products}
       />
     </Stack>
   );

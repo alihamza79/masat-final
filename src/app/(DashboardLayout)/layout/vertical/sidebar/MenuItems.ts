@@ -39,19 +39,25 @@ const Menuitems: MenuitemsType[] = [
     id: uniqueId(),
     title: "menu.myAccount",
     icon: IconUser,
-    href: "/my-account",
+    href: "/account-settings",
   },
   {
     id: uniqueId(),
     title: "menu.dashboard",
     icon: IconChartLine,
-    href: "/dashboarfefd",
+    href: "/dashboard",
   },
   {
     id: uniqueId(),
     title: "menu.businessProfile",
     icon: IconUserCircle,
     href: "/businefrrfss-profile",
+      },
+      {
+        id: uniqueId(),
+        title: "menu.expenses",
+        icon: IconCurrencyDollar,
+        href: "/expenses",
       },
       {
         id: uniqueId(),
@@ -71,6 +77,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconCalculator,
     href: "/calculator",
   },
+ 
   {
     id: uniqueId(),
     title: "menu.listingOptimizer",
