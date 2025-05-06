@@ -70,7 +70,7 @@ resource "aws_subnet" "private_app" {
   availability_zone                              = length(regexall("^[a-z]{2}-", local.azs[count.index])) > 0 ? local.azs[count.index] : null
   availability_zone_id                           = length(regexall("^[a-z]{2}-", local.azs[count.index])) == 0 ? local.azs[count.index] : null
   cidr_block = concat(local.private_subnets, [""])[count.index]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = {
     Name = "${var.project_name}-${var.env}-private-subnet-${local.azs[count.index]}"
@@ -84,6 +84,16 @@ resource "aws_route_table" "private" {
     Name = "${var.project_name}-${var.env}private-route-table"
   }
 }
+
+# resource "aws_route" "private_nat_gateway" {
+#   route_table_id         = aws_route_table.private.id
+#   destination_cidr_block = "0.0.0.0/0"
+#   nat_gateway_id         = aws_nat_gateway.this.id
+#
+#   timeouts {
+#     create = "5m"
+#   }
+# }
 
 resource "aws_route_table_association" "private_app_subnets" {
   count = length(local.azs)
@@ -105,38 +115,6 @@ resource "aws_internet_gateway" "this" {
 }
 
 
-module "endpoints" {
-  source             = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  vpc_id             = aws_vpc.this.id
-  security_group_ids = [aws_security_group.service.id]
-  depends_on = [aws_security_group.load_balancer]
-  endpoints = {
-    ecr-dkr = {
-      service            = "ecr.dkr"
-      security_group_ids = [aws_security_group.service.id]
-      subnet_ids         = [for subnet in aws_subnet.private_app : subnet.id]
-      tags               = { Name = "ecr.dkr-vpc-endpoint" }
-    },
-    ecr-api = {
-      service            = "ecr.api"
-      security_group_ids = [aws_security_group.service.id]
-      subnet_ids         = [for subnet in aws_subnet.private_app : subnet.id]
-      tags               = { Name = "ecr.api-vpc-endpoint" }
-    },
-    ecs-agent = {
-      service            = "ecs-agent"
-      security_group_ids = [aws_security_group.service.id]
-      subnet_ids         = [for subnet in aws_subnet.private_app : subnet.id]
-      tags               = { Name = "ecs-agent-vpc-endpoint" }
-    },
-    ecs-telemetry = {
-      service            = "ecs-telemetry"
-      security_group_ids = [aws_security_group.service.id]
-      subnet_ids         = [for subnet in aws_subnet.private_app : subnet.id]
-      tags               = { Name = "ecs-telemetry-vpc-endpoint" }
-    }
-  }
-}
 
 
 
