@@ -74,3 +74,4 @@ override.tf.json
 terraform.rc
 /terraform/.terraform.lock.hcl
 /build_docker_image.sh
+/lambdas/daily-task.zip
