@@ -37,7 +37,8 @@
         "listingOptimizer": "Listing Optimizer",
         "keywordTracker": "Keyword Tracker",
         "xScan": "X Scan",
-        "reports": "Reports"
+        "reports": "Reports",
+        "expenses": "Expenses"
     },
     "dashboard": {
         "title": "Sales Dashboard",

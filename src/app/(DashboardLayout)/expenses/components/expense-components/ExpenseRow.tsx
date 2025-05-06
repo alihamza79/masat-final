@@ -30,17 +30,23 @@ const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowPro
     <TableRow sx={{ '&:not(:last-child)': { borderBottom: isMobile ? '8px solid rgba(0, 0, 0, 0.04)' : 'inherit' } }}>
       <TableCell align="left" sx={{ py: isMobile ? 2 : 1 }}>
         {expense.type === 'cogs' && expense.product ? (
-          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-start">
+          <Stack direction="row" spacing={2} alignItems="center" justifyContent="flex-start">
             <Box sx={{ 
-              width: isMobile ? 40 : 32, 
-              height: isMobile ? 40 : 32, 
+              width: isMobile ? 48 : 40, 
+              height: isMobile ? 48 : 40, 
               flexShrink: 0,
+              overflow: 'hidden',
               bgcolor: 'background.neutral', 
-              borderRadius: 1, 
-              p: 0.5,
+              borderRadius: 1,
+              aspectRatio: '1/1',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              '& img': {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }
             }}>
               <ProductImage product={expense.product} size="small" />
             </Box>
