@@ -40,12 +40,14 @@ resource "aws_lambda_function" "daily_task" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.lambda_daily_task.output_base64sha256
   runtime          = "nodejs18.x"
-  timeout          = 30
+  timeout          = 60
   memory_size      = 128
 
   environment {
     variables = {
       ENV = var.env
+      API_URL = var.api_url
+      RECURRING_EXPENSES_API_KEY = "masat-recurring-test-key-123456"
     }
   }
 
