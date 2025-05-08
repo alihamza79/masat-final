@@ -30,6 +30,7 @@ data "archive_file" "lambda_daily_task" {
   type        = "zip"
   source_dir  = "${path.module}/../lambdas/daily-task"
   output_path = "${path.module}/../lambdas/daily-task.zip"
+  excludes    = ["node_modules/.cache"] # Exclude cache files
 }
 
 # Lambda function resource

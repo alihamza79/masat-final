@@ -8,7 +8,7 @@ const { addMonths, addYears, isSameDay, differenceInDays } = require('date-fns')
 
 // Configure axios with base URL and API key
 const api = axios.create({
-  baseURL: process.env.API_URL || 'https://masat-dev.shiftcrowd.eu',
+  baseURL: process.env.API_URL ? `https://masat-dev.shiftcrowd.eu${process.env.API_URL}` : 'https://masat-dev.shiftcrowd.eu/api/expenses/recurring',
   timeout: 10000,
   headers: {
     'x-api-key': process.env.RECURRING_EXPENSES_API_KEY || 'masat-recurring-test-key-123456'
