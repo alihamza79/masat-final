@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import SavedCalculation from '@/app/models/SavedCalculation';
 import { uploadFileToS3, generatePresignedUrl, deleteFileFromS3 } from '@/utils/s3';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/lib/auth';
 
 // Set export configuration for Next.js
 export const dynamic = 'force-dynamic';
@@ -13,10 +15,22 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { id } = params;
     await connectToDatabase();
     
-    const calculation = await SavedCalculation.findById(id);
+    const calculation = await SavedCalculation.findOne({ 
+      _id: id,
+      userId: session.user.id 
+    });
     
     if (!calculation) {
       return NextResponse.json(
@@ -54,6 +68,15 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { id } = params;
     
     // Get FormData from the request
@@ -77,11 +100,14 @@ export async function PUT(
 
     await connectToDatabase();
     
-    const calculation = await SavedCalculation.findById(id);
+    const calculation = await SavedCalculation.findOne({ 
+      _id: id,
+      userId: session.user.id 
+    });
     
     if (!calculation) {
       return NextResponse.json(
-        { success: false, message: 'Calculation not found' },
+        { success: false, message: 'Calculation not found or you do not have permission to modify it' },
         { status: 404 }
       );
     }
@@ -156,15 +182,27 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { id } = params;
     await connectToDatabase();
     
     // First, find the calculation to get its image path
-    const calculation = await SavedCalculation.findById(id);
+    const calculation = await SavedCalculation.findOne({ 
+      _id: id,
+      userId: session.user.id 
+    });
     
     if (!calculation) {
       return NextResponse.json(
-        { success: false, message: 'Calculation not found' },
+        { success: false, message: 'Calculation not found or you do not have permission to delete it' },
         { status: 404 }
       );
     }

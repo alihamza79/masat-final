@@ -4,15 +4,14 @@ import mongoose, { Schema } from 'mongoose';
 const SavedCalculationSchema = new Schema({
   title: {
     type: String,
-    required: true
+    required: function() {
+      return !this.emagProduct; // Title is required only if not an eMAG product
+    },
+    trim: true
   },
   description: {
     type: String,
-    default: ''
-  },
-  calculatorState: {
-    type: Object,
-    required: true
+    trim: true
   },
   image: {
     type: String,
@@ -26,9 +25,15 @@ const SavedCalculationSchema = new Schema({
   emagProduct: {
     type: Object,
     default: null
+  },
+  calculatorState: {
+    type: Object,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
 
 // Create the model if it doesn't exist
