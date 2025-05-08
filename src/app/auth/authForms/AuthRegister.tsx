@@ -164,7 +164,21 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
         }, 2000);
       } else {
         // Sign-in successful, redirect to dashboard
-        router.push('/');
+        try {
+          // Use replace instead of push for better navigation
+          await router.replace('/');
+          
+          // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
+          setTimeout(() => {
+            if (window.location.pathname.includes('/auth')) {
+              window.location.href = '/';
+            }
+          }, 2000);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // Fallback to direct location change if router navigation fails
+          window.location.href = '/';
+        }
       }
       
     } catch (err) {
@@ -206,6 +220,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     
     // For regular registration, send OTP for email verification
     try {
+      console.log("🌐 [CLIENT] Sending OTP request for email:", email);
       setLoading(true);
       
       const response = await fetch('/api/auth/send-registration-otp', {
@@ -217,18 +232,25 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
       });
       
       const data = await response.json();
+      console.log("🌐 [CLIENT] OTP API response:", {
+        status: response.status,
+        ok: response.ok,
+        data
+      });
       
       if (!response.ok) {
+        console.error("🌐 [CLIENT] OTP request failed:", data.message);
         setError(data.message || 'Failed to send verification code');
         return;
       }
       
+      console.log("🌐 [CLIENT] OTP sent successfully");
       setSuccess('Verification code sent to your email');
       setActiveStep(1); // Move to OTP verification step
       setResendTimer(60); // Set 60 seconds countdown for resend
       
     } catch (err) {
-      console.error('Error sending OTP:', err);
+      console.error('🌐 [CLIENT] Error sending OTP:', err);
       setError('An error occurred while sending verification code');
     } finally {
       setLoading(false);
@@ -244,6 +266,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     }
     
     try {
+      console.log("🌐 [CLIENT] Verifying OTP for email:", email);
       setLoading(true);
       setError('');
       
@@ -256,32 +279,57 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
       });
       
       const data = await response.json();
+      console.log("🌐 [CLIENT] OTP verification response:", {
+        status: response.status,
+        ok: response.ok,
+        data
+      });
       
       if (!response.ok) {
+        console.error("🌐 [CLIENT] OTP verification failed:", data.message);
         setError(data.message || 'Failed to verify code');
         return;
       }
       
+      console.log("🌐 [CLIENT] OTP verified successfully");
       setSuccess('Email verified and account created successfully!');
       setActiveStep(2); // Move to completion step
       
       // After 2 seconds, sign in and redirect to dashboard
       setTimeout(async () => {
+        console.log("🌐 [CLIENT] Attempting sign in after successful registration");
         const signInResult = await signIn('credentials', {
           redirect: false,
           email,
           password
         });
         
+        console.log("🌐 [CLIENT] Sign in result:", signInResult);
+        
         if (signInResult?.error) {
+          console.error("🌐 [CLIENT] Sign in failed after registration:", signInResult.error);
           setError(`Account created but sign-in failed: ${signInResult.error}`);
         } else {
-          router.push('/');
+          try {
+            // Use replace instead of push for better navigation
+            await router.replace('/');
+            
+            // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
+            setTimeout(() => {
+              if (window.location.pathname.includes('/auth')) {
+                window.location.href = '/';
+              }
+            }, 2000);
+          } catch (navError) {
+            console.error("Navigation error:", navError);
+            // Fallback to direct location change if router navigation fails
+            window.location.href = '/';
+          }
         }
       }, 2000);
       
     } catch (err) {
-      console.error('Error verifying OTP:', err);
+      console.error('🌐 [CLIENT] Error verifying OTP:', err);
       setError('An error occurred while verifying code');
     } finally {
       setLoading(false);
@@ -292,6 +340,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     setOtp('');
     
     try {
+      console.log("🌐 [CLIENT] Resending OTP for email:", email);
       setLoading(true);
       setError('');
       
@@ -304,17 +353,24 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
       });
       
       const data = await response.json();
+      console.log("🌐 [CLIENT] Resend OTP response:", {
+        status: response.status,
+        ok: response.ok,
+        data
+      });
       
       if (!response.ok) {
+        console.error("🌐 [CLIENT] Resend OTP failed:", data.message);
         setError(data.message || 'Failed to resend verification code');
         return;
       }
       
+      console.log("🌐 [CLIENT] OTP resent successfully");
       setSuccess('Verification code resent to your email');
       setResendTimer(60); // Reset countdown timer
       
     } catch (err) {
-      console.error('Error resending OTP:', err);
+      console.error('🌐 [CLIENT] Error resending OTP:', err);
       setError('An error occurred while resending verification code');
     } finally {
       setLoading(false);

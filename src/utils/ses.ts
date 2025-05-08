@@ -1,12 +1,37 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
-// Initialize SES client
-const sesClient = new SESClient({
-  region: process.env.AWS_REGION || 'eu-central-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
+// Get environment variables
+const AWS_REGION = process.env.AWS_REGION || 'eu-central-1';
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+const SES_SOURCE_EMAIL = process.env.SES_SOURCE_EMAIL || 'contact@shiftcrowd.eu';
+const IS_LOCAL_ENV = process.env.NODE_ENV === 'development';
+
+// Create configuration for SES client
+const sesConfig: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
+  region: AWS_REGION,
+  // Important: In production/ECS environment, the IAM task role will be used automatically
+  // Only provide explicit credentials in local development
+};
+
+// Add explicit credentials only in local development
+if (IS_LOCAL_ENV && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  sesConfig.credentials = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY
+  };
+}
+
+// Initialize SES client with the configuration
+const sesClient = new SESClient(sesConfig);
+
+// Log SES configuration for debugging
+console.log('SES Client Configuration:', {
+  region: AWS_REGION,
+  hasAccessKey: !!sesConfig.credentials?.accessKeyId,
+  hasSecretKey: !!sesConfig.credentials?.secretAccessKey,
+  environment: process.env.NODE_ENV,
+  sourceEmail: SES_SOURCE_EMAIL
 });
 
 // Function to generate a random 6-digit OTP
@@ -21,6 +46,8 @@ export async function sendOTPEmail(
   purpose: 'registration' | 'set-password' | 'reset-password' = 'registration'
 ): Promise<boolean> {
   try {
+    console.log(`Attempting to send ${purpose} OTP email to:`, to);
+    
     // Determine subject and message based on purpose
     let subject = 'Your Verification Code for Masat';
     let heading = 'Verification Code';
@@ -40,8 +67,10 @@ export async function sendOTPEmail(
       message = 'You\'re receiving this email because you requested to reset your password for your Masat account.';
     }
 
+    console.log('Using source email:', SES_SOURCE_EMAIL);
+
     const params = {
-      Source: 'contact@shiftcrowd.eu',
+      Source: SES_SOURCE_EMAIL,
       Destination: {
         ToAddresses: [to],
       },
@@ -84,10 +113,34 @@ export async function sendOTPEmail(
       },
     };
 
-    await sesClient.send(new SendEmailCommand(params));
-    return true;
+    console.log('Sending email with params:', {
+      source: params.Source,
+      destination: params.Destination.ToAddresses,
+      subject: params.Message.Subject.Data
+    });
+
+    try {
+      console.log('Calling SES SendEmailCommand...');
+      await sesClient.send(new SendEmailCommand(params));
+      console.log('Email sent successfully');
+      return true;
+    } catch (sesError) {
+      console.error('SES SendEmailCommand error details:', {
+        message: (sesError as Error).message,
+        stack: (sesError as Error).stack,
+        errorType: (sesError as Error).constructor?.name || 'UnknownError',
+        code: (sesError as any).code,
+        requestId: (sesError as any).$metadata?.requestId
+      });
+      throw sesError; // Re-throw to be caught by outer catch
+    }
   } catch (error) {
     console.error('Error sending email:', error);
+    console.error('Error details:', {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      errorType: (error as Error).constructor?.name || 'UnknownError'
+    });
     return false;
   }
 } 
