@@ -47,7 +47,7 @@ resource "aws_lambda_function" "daily_task" {
   environment {
     variables = {
       ENV = var.env
-      API_URL = "/api/expenses/recurring"
+      API_URL = "https://masat-dev.shiftcrowd.eu"
       RECURRING_EXPENSES_API_KEY = "masat-recurring-test-key-123456"
     }
   }
