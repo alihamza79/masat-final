@@ -12,6 +12,7 @@ import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { IconAlertCircle } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 // components
 import CustomFormLabel from '../../forms/theme-elements/CustomFormLabel';
@@ -25,17 +26,8 @@ import { useSession } from 'next-auth/react';
 // images
 import { Stack } from '@mui/system';
 
-// countries list
-const countries = [
-  { value: 'US', label: 'United States' },
-  { value: 'GB', label: 'United Kingdom' },
-  { value: 'DE', label: 'Germany' },
-  { value: 'FR', label: 'France' },
-  { value: 'ES', label: 'Spain' },
-  { value: 'IT', label: 'Italy' },
-  { value: 'RO', label: 'Romania' },
-  { value: 'BG', label: 'Bulgaria' },
-];
+// country codes
+const countryCodes = ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'RO', 'BG'];
 
 // Define props interface
 interface AccountTabProps {
@@ -47,6 +39,13 @@ interface AccountTabProps {
 
 const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData, onDataUpdate, sessionUpdate }: AccountTabProps) => {
   const { data: session } = useSession();
+  const { t } = useTranslation();
+  
+  // Get translated country names
+  const countries = countryCodes.map(code => ({
+    value: code,
+    label: t(`accountSettings.account.countries.${code}`)
+  }));
   
   // User and company state - initialized from props
   const [userData, setUserData] = useState({
@@ -137,13 +136,13 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       
       // Validate file size (max 800KB)
       if (file.size > 800 * 1024) {
-        setMessage({ type: 'error', text: 'Image size must be less than 800KB' });
+        setMessage({ type: 'error', text: t('accountSettings.account.errors.imageTooLarge') });
         return;
       }
       
       // Validate file type
       if (!file.type.match(/image\/(jpeg|jpg|png|gif)/i)) {
-        setMessage({ type: 'error', text: 'Only JPG, PNG, and GIF images are allowed' });
+        setMessage({ type: 'error', text: t('accountSettings.account.errors.invalidImage') });
         return;
       }
       
@@ -213,7 +212,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       if (hasTaxSettingsOnlyCheck) {
         setMessage({ 
           type: 'error', 
-          text: 'Please fill in company details to save tax settings. At minimum, a company name is required.' 
+          text: t('accountSettings.account.provideName')
         });
         setLoading(false);
         return;
@@ -226,11 +225,11 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       if (hasCompanyName) {
         // Required company fields (all company fields are required if name is filled)
         const requiredCompanyFields = [
-          { field: 'taxId', label: 'Tax ID' },
-          { field: 'registrationNumber', label: 'Registration Number' },
-          { field: 'address', label: 'Address' },
-          { field: 'town', label: 'Town/City' },
-          { field: 'country', label: 'Country' }
+          { field: 'taxId', label: t('accountSettings.account.taxId') },
+          { field: 'registrationNumber', label: t('accountSettings.account.regNumber') },
+          { field: 'address', label: t('accountSettings.account.address') },
+          { field: 'town', label: t('accountSettings.account.town') },
+          { field: 'country', label: t('accountSettings.account.country') }
         ];
         
         const missingFields = requiredCompanyFields.filter(
@@ -248,7 +247,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
           setFieldErrors(errors);
           setMessage({ 
             type: 'error', 
-            text: `All company details are required. Missing: ${missingFieldNames}.` 
+            text: t('accountSettings.account.companyDetailsRequired', { fields: missingFieldNames })
           });
           setLoading(false);
           return;
@@ -274,37 +273,30 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       // The parent will handle updating the data cache
       onDataUpdate(updateData);
       
-      setMessage({ type: 'success', text: 'Profile updated successfully' });
-      
-      // Reset selected image state since it's been saved
-      setSelectedImage(null);
-      setImagePreview(null);
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      setMessage({ 
-        type: 'error', 
-        text: error.message || 'Failed to update profile' 
-      });
-    } finally {
+      // Show success message and reset state
+      setMessage({ type: 'success', text: t('accountSettings.account.saveSuccess') });
+      setLoading(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setMessage({ type: 'error', text: String(error) });
       setLoading(false);
     }
   };
-
-  // Log when userData changes
-  useEffect(() => {
-    console.log("userData updated:", userData);
-  }, [userData]);
-
+  
   return (
     <Grid container spacing={3}>
-      {/* Only keep success message at the top */}
+      {message.text && message.type === 'error' && (
+        <Grid item xs={12}>
+          <Alert severity="error">{message.text}</Alert>
+        </Grid>
+      )}
       {message.text && message.type === 'success' && (
         <Grid item xs={12}>
           <Alert severity="success">{message.text}</Alert>
         </Grid>
       )}
       
-      {/* Profile Image Section */}
+      {/* Personal Information */}
       <Grid item xs={12}>
         <BlankCard>
           <CardContent>
@@ -327,7 +319,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                     disabled={loading}
                     size="small"
                   >
-                    Upload
+                    {t('accountSettings.account.upload')}
                     <input 
                       hidden 
                       accept="image/*" 
@@ -343,32 +335,32 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                       disabled={loading}
                       size="small"
                     >
-                      Reset
+                      {t('accountSettings.account.reset')}
                     </Button>
                   )}
                 </Stack>
                 <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
-                  JPG, GIF or PNG. Max 800K
+                  {t('accountSettings.account.imageRestrictions')}
                 </Typography>
               </Grid>
               
               {/* Personal Information */}
               <Grid item xs={12} md={8} lg={9}>
                 <Typography variant="h5" mb={1}>
-                  Personal Information
+                  {t('accountSettings.account.personalInfo')}
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
                 
                 <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12}>
                     <CustomFormLabel
-                      sx={{ mt: 0 }}
-                      htmlFor="text-name"
+                      sx={{ mt: { xs: 2, md: 0 } }}
+                      htmlFor="name"
                     >
-                      Full Name
+                      {t('accountSettings.account.name')}
                     </CustomFormLabel>
                     <CustomTextField
-                      id="text-name"
+                      id="name"
                       name="name"
                       value={userData.name}
                       onChange={handleUserDataChange}
@@ -380,23 +372,36 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   
                   <Grid item xs={12} sm={6}>
                     <CustomFormLabel
-                      sx={{ mt: 0 }}
-                      htmlFor="text-phone"
+                      sx={{ mt: { xs: 2, md: 0 } }}
+                      htmlFor="email"
                     >
-                      Phone
+                      {t('accountSettings.account.email')}
                     </CustomFormLabel>
                     <CustomTextField
-                      id="text-phone"
+                      id="email"
+                      name="email"
+                      value={userData.email}
+                      variant="outlined"
+                      fullWidth
+                      disabled={true}
+                    />
+                  </Grid>
+                  
+                  <Grid item xs={12} sm={6}>
+                    <CustomFormLabel
+                      sx={{ mt: { xs: 2, md: 0 } }}
+                      htmlFor="phone"
+                    >
+                      {t('accountSettings.account.phone')}
+                    </CustomFormLabel>
+                    <CustomTextField
+                      id="phone"
                       name="phone"
-                      value={userData.phone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const value = e.target.value;
-                        setUserData(prev => ({ ...prev, phone: value }));
-                      }}
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
                       variant="outlined"
                       fullWidth
                       disabled={loading}
-                      placeholder="Enter phone number"
                     />
                   </Grid>
                 </Grid>
@@ -411,7 +416,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
         <BlankCard>
           <CardContent>
             <Typography variant="h5" mb={1}>
-              Company Details
+              {t('accountSettings.account.companyDetails')}
               {hasTaxSettingsOnly && (
                 <Typography 
                   component="span" 
@@ -425,19 +430,19 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   }}
                 >
                   <IconAlertCircle size={16} style={{ marginRight: '4px' }} />
-                  Please provide company information to save tax settings
+                  {t('accountSettings.account.provideTaxSettings')}
                 </Typography>
               )}
             </Typography>
             <Divider sx={{ mb: 3 }} />
             
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <CustomFormLabel
-                  sx={{ mt: 0 }}
+                  sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="company-name"
                 >
-                  Company Name
+                  {t('accountSettings.account.name')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="company-name"
@@ -447,18 +452,15 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   variant="outlined"
                   fullWidth
                   disabled={loading}
-                  // Highlight field with error if tax settings are being saved without company name
-                  error={hasTaxSettingsOnly}
-                  helperText={hasTaxSettingsOnly ? "Required field" : ""}
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12} sm={6}>
                 <CustomFormLabel
-                  sx={{ mt: 0 }}
+                  sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="tax-id"
                 >
-                  Tax ID
+                  {t('accountSettings.account.taxId')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="tax-id"
@@ -469,16 +471,16 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   fullWidth
                   disabled={loading}
                   error={fieldErrors.taxId}
-                  helperText={fieldErrors.taxId ? "Required field" : ""}
+                  helperText={fieldErrors.taxId ? t('accountSettings.account.requiredField') : ""}
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12} sm={6}>
                 <CustomFormLabel
-                  sx={{ mt: 0 }}
+                  sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="registration-number"
                 >
-                  Registration Number
+                  {t('accountSettings.account.regNumber')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="registration-number"
@@ -489,16 +491,16 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   fullWidth
                   disabled={loading}
                   error={fieldErrors.registrationNumber}
-                  helperText={fieldErrors.registrationNumber ? "Required field" : ""}
+                  helperText={fieldErrors.registrationNumber ? t('accountSettings.account.requiredField') : ""}
                 />
               </Grid>
               
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6} md={6}>
                 <CustomFormLabel
                   sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="address"
                 >
-                  Address
+                  {t('accountSettings.account.address')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="address"
@@ -509,7 +511,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   fullWidth
                   disabled={loading}
                   error={fieldErrors.address}
-                  helperText={fieldErrors.address ? "Required field" : ""}
+                  helperText={fieldErrors.address ? t('accountSettings.account.requiredField') : ""}
                 />
               </Grid>
               
@@ -518,7 +520,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="town"
                 >
-                  Town/City
+                  {t('accountSettings.account.town')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="town"
@@ -529,7 +531,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   fullWidth
                   disabled={loading}
                   error={fieldErrors.town}
-                  helperText={fieldErrors.town ? "Required field" : ""}
+                  helperText={fieldErrors.town ? t('accountSettings.account.requiredField') : ""}
                 />
               </Grid>
               
@@ -538,7 +540,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="country"
                 >
-                  Country
+                  {t('accountSettings.account.country')}
                 </CustomFormLabel>
                 <CustomSelect
                   fullWidth
@@ -550,7 +552,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   disabled={loading}
                   error={fieldErrors.country}
                 >
-                  <MenuItem value="">Select Country</MenuItem>
+                  <MenuItem value="">{t('accountSettings.account.selectCountry')}</MenuItem>
                   {countries.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                       {option.label}
@@ -559,41 +561,32 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                 </CustomSelect>
                 {fieldErrors.country && (
                   <Typography variant="caption" color="error">
-                    Required field
+                    {t('accountSettings.account.requiredField')}
                   </Typography>
                 )}
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
                 <CustomFormLabel
-                  sx={{ mt: 2 }}
+                  sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="tax-rate"
                 >
-                  Tax Rate
+                  {t('accountSettings.account.taxRate')}
                 </CustomFormLabel>
-                <CustomSelect
+                <CustomTextField
                   id="tax-rate"
                   name="taxRate"
                   value={companyData.taxRate}
-                  onChange={(e: React.ChangeEvent<{ value: unknown }>) => {
-                    const value = e.target.value;
-                    setCompanyData(prev => ({
-                      ...prev,
-                      taxRate: Number(value)
-                    }));
-                  }}
+                  onChange={handleCompanyDataChange}
                   variant="outlined"
                   fullWidth
+                  type="number"
                   disabled={loading}
-                >
-                  <MenuItem value={1}>1%</MenuItem>
-                  <MenuItem value={3}>3%</MenuItem>
-                  <MenuItem value={16}>16%</MenuItem>
-                </CustomSelect>
+                />
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
-                <Box pt={4.5}>
+                <Box sx={{ pt: { xs: 0, md: 4 } }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -604,7 +597,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                         disabled={loading}
                       />
                     }
-                    label="VAT Payer"
+                    label={t('accountSettings.account.isVatPayer')}
                   />
                 </Box>
               </Grid>
@@ -613,7 +606,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
         </BlankCard>
       </Grid>
       
-      {/* Save Changes Button */}
+      {/* Save button */}
       <Grid item xs={12}>
         <Stack 
           direction={{ xs: 'column', sm: 'row' }} 
@@ -635,7 +628,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
               alignSelf: { xs: 'stretch', sm: 'auto' }
             }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+            {loading ? <CircularProgress size={24} /> : t('accountSettings.account.saveChanges')}
           </Button>
         </Stack>
       </Grid>

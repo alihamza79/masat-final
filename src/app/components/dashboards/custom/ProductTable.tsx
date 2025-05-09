@@ -45,23 +45,6 @@ interface ProductTableProps {
   isLoading: boolean;
 }
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.mode === 'dark' 
-      ? 'rgba(255, 255, 255, 0.05)' 
-      : 'rgba(0, 0, 0, 0.02)',
-  },
-  '&:hover': {
-    backgroundColor: theme.palette.mode === 'dark' 
-      ? 'rgba(255, 255, 255, 0.08)' 
-      : 'rgba(0, 0, 0, 0.04)',
-  },
-  // hide last border
-  '&:last-child td, &:last-child th': {
-    border: 0,
-  },
-}));
-
 // ProductTableSkeleton component
 export const ProductTableSkeleton = () => {
   const theme = useTheme();
@@ -144,24 +127,18 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
   const [filteredData, setFilteredData] = useState<ProductPerformanceData[]>([]);
   const [commissionsLoading, setCommissionsLoading] = useState<Record<string, boolean>>({});
   const [productCommissions, setProductCommissions] = useState<Record<string, number>>({});
-  
-  // Use a ref to track which products we've already requested
   const requestedProductsRef = useRef<Set<string>>(new Set());
 
-  // If loading, show skeleton
   if (isLoading) {
     return <ProductTableSkeleton />;
   }
 
-  // Handle search and filtering
   useEffect(() => {
     if (!data) {
       setFilteredData([]);
       return;
     }
-
     const lowercaseSearch = searchQuery.toLowerCase().trim();
-    
     if (lowercaseSearch === '') {
       setFilteredData(data);
     } else {
@@ -172,65 +149,40 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
       );
       setFilteredData(filtered);
     }
-    
-    // Reset to first page when search changes
     setPage(0);
   }, [data, searchQuery]);
 
-  // Memoize current page products to prevent unnecessary recalculations
   const currentPageProducts = useMemo(() => {
     return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredData, page, rowsPerPage]);
 
-  // Fetch commissions for current page products only
   useEffect(() => {
     const fetchCommissions = async () => {
-      // Only fetch for products with emagProductOfferId that don't already have commission data
-      // AND haven't been requested yet
       const productsToFetch = currentPageProducts.filter(product => {
         if (!product.emagProductOfferId) return false;
-        
         const productId = product.emagProductOfferId.toString();
-        
-        // Skip if we already have data or have already sent a request
         if (productCommissions[productId] !== undefined || requestedProductsRef.current.has(productId)) {
           return false;
         }
-        
-        // Mark as requested
         requestedProductsRef.current.add(productId);
         return true;
       });
-      
       if (productsToFetch.length === 0) return;
-      
-      console.log(`Fetching commissions for ${productsToFetch.length} products`);
-      
       for (const product of productsToFetch) {
         if (!product.emagProductOfferId) continue;
-        
         const productId = product.emagProductOfferId.toString();
-        
         try {
-          // Set loading state for this product
           setCommissionsLoading(prev => ({ ...prev, [productId]: true }));
-          
-          // Call the commission API
           const response = await fetch(`/api/v1/commission/estimate/${productId}`);
           const data = await response.json();
-          
           if (data.emagResponse?.data?.value !== undefined) {
-            // Format commission as percentage
             let commission: number;
             if (typeof data.emagResponse.data.value === 'string') {
               commission = parseFloat(data.emagResponse.data.value);
             } else {
               commission = Number(data.emagResponse.data.value);
             }
-            
-            // Convert to percentage if needed
             const commissionPercentage = commission > 1 ? commission : commission * 100;
-            
             setProductCommissions(prev => ({
               ...prev,
               [productId]: commissionPercentage
@@ -243,13 +195,11 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
         }
       }
     };
-    
     if (currentPageProducts.length > 0) {
       fetchCommissions();
     }
   }, [page, rowsPerPage, filteredData, currentPageProducts]);
 
-  // Handle pagination
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -259,7 +209,6 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
     setPage(0);
   };
 
-  // Format currency values
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',
@@ -301,11 +250,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
           </Box>
         ) : (
           <>
-            <TableContainer component={Paper} elevation={0} sx={{ 
-              borderRadius: 1, 
-              boxShadow: 'none',
-              border: theme => `1px solid ${theme.palette.divider}`
-            }}>
+            <TableContainer >
               <Table sx={{ minWidth: 650 }} aria-label="product performance table">
                 <TableHead>
                   <TableRow>
@@ -331,9 +276,8 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                     const productId = product.emagProductOfferId?.toString() || '';
                     const isLoadingCommission = commissionsLoading[productId];
                     const commission = productCommissions[productId];
-                    
                     return (
-                      <StyledTableRow key={product.id}>
+                      <TableRow key={product.id} hover>
                         <TableCell>
                           <Box 
                             sx={{ 
@@ -407,7 +351,6 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                               {commission.toFixed(2)}%
                             </Typography>
                           ) : requestedProductsRef.current.has(productId) ? (
-                            // We've requested but not received data yet
                             <CircularProgress size={16} />
                           ) : (
                             <Typography variant="body2" color="text.secondary">-</Typography>
@@ -426,7 +369,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                             {formatCurrency(product.grossRevenue || 0)}
                           </Typography>
                         </TableCell>
-                      </StyledTableRow>
+                      </TableRow>
                     );
                   })}
                 </TableBody>

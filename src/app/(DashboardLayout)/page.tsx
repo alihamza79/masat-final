@@ -480,43 +480,43 @@ export default function Dashboard() {
           <Box sx={{ mx: -1.5 }}>
             <Grid container spacing={3} sx={{ px: 1.5 }}>
               {/* Top stat cards row */}
-              <Grid container item spacing={3} sx={{ mb: 1 }}>
-                <Grid item xs={12} sm={6} md={4} lg={2}>
+              <Grid container item spacing={1} sx={{ mb: 1 }}>
+                <Grid item xs={12} sm={6} md={4} lg={2} sx={{ p: 0 }}>
                   <SimplifiedStatsCard
                     title={t('dashboard.stats.totalOrders')}
                     value={dashboardData ? dashboardData.orderStats.totalOrders.toString() : "0"}
                     icon={<IconShoppingCart />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4} lg={2}>
+                <Grid item xs={12} sm={6} md={4} lg={2} sx={{ p: 0 }}>
                   <SimplifiedStatsCard
                     title={t('dashboard.stats.grossRevenue')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.grossRevenue) : "0 RON"}
                     icon={<IconCash />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4} lg={2}>
+                <Grid item xs={12} sm={6} md={4} lg={2} sx={{ p: 0 }}>
                   <SimplifiedStatsCard
                     title={t('dashboard.stats.profit')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.profitMargin) : "0 RON"}
                     icon={<IconCoin />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4} lg={2}>
+                <Grid item xs={12} sm={6} md={4} lg={2} sx={{ p: 0 }}>
                   <SimplifiedStatsCard
                     title={t('dashboard.stats.costOfGoods')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.costOfGoods) : "0 RON"}
                     icon={<IconReportMoney />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4} lg={2}>
+                <Grid item xs={12} sm={6} md={4} lg={2} sx={{ p: 0 }}>
                   <SimplifiedStatsCard
                     title={t('dashboard.stats.refundedOrders')}
                     value={dashboardData ? dashboardData.orderStats.refundedOrders.toString() : "0"}
                     icon={<IconRefresh />}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4} lg={2}>
+                <Grid item xs={12} sm={6} md={4} lg={2} sx={{ p: 0 }}>
                   <SimplifiedStatsCard
                     title={t('dashboard.stats.shippingRevenue')}
                     value={dashboardData ? formatCurrency(dashboardData.orderStats.shippingRevenue) : "0 RON"}
@@ -567,7 +567,13 @@ export default function Dashboard() {
                       display: 'flex', 
                       justifyContent: 'center', 
                       alignItems: 'center',
-                      height: '100%'
+                      height: { xs: 'auto', sm: '100%' },
+                      mb: { xs: 3, sm: 0 },
+                      minHeight: { xs: '280px', sm: 'auto' },
+                      '& > div': { 
+                        width: '100%',
+                        height: { xs: '320px', sm: '300px' },
+                      }
                     }}>
                       <EnhancedDistributionChart
                         title={t('dashboard.charts.deliveryMethods.title')}
@@ -582,7 +588,7 @@ export default function Dashboard() {
                             name: t('dashboard.charts.deliveryMethods.locker'), 
                             value: dashboardData?.deliveryMethodStats.locker || 0,
                             icon: <IconTimeline size={16} />,
-                            color: '#f06292'
+                            color: '#55b9f3'
                           }
                         ].filter(item => 
                           // Only include items with non-zero values, or include all if all are zero
@@ -591,14 +597,19 @@ export default function Dashboard() {
                            (dashboardData?.deliveryMethodStats.locker || 0) === 0)
                         )}
                         isLoading={isLoading}
-                        height={280}
+                        height="100%"
                       />
                     </Grid>
                     <Grid item xs={12} sm={6} sx={{ 
                       display: 'flex', 
                       justifyContent: 'center', 
                       alignItems: 'center',
-                      height: '100%'
+                      height: { xs: 'auto', sm: '100%' },
+                      minHeight: { xs: '280px', sm: 'auto' },
+                      '& > div': { 
+                        width: '100%',
+                        height: { xs: '320px', sm: '300px' },
+                      }
                     }}>
                       <EnhancedDistributionChart
                         title={t('dashboard.charts.paymentMethods.title')}
@@ -629,7 +640,7 @@ export default function Dashboard() {
                            (dashboardData?.paymentMethodStats.bank || 0) === 0)
                         )}
                         isLoading={isLoading}
-                        height={280}
+                        height="100%"
                       />
                     </Grid>
                   </Grid>

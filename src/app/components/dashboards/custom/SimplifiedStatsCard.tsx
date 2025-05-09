@@ -43,11 +43,13 @@ interface SimplifiedStatsCardProps {
 const SimplifiedStatsCard: React.FC<SimplifiedStatsCardProps> = ({
   title,
   value,
-  icon
+  icon,
+  color
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+  const iconColor = color || theme.palette.primary.main;
+
   return (
     <Card sx={{ 
       p: isMobile ? 1.5 : 2.5, 
@@ -56,40 +58,32 @@ const SimplifiedStatsCard: React.FC<SimplifiedStatsCardProps> = ({
       flexDirection: 'column', 
       justifyContent: 'center', 
       borderRadius: 2,
-      position: 'relative'
     }}>
-      <Box 
-        sx={{ 
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          color: theme.palette.text.secondary,
-          opacity: 0.7
-        }}
-      >
-        {React.cloneElement(icon, { size: 24 })}
-      </Box>
-      
-      <Stack spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={1.5} mb={1}>
+        <Box sx={{ color: iconColor, display: 'flex', alignItems: 'center' }}>
+          {React.cloneElement(icon, { size: 28, color: iconColor })}
+        </Box>
         <Typography 
           variant="subtitle1" 
-          fontWeight={700} 
-          mb={0.5}
+          fontWeight={700}
+          sx={{ flex: 1, fontSize: '0.75rem' }}
         >
           {title}
         </Typography>
-        <Typography 
-          variant="h3" 
-          fontWeight={600}
-          sx={{ 
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {value}
-        </Typography>
       </Stack>
+      <Typography 
+        variant="h6"
+        fontWeight={600}
+        sx={{ 
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontSize: '1.15rem',
+          maxWidth: '100%'
+        }}
+      >
+        {value}
+      </Typography>
     </Card>
   );
 };

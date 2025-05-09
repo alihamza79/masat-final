@@ -9,6 +9,7 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 // components
 import BlankCard from '../../shared/BlankCard';
@@ -24,6 +25,7 @@ interface SecurityTabProps {
 }
 
 const SecurityTab = ({ userData }: SecurityTabProps) => {
+  const { t } = useTranslation();
   // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -67,28 +69,28 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
 
       // Validate passwords
       if (!passwordData.currentPassword) {
-        setMessage({ type: 'error', text: 'Current password is required' });
+        setMessage({ type: 'error', text: t('accountSettings.security.errors.currentRequired') });
         return;
       }
       
       if (!passwordData.newPassword) {
-        setMessage({ type: 'error', text: 'New password is required' });
+        setMessage({ type: 'error', text: t('accountSettings.security.errors.newRequired') });
         return;
       }
       
       if (passwordData.newPassword.length < 6) {
-        setMessage({ type: 'error', text: 'New password must be at least 6 characters' });
+        setMessage({ type: 'error', text: t('accountSettings.security.errors.minLength') });
         return;
       }
 
       // Check if new password is same as current password
       if (passwordData.currentPassword === passwordData.newPassword) {
-        setMessage({ type: 'error', text: 'New password must be different from current password' });
+        setMessage({ type: 'error', text: t('accountSettings.security.errors.mustBeDifferent') });
         return;
       }
       
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setMessage({ type: 'error', text: 'Passwords do not match' });
+        setMessage({ type: 'error', text: t('accountSettings.security.errors.noMatch') });
         return;
       }
       
@@ -101,7 +103,7 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
       });
       
       if (response.data.success) {
-        setMessage({ type: 'success', text: 'Password changed successfully' });
+        setMessage({ type: 'success', text: t('accountSettings.security.passwordSuccess') });
         // Reset password fields
         setPasswordData({
           currentPassword: '',
@@ -109,13 +111,13 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
           confirmPassword: ''
         });
       } else {
-        setMessage({ type: 'error', text: response.data.error || 'Failed to change password' });
+        setMessage({ type: 'error', text: response.data.error || t('accountSettings.security.errors.changeFailed') });
       }
     } catch (error: any) {
       console.error('Error changing password:', error);
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.error || 'Failed to change password' 
+        text: error.response?.data?.error || t('accountSettings.security.errors.changeFailed') 
       });
     } finally {
       setLoading(false);
@@ -140,11 +142,11 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
         <BlankCard>
           <CardContent>
             <Typography variant="h5" mb={1}>
-              Change Password
+              {t('accountSettings.security.changePassword')}
             </Typography>
             <Divider sx={{ mb: 3 }} />
             <Typography color="textSecondary" mb={3}>
-              Choose a password that is at least 6 characters long and different from your current password
+              {t('accountSettings.security.passwordRequirements')}
             </Typography>
             
             <Grid container spacing={3} maxWidth="md">
@@ -153,7 +155,7 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
                   htmlFor="current-password"
                   sx={{ mt: 0 }}
                 >
-                  Current Password
+                  {t('accountSettings.security.currentPassword')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="current-password"
@@ -172,7 +174,7 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
                   sx={{ mt: { xs: 2, sm: 0 } }}
                   htmlFor="new-password"
                 >
-                  New Password
+                  {t('accountSettings.security.newPassword')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="new-password"
@@ -191,7 +193,7 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
                   sx={{ mt: { xs: 2, sm: 0 } }}
                   htmlFor="confirm-password"
                 >
-                  Confirm New Password
+                  {t('accountSettings.security.confirmPassword')}
                 </CustomFormLabel>
                 <CustomTextField
                   id="confirm-password"
@@ -213,7 +215,7 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
                     onClick={handleChangePassword}
                     disabled={loading}
                   >
-                    {loading ? <CircularProgress size={24} /> : 'Change Password'}
+                    {loading ? <CircularProgress size={24} /> : t('accountSettings.security.changePasswordButton')}
                   </Button>
                 </Box>
               </Grid>
@@ -227,12 +229,12 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
         <BlankCard>
           <CardContent>
             <Typography variant="h5" mb={1}>
-              Password Security Tips
+              {t('accountSettings.security.securityTips')}
             </Typography>
             <Divider sx={{ mb: 3 }} />
             
             <Typography variant="body1" gutterBottom>
-              Follow these guidelines to create a strong, secure password:
+              {t('accountSettings.security.guidelines')}
             </Typography>
             
             <Grid container spacing={2} mt={1}>
@@ -240,17 +242,17 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
                 <ul style={{ paddingLeft: '20px' }}>
                   <li>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Use at least 8 characters, preferably more
+                      {t('accountSettings.security.tip1')}
                     </Typography>
                   </li>
                   <li>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Mix uppercase and lowercase letters
+                      {t('accountSettings.security.tip2')}
                     </Typography>
                   </li>
                   <li>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Include numbers and special characters
+                      {t('accountSettings.security.tip3')}
                     </Typography>
                   </li>
                 </ul>
@@ -260,17 +262,17 @@ const SecurityTab = ({ userData }: SecurityTabProps) => {
                 <ul style={{ paddingLeft: '20px' }}>
                   <li>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Avoid using easily guessable information
+                      {t('accountSettings.security.tip4')}
                     </Typography>
                   </li>
                   <li>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Don't reuse passwords across multiple sites
+                      {t('accountSettings.security.tip5')}
                     </Typography>
                   </li>
                   <li>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Consider using a password manager
+                      {t('accountSettings.security.tip6')}
                     </Typography>
                   </li>
                 </ul>

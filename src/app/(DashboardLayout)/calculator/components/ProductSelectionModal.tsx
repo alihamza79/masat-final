@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -240,8 +240,16 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   // Use the products hook to get products data
   const { products: hookProducts, isLoading: hookLoading, error: hookError, refetch } = useProducts();
   
-  // Use hook data or fall back to props
-  const products = hookProducts?.length > 0 ? hookProducts : (propProducts || []);
+  // Use hook data or fall back to props, but avoid object creation if possible
+  const products = useMemo(() => {
+    // If hook has products, use them
+    if (hookProducts && hookProducts.length > 0) {
+      return hookProducts;
+    }
+    // Otherwise use prop products if available
+    return propProducts || [];
+  }, [hookProducts, propProducts]);
+  
   const loading = hookLoading || propLoading;
   const error = hookError ? String(hookError) : propError;
   
@@ -268,8 +276,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   // Helper function to process products consistently
   const processProducts = (productsToProcess: any[]) => {
     if (!Array.isArray(productsToProcess) || productsToProcess.length === 0) {
-      setEmagProducts([]);
-      setFilteredEmagProducts([]);
+      console.log('No products to process in processProducts function');
       return;
     }
     
@@ -277,27 +284,35 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
       console.log('Processing products, count:', productsToProcess.length);
       
       const allProducts = productsToProcess.map((product: any) => {
+        if (!product) return null;
+        
         // Use emagProductOfferId or _id (database ID) if present
         const productId = product.emagProductOfferId || (product._id ? product._id.toString() : null);
         
         if (!productId) {
+          console.log('Skipping product without ID:', product);
           return null; // Skip this product
         }
         
         // Extract integration ID properly, handling different formats
         let integrationIdStr;
-        if (typeof product.integrationId === 'object' && product.integrationId !== null) {
-          // If integrationId is a populated document
-          integrationIdStr = product.integrationId._id?.toString() || product.integrationId.id?.toString();
-        } else if (product.integrationId) {
-          // If integrationId is already a string or ID
-          integrationIdStr = product.integrationId.toString();
-        } else {
-          return null; // Skip products without integration ID
+        
+        try {
+          if (typeof product.integrationId === 'object' && product.integrationId !== null) {
+            // If integrationId is a populated document
+            integrationIdStr = product.integrationId._id?.toString() || product.integrationId.id?.toString();
+          } else if (product.integrationId) {
+            // If integrationId is already a string or ID
+            integrationIdStr = product.integrationId.toString();
+          }
+        } catch (err) {
+          console.warn('Error extracting integration ID:', err);
         }
         
+        // Use a fallback ID if no integration ID is available
         if (!integrationIdStr) {
-          return null; // Skip this product
+          console.log('Product missing integration ID, using fallback:', product);
+          integrationIdStr = 'unknown';
         }
         
         return {
@@ -331,19 +346,26 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
     console.log('Products array received in modal:', products);
     console.log('Products length:', products?.length || 0);
     
-    if (products && Array.isArray(products) && products.length > 0) {
-      setLoadingEmagProducts(true);
-      
-      try {
-        processProducts(products);
-      } finally {
-        setLoadingEmagProducts(false);
-      }
-    } else {
+    // Skip processing if products is undefined, null, or empty to prevent unnecessary state updates
+    if (!products || !Array.isArray(products) || products.length === 0) {
       console.log('No products to process, showing empty state');
-      // If products array is empty, set empty arrays
-      setEmagProducts([]);
-      setFilteredEmagProducts([]);
+      
+      // Only update state if the current state has items (avoid unnecessary rerenders)
+      if (emagProducts.length > 0 || filteredEmagProducts.length > 0) {
+        setEmagProducts([]);
+        setFilteredEmagProducts([]);
+      }
+      
+      setLoadingEmagProducts(false);
+      return;
+    }
+    
+    // Process products only if there's actual data
+    setLoadingEmagProducts(true);
+    
+    try {
+      processProducts(products);
+    } finally {
       setLoadingEmagProducts(false);
     }
   }, [products]);

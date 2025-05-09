@@ -21,10 +21,10 @@ interface EnhancedDistributionChartProps {
   data: DistributionData[];
   isLoading?: boolean;
   title?: string;
-  height?: number;
+  height?: number | string;
 }
 
-export const EnhancedDistributionChartSkeleton = ({ height = 280 }: { height?: number }) => {
+export const EnhancedDistributionChartSkeleton = ({ height = 280 }: { height?: number | string }) => {
   const theme = useTheme();
   
   return (
@@ -129,7 +129,28 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
     labels,
     colors,
     legend: {
-      show: false,
+      show: true,
+      position: 'bottom',
+      fontSize: '12px',
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 400,
+      formatter: function(seriesName: string, opts: any) {
+        // Get the percentage value
+        const percent = opts.w.globals.series[opts.seriesIndex] / total * 100;
+        // Format with 1 decimal place
+        return `${seriesName.split(':')[0]}: ${percent.toFixed(1)}%`;
+      },
+      itemMargin: {
+        horizontal: 15,
+        vertical: 5
+      },
+      horizontalAlign: 'center',
+      width: 'auto',
+      offsetY: 8,
+      floating: false,
+      onItemClick: {
+        toggleDataSeries: true
+      },
     },
     dataLabels: {
       enabled: false,
@@ -154,9 +175,9 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
     },
     plotOptions: {
       pie: {
-        expandOnClick: false,
+        expandOnClick: true,
         donut: {
-          size: '75%',
+          size: '70%',
           background: 'transparent',
           labels: {
             show: true,
@@ -200,6 +221,17 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
         }
       }
     },
+    responsive: [{
+      breakpoint: 480,
+      options: {
+        chart: {
+          height: 250
+        },
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }]
   };
   
   return (
@@ -229,11 +261,12 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
           display: 'flex', 
           flexDirection: 'column',
           alignItems: 'center', 
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           position: 'relative',
           width: '100%',
-          maxWidth: 240,
-          pt: 1
+          pt: 1,
+          maxWidth: { xs: '100%', sm: '240px' },
+          mx: 'auto'
         }}
       >
         {isLoading ? (
@@ -242,62 +275,36 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
           </Box>
         ) : (
           data.length > 0 && total > 0 ? (
-            <>
-              <Box sx={{ 
-                width: '100%', 
-                height: height * 0.6,
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Chart
-                  options={chartOptions}
-                  series={values}
-                  type="donut"
-                  height="100%"
-                  width="100%"
-                />
-              </Box>
-              
-              <Box sx={{ 
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                minHeight: 60,
-                alignItems: 'flex-start',
-                mt: 1
-              }}>
-                <Stack 
-                  direction="row" 
-                  spacing={1}
-                  justifyContent="center"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  sx={{ 
-                    gap: 1
-                  }}
-                >
-                  {data.map((item, index) => (
-                    <Chip
-                      key={index}
-                      icon={item.icon}
-                      label={`${item.name}: ${((item.value / total) * 100).toFixed(1)}%`}
-                      size="small"
-                      sx={{
-                        borderColor: colors[index],
-                        color: colors[index],
-                        fontWeight: 500,
-                        '& .MuiChip-icon': {
-                          color: colors[index]
-                        }
-                      }}
-                      variant="outlined"
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            </>
+            <Box sx={{ 
+              width: '100%', 
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'visible',
+              '& .apexcharts-legend': {
+                overflow: 'visible !important',
+                display: 'flex !important',
+                justifyContent: 'center !important',
+                flexWrap: 'nowrap !important',
+                padding: '0 8px !important',
+                height: '32px !important',
+                width: '100% !important',
+                maxWidth: 'none !important'
+              },
+              '& .apexcharts-legend-series': {
+                display: 'inline-flex !important',
+                margin: '0 6px !important'
+              }
+            }}>
+              <Chart
+                options={chartOptions}
+                series={values}
+                type="donut"
+                height="100%"
+                width="100%"
+              />
+            </Box>
           ) : (
             <Box display="flex" alignItems="center" justifyContent="center" height="100%">
               <Typography variant="body2" color="textSecondary">No data available</Typography>

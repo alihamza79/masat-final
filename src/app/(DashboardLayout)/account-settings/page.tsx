@@ -1,11 +1,11 @@
 'use client'
 
-import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/app/components/container/PageContainer';
-import { Box, CardContent, Divider, Grid, Tab, Tabs, CircularProgress, Alert } from '@mui/material';
+import { Alert, Box, CardContent, CircularProgress, Divider, Grid, Tab, Tabs, Typography } from '@mui/material';
+import { useSession } from 'next-auth/react';
 import * as React from 'react';
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useTranslation } from 'react-i18next';
 
 // Import our custom hook
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -14,16 +14,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import AccountTab from '@/app/components/pages/account-setting/AccountTab';
 import SecurityTab from '@/app/components/pages/account-setting/SecurityTab';
 import BlankCard from '@/app/components/shared/BlankCard';
-import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons-react';
-const BCrumb = [
-  {
-    to: '/',
-    title: 'Home',
-  },
-  {
-    title: 'Account Setting',
-  },
-];
+import { IconArticle, IconLock, IconUserCircle } from '@tabler/icons-react';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -57,7 +48,19 @@ function a11yProps(index: number) {
 const AccountSetting = () => {
   const [value, setValue] = useState(0);
   const { data: session, update } = useSession();
+  const { t } = useTranslation();
   
+  // Define breadcrumb with translations
+  const BCrumb = [
+    {
+      to: '/',
+      title: t('common.home'),
+    },
+    {
+      title: t('accountSettings.title'),
+    },
+  ];
+
   // Use our custom hook to get user profile data with caching
   const { 
     userData, 
@@ -93,8 +96,30 @@ const AccountSetting = () => {
   };
 
   return (
-    <PageContainer title="Account Setting" description="this is Account Setting">
-
+    <PageContainer title={t('accountSettings.title')} description={t('accountSettings.pageDescription')}>
+<Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box 
+              display="flex" 
+              alignItems="center" 
+              justifyContent="space-between" 
+              mb={3}
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+            >
+              <Typography 
+                variant="h2" 
+                sx={{ 
+                  fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
+                  textAlign: { xs: 'center', sm: 'left' },
+                  width: '100%'
+                }}
+              >
+                {t('accountSettings.title')}
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <BlankCard>
@@ -108,21 +133,21 @@ const AccountSetting = () => {
                 <Tab
                   iconPosition="start"
                   icon={<IconUserCircle size="22" />}
-                  label="Account"
+                  label={t('accountSettings.tabNames.account')}
                   {...a11yProps(0)}
                 />
 
                 <Tab
                   iconPosition="start"
                   icon={<IconLock size="22" />}
-                  label="Security"
+                  label={t('accountSettings.tabNames.security')}
                   {...a11yProps(1)}
                 />
 
                 <Tab
                   iconPosition="start"
                   icon={<IconArticle size="22" />}
-                  label="Bills"
+                  label={t('accountSettings.tabNames.bills')}
                   {...a11yProps(2)}
                 />
               </Tabs>
@@ -132,10 +157,11 @@ const AccountSetting = () => {
               {isLoading ? (
                 <Box display="flex" justifyContent="center" alignItems="center" p={3}>
                   <CircularProgress />
+                  <Typography ml={2}>{t('accountSettings.loadingProfile')}</Typography>
                 </Box>
               ) : error ? (
                 <Alert severity="error" sx={{ mb: 3 }}>
-                  {error instanceof Error ? error.message : 'Failed to load user data'}
+                  {error instanceof Error ? error.message : t('accountSettings.loadingError')}
                 </Alert>
               ) : (
                 <>

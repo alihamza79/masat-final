@@ -537,6 +537,7 @@
         "cancel": "Anulează",
         "close": "Închide",
         "remove": "Elimină",
+        "home": "Acasă",
         "time": {
             "justNow": "chiar acum",
             "minutesAgo": "acum {{count}} minut",
@@ -545,6 +546,80 @@
             "hoursAgo": "acum {{count}} ore",
             "dayAgo": "acum 1 zi",
             "daysAgo": "acum {{count}} zile"
+        }
+    },
+    "accountSettings": {
+        "title": "Setări Cont",
+        "pageDescription": "acestea sunt Setările Contului",
+        "tabNames": {
+            "account": "Cont",
+            "security": "Securitate",
+            "bills": "Facturi"
+        },
+        "loadingProfile": "Se încarcă datele profilului...",
+        "loadingError": "Nu s-au putut încărca datele utilizatorului",
+        "account": {
+            "personalInfo": "Informații Personale",
+            "companyDetails": "Detalii Companie",
+            "name": "Nume",
+            "email": "Email",
+            "phone": "Număr de Telefon",
+            "upload": "Încarcă",
+            "reset": "Resetează",
+            "imageRestrictions": "JPG, GIF sau PNG. Max 800K",
+            "taxId": "Cod Fiscal",
+            "regNumber": "Număr de Înregistrare",
+            "address": "Adresă",
+            "town": "Oraș",
+            "country": "Țară",
+            "selectCountry": "Selectează Țara",
+            "taxRate": "Cotă de Impozitare (%)",
+            "isVatPayer": "Plătitor de TVA",
+            "saveChanges": "Salvează Modificările",
+            "saveSuccess": "Profilul a fost actualizat cu succes",
+            "requiredField": "Câmp obligatoriu",
+            "provideTaxSettings": "Vă rugăm să furnizați informații despre companie pentru a salva setările fiscale",
+            "companyDetailsRequired": "Toate detaliile companiei sunt obligatorii. Lipsește: {fields}.",
+            "provideName": "Vă rugăm să completați detaliile companiei pentru a salva setările fiscale. Este necesar cel puțin un nume de companie.",
+            "errors": {
+                "invalidImage": "Sunt permise doar imagini JPG, PNG și GIF",
+                "imageTooLarge": "Dimensiunea imaginii trebuie să fie mai mică de 800KB"
+            },
+            "countries": {
+                "US": "Statele Unite",
+                "GB": "Regatul Unit",
+                "DE": "Germania",
+                "FR": "Franța",
+                "ES": "Spania",
+                "IT": "Italia",
+                "RO": "România",
+                "BG": "Bulgaria"
+            }
+        },
+        "security": {
+            "changePassword": "Schimbă Parola",
+            "passwordRequirements": "Alegeți o parolă care are cel puțin 6 caractere și este diferită de parola actuală",
+            "currentPassword": "Parola Actuală",
+            "newPassword": "Parolă Nouă",
+            "confirmPassword": "Confirmă Parola Nouă",
+            "changePasswordButton": "Schimbă Parola",
+            "securityTips": "Sfaturi de Securitate pentru Parolă",
+            "guidelines": "Urmați aceste instrucțiuni pentru a crea o parolă puternică și sigură:",
+            "tip1": "Utilizați cel puțin 8 caractere, de preferință mai multe",
+            "tip2": "Combinați litere mari și mici",
+            "tip3": "Includeți numere și caractere speciale",
+            "tip4": "Evitați utilizarea informațiilor ușor de ghicit",
+            "tip5": "Nu reutilizați parolele pe mai multe site-uri",
+            "tip6": "Luați în considerare utilizarea unui manager de parole",
+            "passwordSuccess": "Parola a fost schimbată cu succes",
+            "errors": {
+                "currentRequired": "Parola actuală este obligatorie",
+                "newRequired": "Parola nouă este obligatorie",
+                "minLength": "Parola nouă trebuie să aibă cel puțin 6 caractere",
+                "mustBeDifferent": "Parola nouă trebuie să fie diferită de parola actuală",
+                "noMatch": "Parolele nu se potrivesc",
+                "changeFailed": "Nu s-a putut schimba parola"
+            }
         }
     }
 } 

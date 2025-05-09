@@ -537,6 +537,7 @@
         "cancel": "Cancel",
         "close": "Close",
         "remove": "Remove",
+        "home": "Home",
         "time": {
             "justNow": "just now",
             "minutesAgo": "{{count}} minute ago",
@@ -545,6 +546,80 @@
             "hoursAgo": "{{count}} hours ago",
             "dayAgo": "1 day ago",
             "daysAgo": "{{count}} days ago"
+        }
+    },
+    "accountSettings": {
+        "title": "Account Settings",
+        "pageDescription": "this is Account Setting",
+        "tabNames": {
+            "account": "Account",
+            "security": "Security",
+            "bills": "Bills"
+        },
+        "loadingProfile": "Loading profile data...",
+        "loadingError": "Failed to load user data",
+        "account": {
+            "personalInfo": "Personal Information",
+            "companyDetails": "Company Details",
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone Number",
+            "upload": "Upload",
+            "reset": "Reset",
+            "imageRestrictions": "JPG, GIF or PNG. Max 800K",
+            "taxId": "Tax ID",
+            "regNumber": "Registration Number",
+            "address": "Address",
+            "town": "Town/City",
+            "country": "Country",
+            "selectCountry": "Select Country",
+            "taxRate": "Tax Rate (%)",
+            "isVatPayer": "VAT Payer",
+            "saveChanges": "Save Changes",
+            "saveSuccess": "Profile updated successfully",
+            "requiredField": "Required field",
+            "provideTaxSettings": "Please provide company information to save tax settings",
+            "companyDetailsRequired": "All company details are required. Missing: {fields}.",
+            "provideName": "Please fill in company details to save tax settings. At minimum, a company name is required.",
+            "errors": {
+                "invalidImage": "Only JPG, PNG, and GIF images are allowed",
+                "imageTooLarge": "Image size must be less than 800KB"
+            },
+            "countries": {
+                "US": "United States",
+                "GB": "United Kingdom",
+                "DE": "Germany",
+                "FR": "France",
+                "ES": "Spain",
+                "IT": "Italy",
+                "RO": "Romania",
+                "BG": "Bulgaria"
+            }
+        },
+        "security": {
+            "changePassword": "Change Password",
+            "passwordRequirements": "Choose a password that is at least 6 characters long and different from your current password",
+            "currentPassword": "Current Password",
+            "newPassword": "New Password",
+            "confirmPassword": "Confirm New Password",
+            "changePasswordButton": "Change Password",
+            "securityTips": "Password Security Tips",
+            "guidelines": "Follow these guidelines to create a strong, secure password:",
+            "tip1": "Use at least 8 characters, preferably more",
+            "tip2": "Mix uppercase and lowercase letters",
+            "tip3": "Include numbers and special characters",
+            "tip4": "Avoid using easily guessable information",
+            "tip5": "Don't reuse passwords across multiple sites",
+            "tip6": "Consider using a password manager",
+            "passwordSuccess": "Password changed successfully",
+            "errors": {
+                "currentRequired": "Current password is required",
+                "newRequired": "New password is required",
+                "minLength": "New password must be at least 6 characters",
+                "mustBeDifferent": "New password must be different from current password",
+                "noMatch": "Passwords do not match",
+                "changeFailed": "Failed to change password"
+            }
         }
     }
 }
