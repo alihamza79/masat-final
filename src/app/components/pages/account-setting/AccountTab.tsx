@@ -75,6 +75,8 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [hasTaxSettingsOnly, setHasTaxSettingsOnly] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+  const [imageUploading, setImageUploading] = useState(false);
+  const [hasImageChanged, setHasImageChanged] = useState(false);
   
   // Auto-hide success message after 3 seconds
   useEffect(() => {
@@ -133,16 +135,19 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
+      setImageUploading(true);
       
       // Validate file size (max 800KB)
       if (file.size > 800 * 1024) {
         setMessage({ type: 'error', text: t('accountSettings.account.errors.imageTooLarge') });
+        setImageUploading(false);
         return;
       }
       
       // Validate file type
       if (!file.type.match(/image\/(jpeg|jpg|png|gif)/i)) {
         setMessage({ type: 'error', text: t('accountSettings.account.errors.invalidImage') });
+        setImageUploading(false);
         return;
       }
       
@@ -152,6 +157,12 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        setHasImageChanged(true);
+        setImageUploading(false);
+      };
+      reader.onerror = () => {
+        setMessage({ type: 'error', text: t('accountSettings.account.errors.imageUploadFailed') });
+        setImageUploading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -161,6 +172,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
   const handleResetImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setHasImageChanged(false);
   };
   
   // Handle user data change
@@ -265,31 +277,31 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       // Add profile image if selected
       if (selectedImage && imagePreview) {
         updateData.profileImage = imagePreview;
-        
-        // Immediately update the session with new image
-        if (session) {
-          await sessionUpdate({
-            ...session,
-            user: {
-              ...session.user,
-              image: imagePreview // Use the new image preview URL
-            }
-          });
-        }
       }
       
       console.log('Full update data being sent:', updateData);
       
-      // Notify parent about the update instead of making a direct API call
-      // The parent will handle updating the data cache
-      onDataUpdate(updateData);
+      // Notify parent about the update
+      await onDataUpdate(updateData);
       
-      // Reset image selection state after successful update
-      setSelectedImage(null);
-      
-      // Show success message and reset state
+      // Show success message
       setMessage({ type: 'success', text: t('accountSettings.account.saveSuccess') });
-      setLoading(false);
+      
+      // If image was changed, wait longer and show loading state
+      if (hasImageChanged) {
+        setMessage({ 
+          type: 'success', 
+          text: t('accountSettings.account.saveSuccess') + ' - ' + t('accountSettings.account.refreshing') 
+        });
+        
+        // Wait for 3 seconds before reload to ensure image is processed
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Force a hard reload
+        window.location.href = window.location.href;
+      } else {
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       setMessage({ type: 'error', text: String(error) });
@@ -316,21 +328,39 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
           <CardContent>
             <Grid container spacing={3} alignItems="flex-start">
               <Grid item xs={12} md={4} lg={3} sx={{ textAlign: { xs: 'center', md: 'center' } }}>
-                <Avatar
-                  src={imagePreview || (userData.image ? 
-                    userData.image.startsWith('http') ? 
-                      userData.image : 
-                      `/api/image?path=${encodeURIComponent(userData.image)}` 
-                    : "/images/profile/user-1.jpg")}
-                  alt={userData.name || "User"}
-                  sx={{ width: 150, height: 150, margin: '0 auto' }}
-                />
+                <Box position="relative" sx={{ width: 150, height: 150, margin: '0 auto' }}>
+                  <Avatar
+                    src={imagePreview || (userData.image ? 
+                      userData.image.startsWith('http') ? 
+                        userData.image : 
+                        `/api/image?path=${encodeURIComponent(userData.image)}` 
+                      : "/images/profile/user-1.jpg")}
+                    alt={userData.name || "User"}
+                    sx={{ width: '100%', height: '100%' }}
+                  />
+                  {imageUploading && (
+                    <Box
+                      position="absolute"
+                      top={0}
+                      left={0}
+                      right={0}
+                      bottom={0}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      bgcolor="rgba(0, 0, 0, 0.5)"
+                      borderRadius="50%"
+                    >
+                      <CircularProgress sx={{ color: 'white' }} />
+                    </Box>
+                  )}
+                </Box>
                 <Stack direction="row" justifyContent="center" spacing={2} mt={2}>
                   <Button 
                     variant="contained" 
                     color="primary" 
                     component="label"
-                    disabled={loading}
+                    disabled={loading || imageUploading}
                     size="small"
                   >
                     {t('accountSettings.account.upload')}
@@ -346,7 +376,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                       variant="outlined" 
                       color="error" 
                       onClick={handleResetImage}
-                      disabled={loading}
+                      disabled={loading || imageUploading}
                       size="small"
                     >
                       {t('accountSettings.account.reset')}
