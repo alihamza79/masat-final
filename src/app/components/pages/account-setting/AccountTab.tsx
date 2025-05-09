@@ -265,6 +265,17 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       // Add profile image if selected
       if (selectedImage && imagePreview) {
         updateData.profileImage = imagePreview;
+        
+        // Immediately update the session with new image
+        if (session) {
+          await sessionUpdate({
+            ...session,
+            user: {
+              ...session.user,
+              image: imagePreview // Use the new image preview URL
+            }
+          });
+        }
       }
       
       console.log('Full update data being sent:', updateData);
@@ -272,6 +283,9 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       // Notify parent about the update instead of making a direct API call
       // The parent will handle updating the data cache
       onDataUpdate(updateData);
+      
+      // Reset image selection state after successful update
+      setSelectedImage(null);
       
       // Show success message and reset state
       setMessage({ type: 'success', text: t('accountSettings.account.saveSuccess') });
@@ -398,10 +412,19 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                       id="phone"
                       name="phone"
                       value={phoneNumber}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        // Only allow numeric input
+                        const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                        setPhoneNumber(numericValue);
+                      }}
                       variant="outlined"
                       fullWidth
                       disabled={loading}
+                      type="tel"
+                      inputProps={{
+                        inputMode: 'numeric',
+                        pattern: '[0-9]*'
+                      }}
                     />
                   </Grid>
                 </Grid>
