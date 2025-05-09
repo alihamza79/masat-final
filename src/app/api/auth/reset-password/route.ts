@@ -7,7 +7,44 @@ import { ObjectId } from 'mongodb';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, otp, password, token } = await request.json();
+    // Parse request data based on content type
+    let email, otp, password, token;
+    
+    const contentType = request.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json')) {
+      // Handle JSON data
+      const body = await request.json();
+      email = body.email;
+      otp = body.otp;
+      password = body.password;
+      token = body.token;
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      // Handle form data
+      const formData = await request.formData();
+      email = formData.get('email')?.toString();
+      otp = formData.get('otp')?.toString();
+      password = formData.get('password')?.toString();
+      token = formData.get('token')?.toString();
+    } else {
+      // Try to handle any other format
+      const text = await request.text();
+      try {
+        // Try JSON parsing first
+        const body = JSON.parse(text);
+        email = body.email;
+        otp = body.otp;
+        password = body.password;
+        token = body.token;
+      } catch (e) {
+        // Fall back to URL-encoded parsing
+        const params = new URLSearchParams(text);
+        email = params.get('email');
+        otp = params.get('otp');
+        password = params.get('password');
+        token = params.get('token');
+      }
+    }
     
     // Validate input
     if (!email || !password || (!otp && !token)) {

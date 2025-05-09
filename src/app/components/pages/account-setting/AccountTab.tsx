@@ -490,7 +490,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
             <Divider sx={{ mb: 3 }} />
             
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={4}>
                 <CustomFormLabel
                   sx={{ mt: { xs: 2, md: 0 } }}
                   htmlFor="company-name"
@@ -504,6 +504,45 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   onChange={handleCompanyDataChange}
                   variant="outlined"
                   fullWidth
+                  disabled={loading}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={4}>
+                <CustomFormLabel
+                  sx={{ mt: { xs: 2, md: 0 } }}
+                  htmlFor="registration-number"
+                >
+                  {t('accountSettings.account.regNumber')}
+                </CustomFormLabel>
+                <CustomTextField
+                  id="registration-number"
+                  name="registrationNumber"
+                  value={companyData.registrationNumber}
+                  onChange={handleCompanyDataChange}
+                  variant="outlined"
+                  fullWidth
+                  disabled={loading}
+                  error={fieldErrors.registrationNumber}
+                  helperText={fieldErrors.registrationNumber ? t('accountSettings.account.requiredField') : ""}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={4}>
+                <CustomFormLabel
+                  sx={{ mt: { xs: 2, md: 0 } }}
+                  htmlFor="tax-rate"
+                >
+                  {t('accountSettings.account.taxRate')}
+                </CustomFormLabel>
+                <CustomTextField
+                  id="tax-rate"
+                  name="taxRate"
+                  value={companyData.taxRate}
+                  onChange={handleCompanyDataChange}
+                  variant="outlined"
+                  fullWidth
+                  type="number"
                   disabled={loading}
                 />
               </Grid>
@@ -525,26 +564,6 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   disabled={loading}
                   error={fieldErrors.taxId}
                   helperText={fieldErrors.taxId ? t('accountSettings.account.requiredField') : ""}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <CustomFormLabel
-                  sx={{ mt: { xs: 2, md: 0 } }}
-                  htmlFor="registration-number"
-                >
-                  {t('accountSettings.account.regNumber')}
-                </CustomFormLabel>
-                <CustomTextField
-                  id="registration-number"
-                  name="registrationNumber"
-                  value={companyData.registrationNumber}
-                  onChange={handleCompanyDataChange}
-                  variant="outlined"
-                  fullWidth
-                  disabled={loading}
-                  error={fieldErrors.registrationNumber}
-                  helperText={fieldErrors.registrationNumber ? t('accountSettings.account.requiredField') : ""}
                 />
               </Grid>
               
@@ -617,25 +636,6 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                     {t('accountSettings.account.requiredField')}
                   </Typography>
                 )}
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <CustomFormLabel
-                  sx={{ mt: { xs: 2, md: 0 } }}
-                  htmlFor="tax-rate"
-                >
-                  {t('accountSettings.account.taxRate')}
-                </CustomFormLabel>
-                <CustomTextField
-                  id="tax-rate"
-                  name="taxRate"
-                  value={companyData.taxRate}
-                  onChange={handleCompanyDataChange}
-                  variant="outlined"
-                  fullWidth
-                  type="number"
-                  disabled={loading}
-                />
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>

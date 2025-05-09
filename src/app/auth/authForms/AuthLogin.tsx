@@ -196,7 +196,19 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       }
     } catch (error) {
       console.error("🌐 [CLIENT] Sign in error:", error);
-      setError("An unexpected error occurred. Please try again.");
+      
+      // Specific handling for common error types
+      if (error instanceof TypeError && error.message.includes('URL')) {
+        // Handle URL construction errors, which often happen with invalid server responses
+        setError('Invalid email or password');
+      } else {
+        // Try to extract a meaningful error message if available
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : "An unexpected error occurred. Please try again.";
+        setError(errorMessage);
+      }
+      
       setLoading(false);
       setSigningIn(false);
     }

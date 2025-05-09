@@ -4,7 +4,36 @@ import OTP from '@/models/OTP';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, otp } = await request.json();
+    // Parse request data based on content type
+    let email, otp;
+    
+    const contentType = request.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json')) {
+      // Handle JSON data
+      const body = await request.json();
+      email = body.email;
+      otp = body.otp;
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      // Handle form data
+      const formData = await request.formData();
+      email = formData.get('email')?.toString();
+      otp = formData.get('otp')?.toString();
+    } else {
+      // Try to handle any other format
+      const text = await request.text();
+      try {
+        // Try JSON parsing first
+        const body = JSON.parse(text);
+        email = body.email;
+        otp = body.otp;
+      } catch (e) {
+        // Fall back to URL-encoded parsing
+        const params = new URLSearchParams(text);
+        email = params.get('email');
+        otp = params.get('otp');
+      }
+    }
     
     // Validate input
     if (!email || !otp) {
