@@ -147,48 +147,42 @@ async function getDueExpenses(searchParams: URLSearchParams) {
               type: "monthly",
               expenseDay: currentDay,
               $or: [
-                { expenseMonth: { $ne: currentMonth + 1 } },
-                { expenseYear: { $ne: currentYear } }
+                { $expr: { $ne: ["$expenseMonth", currentMonth + 1] } },
+                { $expr: { $ne: ["$expenseYear", currentYear] } }
               ]
             },
             // Monthly recurring: last day of month when original day doesn't exist in current month
             {
               type: "monthly",
-              expenseDay: { $gt: currentDay },
-              currentDay: { $in: [28, 29, 30, 31] }, // Last days of a month
-              $expr: {
-                // Check if today is the last day of the month
+              $expr: { 
                 $and: [
-                  // Today's month is one of those with last day < 31
-                  { $in: [currentMonth + 1, [2, 4, 6, 9, 11]] },
-                  // For February special case
-                  {
-                    $or: [
+                  { $gt: ["$expenseDay", currentDay] },
+                  { $in: [currentDay, [28, 29, 30, 31]] }, // Last days of a month
+                  // Check if today is the last day of the month
+                  { $and: [
+                    // Today's month is one of those with last day < 31
+                    { $in: [currentMonth + 1, [2, 4, 6, 9, 11]] },
+                    // For February special case
+                    { $or: [
                       // For February in non-leap years
-                      {
-                        $and: [
-                          { $eq: [currentMonth + 1, 2] },
-                          { $eq: [currentDay, 28] },
-                          { $ne: { $mod: [currentYear, 4] } }
-                        ]
-                      },
+                      { $and: [
+                        { $eq: [currentMonth + 1, 2] },
+                        { $eq: [currentDay, 28] },
+                        { $ne: [{ $mod: [currentYear, 4] }, 0] }
+                      ]},
                       // For February in leap years
-                      {
-                        $and: [
-                          { $eq: [currentMonth + 1, 2] },
-                          { $eq: [currentDay, 29] },
-                          { $eq: { $mod: [currentYear, 4] } }
-                        ]
-                      },
+                      { $and: [
+                        { $eq: [currentMonth + 1, 2] },
+                        { $eq: [currentDay, 29] },
+                        { $eq: [{ $mod: [currentYear, 4] }, 0] }
+                      ]},
                       // For months with 30 days
-                      {
-                        $and: [
-                          { $in: [currentMonth + 1, [4, 6, 9, 11]] },
-                          { $eq: [currentDay, 30] }
-                        ]
-                      }
-                    ]
-                  }
+                      { $and: [
+                        { $in: [currentMonth + 1, [4, 6, 9, 11]] },
+                        { $eq: [currentDay, 30] }
+                      ]}
+                    ]}
+                  ]}
                 ]
               }
             },
@@ -197,7 +191,7 @@ async function getDueExpenses(searchParams: URLSearchParams) {
               type: "annually",
               expenseDay: currentDay,
               expenseMonth: currentMonth + 1,
-              expenseYear: { $ne: currentYear }
+              $expr: { $ne: ["$expenseYear", currentYear] }
             },
             // Annual recurring: Feb 28/29 special case
             {
@@ -208,7 +202,7 @@ async function getDueExpenses(searchParams: URLSearchParams) {
                 $and: [
                   { $eq: [currentMonth + 1, 2] },
                   { $eq: [currentDay, 28] },
-                  { $ne: { $mod: [currentYear, 4] } } // Not a leap year
+                  { $ne: [{ $mod: [currentYear, 4] }, 0] } // Not a leap year
                 ]
               }
             }
