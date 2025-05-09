@@ -73,7 +73,7 @@ const ForgotPasswordFlow: React.FC<ForgotPasswordFlowProps> = ({
       const response = await axios.post('/api/auth/forgot-password', { email });
       
       if (response.data.success) {
-        setSuccess('If your email exists in our system, you will receive a password reset code');
+        setSuccess('If your email exists in our system, you will receive a verification code shortly');
         setActiveStep(1);
         setTimer(60); // 60 seconds countdown for resend
       } else if (response.data.action === 'set-password') {
@@ -214,7 +214,7 @@ const ForgotPasswordFlow: React.FC<ForgotPasswordFlowProps> = ({
         return (
           <Box my={3}>
             <Typography variant="body2" align="center" gutterBottom>
-              Enter the verification code sent to {email}
+              Please check your email for the verification code
             </Typography>
             
             {success && success.includes('receive') && (
@@ -235,7 +235,7 @@ const ForgotPasswordFlow: React.FC<ForgotPasswordFlowProps> = ({
                 >
                   <IconCheck size={20} />
                   <Typography variant="body2" fontWeight={500}>
-                    Verification code sent
+                    If your email exists in our database, you will receive the verification code
                   </Typography>
                 </Box>
               </Fade>
