@@ -398,7 +398,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                       id="phone"
                       name="phone"
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(e.target.value)}
                       variant="outlined"
                       fullWidth
                       disabled={loading}
