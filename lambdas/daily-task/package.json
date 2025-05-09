@@ -1,0 +1,10 @@
+{
+  "name": "daily-task",
+  "version": "1.0.0",
+  "description": "Lambda function for handling recurring expenses",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.6.7",
+    "date-fns": "^3.3.1"
+  }
+}

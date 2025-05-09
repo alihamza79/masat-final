@@ -98,6 +98,26 @@ const SelectedProductView = ({
                   InputProps={{
                     inputProps: { min: 0 },
                   }}
+                  InputLabelProps={{
+                    sx: { 
+                      mt: 0.2,
+                      ml: 1,
+                      "&.MuiInputLabel-shrink": {
+                        ml: 0
+                      }
+                    }
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderRadius: '8px',
+                      },
+                      '& input': {
+                        pl: 2,
+                        py: 1.5
+                      }
+                    }
+                  }}
                 />
                 <TextField
                   label={t('expenses.dialog.costPerUnit')}
@@ -119,6 +139,26 @@ const SelectedProductView = ({
                   InputProps={{
                     endAdornment: <InputAdornment position="end">RON</InputAdornment>,
                     inputProps: { min: 0 },
+                  }}
+                  InputLabelProps={{
+                    sx: { 
+                      mt: 0.2,
+                      ml: 1,
+                      "&.MuiInputLabel-shrink": {
+                        ml: 0
+                      }
+                    }
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderRadius: '8px',
+                      },
+                      '& input': {
+                        pl: 2,
+                        py: 1.5
+                      }
+                    }
                   }}
                 />
               </Stack>

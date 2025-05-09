@@ -37,7 +37,8 @@
         "listingOptimizer": "Optimizator Listări",
         "keywordTracker": "Urmăritor Cuvinte Cheie",
         "xScan": "X Scan",
-        "reports": "Rapoarte"
+        "reports": "Rapoarte",
+        "expenses": "Cheltuieli"
     },
     "dashboard": {
         "title": "Panou de Control Vânzări",

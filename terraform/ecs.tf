@@ -52,14 +52,6 @@ resource "aws_ecs_task_definition" "this" {
             "value" : "${aws_s3_bucket.this.bucket}"
           },
           {
-            "name" : "SES_SOURCE_EMAIL",
-            "value" : "contact@shiftcrowd.eu"
-          },
-          {
-            "name" : "AWS_REGION",
-            "value" : "${var.aws_region}"
-          },
-          {
             "name" : "NEXTAUTH_SECRET",
             "value" : "${var.nextauth_secret}"
           },

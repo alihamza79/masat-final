@@ -8,6 +8,7 @@ import React from 'react';
 import ProductSearchAutocomplete from './ProductSearchAutocomplete';
 import SelectedProductView from './SelectedProductView';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 
 interface CogsFieldsProps {
   date: Date | null;
@@ -43,6 +44,7 @@ const CogsFields = ({
   setErrors
 }: CogsFieldsProps) => {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   return (
     <Stack spacing={3} sx={{ mt: 0 }}>
@@ -70,6 +72,27 @@ const CogsFields = ({
                 required
                 error={Boolean(errors.date)}
                 helperText={errors.date}
+                InputLabelProps={{
+                  sx: { 
+                    mt: 0.2,
+                    ml: 1,
+                    "&.MuiInputLabel-shrink": {
+                      ml: 0
+                    }
+                  }
+                }}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    '&:hover fieldset': {
+                      borderColor: theme.palette.primary.main,
+                    },
+                    '& input': {
+                      pl: 2,
+                      py: 1.5
+                    }
+                  }
+                }}
                 InputProps={{
                   ...params.InputProps,
                   startAdornment: (

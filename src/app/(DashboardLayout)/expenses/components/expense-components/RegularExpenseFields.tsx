@@ -58,18 +58,24 @@ const RegularExpenseFields = ({
           required
           error={Boolean(errors.description)}
           helperText={errors.description}
-          InputProps={{
+          InputLabelProps={{
             sx: { 
-              '& input': { 
-                padding: '14px 14px'
-              } 
+              mt: -0.5,
+              ml: 1,
+              "&.MuiInputLabel-shrink": {
+                ml: 0
+              }
             }
           }}
           sx={{ 
             '& .MuiOutlinedInput-root': {
-              borderRadius: 1,
+              borderRadius: '8px',
               '&:hover fieldset': {
                 borderColor: theme.palette.primary.main,
+              },
+              '& input': {
+                pl: 2,
+                py: 1.5
               }
             }
           }}
@@ -100,6 +106,27 @@ const RegularExpenseFields = ({
               endAdornment: <InputAdornment position="end">RON</InputAdornment>,
               inputProps: { min: 0 },
             }}
+            InputLabelProps={{
+              sx: { 
+                mt: -0.5,
+                ml: 1,
+                "&.MuiInputLabel-shrink": {
+                  ml: 0
+                }
+              }
+            }}
+            sx={{ 
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                '&:hover fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+                '& input': {
+                  pl: 2,
+                  py: 1.5
+                }
+              }
+            }}
           />
           
           <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -124,6 +151,27 @@ const RegularExpenseFields = ({
                   required
                   error={Boolean(errors.date)}
                   helperText={errors.date}
+                  InputLabelProps={{
+                    sx: { 
+                      mt: -0.5,
+                      ml: 1,
+                      "&.MuiInputLabel-shrink": {
+                        ml: 0
+                      }
+                    }
+                  }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                      '&:hover fieldset': {
+                        borderColor: theme.palette.primary.main,
+                      },
+                      '& input': {
+                        pl: 2,
+                        py: 1.5
+                      }
+                    }
+                  }}
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
