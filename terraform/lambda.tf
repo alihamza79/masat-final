@@ -10,7 +10,7 @@ variable "api_url" {
 variable "recurring_expenses_api_key" {
   description = "API key for recurring expenses authentication"
   type        = string
-  default     = "masat_rec_live"
+  default     = "masat_rec_live_8f2a61b3e4d95c7f16940adb7c852x9p"
   sensitive   = true
 }
 
