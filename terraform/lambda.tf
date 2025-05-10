@@ -74,11 +74,11 @@ resource "aws_lambda_function" "daily_task" {
   }
 }
 
-# CloudWatch Events/EventBridge rule to trigger the Lambda every 5 minutes
+# CloudWatch Events/EventBridge rule to trigger the Lambda at 00:05 daily
 resource "aws_cloudwatch_event_rule" "daily_task_schedule" {
   name                = "${var.project_name}-${var.env}-daily-task-schedule"
-  description         = "Triggers the daily task Lambda function every 5 minutes"
-  schedule_expression = "cron(0/5 * * * ? *)" # Run every 5 minutes using cron expression
+  description         = "Triggers the daily task Lambda function at 00:05 every day"
+  schedule_expression = "cron(5 0 * * ? *)" # Run at 00:05 (UTC) every day
 
   tags = {
     Name        = "${var.project_name}-${var.env}-daily-task-schedule"
