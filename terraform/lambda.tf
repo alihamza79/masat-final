@@ -4,11 +4,13 @@
 variable "api_url" {
   description = "The URL of the API endpoint"
   type        = string
+  default     = "https://masat-dev.shiftcrowd.eu"  # Matches Lambda env variable
 }
 
 variable "recurring_expenses_api_key" {
   description = "API key for recurring expenses authentication"
   type        = string
+  default     = ""  
   sensitive   = true
 }
 
