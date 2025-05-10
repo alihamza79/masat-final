@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useIntegrations, INTEGRATION_SYNC_QUERY_KEY } from '@/lib/hooks/useIntegrations';
 import { useIntegrationSync } from '@/lib/hooks/useIntegrationSync';
 import { useQuery } from '@tanstack/react-query';
-import useAuth from '@/lib/hooks/useAuth';
+import { useSession } from 'next-auth/react';
 
 interface GlobalDataProviderProps {
   children: React.ReactNode;
@@ -12,8 +12,10 @@ interface GlobalDataProviderProps {
 const SYNC_CHECK_INTERVAL = 60 * 1000;
 
 export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children }) => {
-  // Get authentication state
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  // Replace useAuth with useSession
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  const loading = status === 'loading';
   
   // Only use these hooks if authenticated
   const {

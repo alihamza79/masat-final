@@ -23,7 +23,7 @@ export const Profile = () => {
       try {
         const response = await axios.get('/api/user/profile');
         if (response.data.success) {
-          console.log('Profile sidebar - Fresh user data:', response.data.data.user);
+          // console.log('Profile sidebar - Fresh user data:', response.data.data.user);
           setUserData(response.data.data.user);
           
           // Update session with fresh data - removed to prevent loops
@@ -42,10 +42,10 @@ export const Profile = () => {
   const sessionData = data as any; // Cast to any to avoid TypeScript errors
   const session = sessionData?.session?.user ? sessionData.session : sessionData;
 
-  console.log("Sidebar Profile - Session data:", data);
-  console.log("Sidebar Profile - Extracted session:", session);
-  console.log("Sidebar Profile - Fresh userData:", userData);
-  console.log("Sidebar Profile - Status:", status);
+  // console.log("Sidebar Profile - Session data:", data);
+  // console.log("Sidebar Profile - Extracted session:", session);
+  // console.log("Sidebar Profile - Fresh userData:", userData);
+  // console.log("Sidebar Profile - Status:", status);
 
   // Prefer the fresh userData over session data when available
   const userImage = userData?.image || session?.user?.image || null;
@@ -53,7 +53,7 @@ export const Profile = () => {
   const userEmail = userData?.email || session?.user?.email || "user@example.com";
   
   // Log the image source for debugging
-  console.log("Sidebar Profile - Using image source:", userImage);
+  // console.log("Sidebar Profile - Using image source:", userImage);
 
   // Format the image URL correctly - if it's an S3 path, use the image API
   const formattedUserImage = userImage ? 
@@ -62,7 +62,7 @@ export const Profile = () => {
       `/api/image?path=${encodeURIComponent(userImage)}`) 
     : null;
     
-  console.log("Sidebar Profile - Formatted image URL:", formattedUserImage);
+  // console.log("Sidebar Profile - Formatted image URL:", formattedUserImage);
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/auth/auth1/login' });

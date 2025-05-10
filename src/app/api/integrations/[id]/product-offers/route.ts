@@ -196,10 +196,11 @@ export async function GET(
         }
         
         // If we've exhausted retries or it's not a timeout error, return error
+        const errMsg = error.response?.data?.error || error.message || `Error fetching page ${page}`;
         return NextResponse.json(
           { 
             success: false, 
-            error: error.message || `Error fetching page ${page}` 
+            error: errMsg
           },
           { status: 500 }
         );

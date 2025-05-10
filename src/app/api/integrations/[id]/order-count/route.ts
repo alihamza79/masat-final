@@ -69,11 +69,9 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('Error fetching order count:', error);
+    const errMsg = error.response?.data?.error || error.message || 'An unexpected error occurred';
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'An unexpected error occurred' 
-      },
+      { success: false, error: errMsg },
       { status: 500 }
     );
   }

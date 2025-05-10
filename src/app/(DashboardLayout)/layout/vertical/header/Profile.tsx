@@ -35,7 +35,7 @@ const Profile = () => {
       try {
         const response = await axios.get('/api/user/profile');
         if (response.data.success) {
-          console.log('Header Profile - Fresh user data:', response.data.data.user);
+          // console.log('Header Profile - Fresh user data:', response.data.data.user);
           setUserData(response.data.data.user);
         }
       } catch (error) {
@@ -82,12 +82,12 @@ const Profile = () => {
     : null;
   
   // Add logging for debugging
-  useEffect(() => {
-    console.log('Header Profile - Session data:', data);
-    console.log('Header Profile - Fresh userData:', userData);
-    console.log('Header Profile - Using image:', userImage);
-    console.log('Header Profile - Formatted image URL:', formattedUserImage);
-  }, [data, userData, userImage, formattedUserImage]);
+  // useEffect(() => {
+  //   console.log('Header Profile - Session data:', data);
+  //   console.log('Header Profile - Fresh userData:', userData);
+  //   console.log('Header Profile - Using image:', userImage);
+  //   console.log('Header Profile - Formatted image URL:', formattedUserImage);
+  // }, [data, userData, userImage, formattedUserImage]);
   
   // Get first letter of email for avatar if no image is available
   const getAvatarContent = () => {

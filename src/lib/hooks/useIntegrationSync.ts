@@ -520,12 +520,13 @@ export const useIntegrationSync = () => {
           
           // Set the timestamp at the moment of success
           lastOrdersImport = new Date();
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error importing orders for integration ${integrationId}:`, error);
+          const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
           await updateIntegrationStatus(
             integrationId, 
             'error', 
-            `Error importing orders: ${error instanceof Error ? error.message : String(error)}`
+            `Error importing orders: ${errMsg}`
           );
           return;
         }
