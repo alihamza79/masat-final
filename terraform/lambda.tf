@@ -62,7 +62,7 @@ resource "aws_lambda_function" "daily_task" {
 
   environment {
     variables = {
-      ENV                       = var.ENV
+      ENV                       = var.env
       API_URL                   = var. API_URL
       RECURRING_EXPENSES_API_KEY = var.RECURRING_EXPENSES_API_KEY
     }
