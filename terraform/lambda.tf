@@ -1,16 +1,16 @@
 # Environment Variables
 
 
-variable "API_URL" {
+variable "api_url" {
   description = "The URL of the API endpoint"
   type        = string
-  default     = "https://masat-dev.shiftcrowd.eu"  # Matches Lambda env variable
+  default     = "https://masat-dev.shiftcrowd.eu"
 }
 
-variable "RECURRING_EXPENSES_API_KEY" {
+variable "recurring_expenses_api_key" {
   description = "API key for recurring expenses authentication"
   type        = string
-  default     = ""  
+  default     = "masat_rec_live"
   sensitive   = true
 }
 
@@ -63,8 +63,8 @@ resource "aws_lambda_function" "daily_task" {
   environment {
     variables = {
       ENV                       = var.env
-      API_URL                   = var. API_URL
-      RECURRING_EXPENSES_API_KEY = var.RECURRING_EXPENSES_API_KEY
+      API_URL                   = var.api_url
+      RECURRING_EXPENSES_API_KEY = var.recurring_expenses_api_key
     }
   }
 
