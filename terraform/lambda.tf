@@ -1,5 +1,6 @@
 # Environment Variables
 
+
 variable "api_url" {
   description = "The URL of the API endpoint"
   type        = string
