@@ -1,13 +1,13 @@
 # Environment Variables
 
 
-variable "api_url" {
+variable "API_URL" {
   description = "The URL of the API endpoint"
   type        = string
   default     = "https://masat-dev.shiftcrowd.eu"  # Matches Lambda env variable
 }
 
-variable "recurring_expenses_api_key" {
+variable "RECURRING_EXPENSES_API_KEY" {
   description = "API key for recurring expenses authentication"
   type        = string
   default     = ""  
