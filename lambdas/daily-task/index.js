@@ -6,12 +6,23 @@
 const axios = require('axios');
 const { isSameDay } = require('date-fns');
 
+const API_URL = process.env.API_URL;
+const API_KEY = process.env.RECURRING_EXPENSES_API_KEY;
+
+// Validate required environment variables
+if (!API_URL) {
+  throw new Error('API_URL environment variable is required');
+}
+if (!API_KEY) {
+  throw new Error('RECURRING_EXPENSES_API_KEY environment variable is required');
+}
+
 // Configure axios with base URL and API key
 const api = axios.create({
-  baseURL: 'https://masat-dev.shiftcrowd.eu',
+  baseURL: API_URL,
   timeout: 10000,
   headers: {
-    'x-api-key': process.env.RECURRING_EXPENSES_API_KEY || 'masat-recurring-test-key-123456'
+    'x-api-key': API_KEY
   }
 });
 

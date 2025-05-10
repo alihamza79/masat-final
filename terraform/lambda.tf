@@ -1,3 +1,9 @@
+variable "recurring_expenses_api_key" {
+  description = "API key for recurring expenses authentication"
+  type        = string
+  sensitive   = true
+}
+
 # IAM role for the Lambda function
 resource "aws_iam_role" "lambda_daily_task" {
   name = "${var.project_name}-${var.env}-lambda-daily-task-role"
@@ -46,9 +52,9 @@ resource "aws_lambda_function" "daily_task" {
 
   environment {
     variables = {
-      ENV = var.env
-      API_URL = "https://masat-dev.shiftcrowd.eu"
-      RECURRING_EXPENSES_API_KEY = "masat-recurring-test-key-123456"
+      ENV                       = var.env
+      API_URL                   = var.api_url
+      RECURRING_EXPENSES_API_KEY = var.recurring_expenses_api_key
     }
   }
 

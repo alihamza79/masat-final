@@ -6,9 +6,12 @@ import { Types } from 'mongoose';
 // API key validation middleware
 const validateApiKey = (request: NextRequest) => {
   const apiKey = request.headers.get('x-api-key');
+  const validApiKey = process.env.RECURRING_EXPENSES_API_KEY;
   
-  // Hardcoded test API key - will be replaced with environment variable later
-  const validApiKey = "masat-recurring-test-key-123456";
+  if (!validApiKey) {
+    console.error('RECURRING_EXPENSES_API_KEY environment variable is not set');
+    return false;
+  }
   
   if (!apiKey || apiKey !== validApiKey) {
     return false;
