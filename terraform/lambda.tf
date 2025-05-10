@@ -1,14 +1,3 @@
-variable "api_url" {
-  description = "The URL of the API endpoint"
-  type        = string
-}
-
-variable "recurring_expenses_api_key" {
-  description = "API key for recurring expenses authentication"
-  type        = string
-  sensitive   = true
-}
-
 # IAM role for the Lambda function
 resource "aws_iam_role" "lambda_daily_task" {
   name = "${var.project_name}-${var.env}-lambda-daily-task-role"
