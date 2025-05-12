@@ -63,8 +63,7 @@ const ExpenseDialog = ({
   const { products, isLoading: productsLoading } = useProducts();
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    
+    if (!searchQuery.trim()) return products;
     const query = searchQuery.toLowerCase().trim();
     return products.filter((product: any) => {
       return (

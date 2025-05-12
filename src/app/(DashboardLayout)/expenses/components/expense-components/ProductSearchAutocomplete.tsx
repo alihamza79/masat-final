@@ -9,7 +9,10 @@ import {
   Box,
   Avatar
 } from '@mui/material';
-import { IconSearch } from '@tabler/icons-react';
+import { 
+  IconSearch,
+  IconPackage
+} from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 
@@ -35,18 +38,60 @@ const ProductSearchAutocomplete = ({
   const { t } = useTranslation();
   const theme = useTheme();
 
+  // Function to get image URL from product object
+  const getImageUrl = (product: any) => {
+    // Direct image property
+    if (product.image) {
+      return product.image;
+    }
+    
+    // Array of images
+    if (product.images && product.images.length > 0 && product.images[0].url) {
+      return product.images[0].url;
+    }
+    
+    // API mainImage property
+    if (product.mainImage) {
+      return product.mainImage;
+    }
+    
+    // No image found
+    return null;
+  };
+
   const renderOption = (props: any, option: any, { inputValue }: { inputValue: string }) => {
     const parts = option.name.split(new RegExp(`(${inputValue})`, 'gi'));
+    const imageUrl = getImageUrl(option);
     
     return (
       <li {...props}>
         <Box display="flex" alignItems="center" gap={1}>
-          {option.mainImage && (
+          {imageUrl ? (
             <Avatar 
-              src={option.mainImage} 
+              src={imageUrl} 
               alt={option.name} 
-              sx={{ width: 40, height: 40 }}
+              sx={{ 
+                width: 40, 
+                height: 40, 
+                borderRadius: 1,
+                '& img': { objectFit: 'cover' }
+              }}
             />
+          ) : (
+            <Avatar 
+              sx={{ 
+                width: 40, 
+                height: 40, 
+                borderRadius: 1,
+                bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme.palette.text.secondary
+              }}
+            >
+              <IconPackage size={20} />
+            </Avatar>
           )}
           <Box>
             <Typography>
