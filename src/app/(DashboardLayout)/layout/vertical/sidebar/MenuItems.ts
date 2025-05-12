@@ -35,12 +35,7 @@ import {
 
 const Menuitems: MenuitemsType[] = [
   
-  {
-    id: uniqueId(),
-    title: "menu.myAccount",
-    icon: IconUser,
-    href: "/account-settings",
-  },
+  
   {
     id: uniqueId(),
     title: "menu.dashboard",

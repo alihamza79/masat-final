@@ -17,8 +17,10 @@ import { IconMail } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import Image from 'next/image';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const Profile = () => {
+  const { t } = useTranslation();
   const { data, update: updateSession } = useSession();
   const [anchorEl2, setAnchorEl2] = useState(null);
   const hasTriedUpdate = useRef(false);
@@ -117,6 +119,28 @@ const Profile = () => {
     }
   };
 
+  // Modified profile data with translations and correct paths
+  const profileItems = [
+    {
+      title: t('profile.myAccount'),
+      subtitle: t('profile.accountSettings'),
+      href: '/account-settings',
+      icon: dropdownData.profile[0].icon
+    },
+    {
+      title: t('profile.integrations'),
+      subtitle: t('profile.emagIntegrations'),
+      href: dropdownData.profile[1].href,
+      icon: dropdownData.profile[1].icon
+    },
+    {
+      title: t('profile.subscriptions'),
+      subtitle: t('profile.paymentsAndSubscriptions'),
+      href: dropdownData.profile[2].href,
+      icon: dropdownData.profile[2].icon
+    }
+  ];
+
   return (
     <Box>
       <IconButton
@@ -151,7 +175,7 @@ const Profile = () => {
           },
         }}
       >
-        <Typography variant="h5">User Profile</Typography>
+        <Typography variant="h5">{t('profile.userProfile')}</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
           {formattedUserImage ? (
             <Avatar 
@@ -192,10 +216,10 @@ const Profile = () => {
           </Box>
         </Stack>
         <Divider />
-        {dropdownData.profile.map((profile) => (
+        {profileItems.map((profile) => (
           <Box key={profile.title}>
             <Box sx={{ py: 2, px: 0 }} className="hover-text-primary">
-              <Link href={profile.href}>
+              <Link href={profile.href} onClick={handleClose2}>
                 <Stack direction="row" spacing={2}>
                   <Box
                     width="45px"
@@ -249,18 +273,17 @@ const Profile = () => {
             <Box display="flex" justifyContent="space-between">
               <Box>
                 <Typography variant="h5" mb={2}>
-                  Unlimited <br />
-                  Access
+                  {t('profile.unlimitedAccess')}
                 </Typography>
-                <Button variant="contained" color="primary">
-                  Upgrade
+                <Button variant="contained" color="primary" onClick={handleClose2}>
+                  {t('profile.upgrade')}
                 </Button>
               </Box>
               <Image src={"/images/backgrounds/unlimited-bg.png"} width={150} height={183} style={{ height: 'auto', width: 'auto' }} alt="unlimited" className="signup-bg" />
             </Box>
           </Box>
-          <Button onClick={handleLogout} variant="outlined" color="primary" fullWidth>
-            Logout
+          <Button onClick={() => { handleClose2(); handleLogout(); }} variant="outlined" color="primary" fullWidth>
+            {t('profile.logout')}
           </Button>
         </Box>
       </Menu>

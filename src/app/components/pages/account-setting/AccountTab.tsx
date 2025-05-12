@@ -29,6 +29,9 @@ import { Stack } from '@mui/system';
 // country codes
 const countryCodes = ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'RO', 'BG'];
 
+// Tax rate options
+const taxRateOptions = [1, 3, 16];
+
 // Define props interface
 interface AccountTabProps {
   userData: any;
@@ -535,16 +538,22 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                 >
                   {t('accountSettings.account.taxRate')}
                 </CustomFormLabel>
-                <CustomTextField
+                <CustomSelect
                   id="tax-rate"
                   name="taxRate"
-                  value={companyData.taxRate}
+                  value={companyData.taxRate || ''}
                   onChange={handleCompanyDataChange}
                   variant="outlined"
                   fullWidth
-                  type="number"
                   disabled={loading}
-                />
+                >
+                  <MenuItem value="">{t('accountSettings.account.selectTaxRate')}</MenuItem>
+                  {taxRateOptions.map((rate) => (
+                    <MenuItem key={rate} value={rate}>
+                      {rate}%
+                    </MenuItem>
+                  ))}
+                </CustomSelect>
               </Grid>
               
               <Grid item xs={12} sm={6}>

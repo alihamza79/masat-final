@@ -248,7 +248,7 @@ const SimpleDistributionChart: React.FC<SimpleDistributionChartProps> = ({
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('allTime');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('last30days');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);

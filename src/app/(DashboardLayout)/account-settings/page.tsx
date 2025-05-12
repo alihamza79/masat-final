@@ -4,7 +4,7 @@ import PageContainer from '@/app/components/container/PageContainer';
 import { Alert, Box, CardContent, CircularProgress, Divider, Grid, Tab, Tabs, Typography } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Import our custom hook
@@ -14,7 +14,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import AccountTab from '@/app/components/pages/account-setting/AccountTab';
 import SecurityTab from '@/app/components/pages/account-setting/SecurityTab';
 import BlankCard from '@/app/components/shared/BlankCard';
-import { IconArticle, IconLock, IconUserCircle } from '@tabler/icons-react';
+import { IconLock, IconUserCircle } from '@tabler/icons-react';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -71,6 +71,16 @@ const AccountSetting = () => {
     refreshUserProfile 
   } = useUserProfile();
 
+  // Determine if security tab should be shown (only for users with credentials linked)
+  const canChangePassword = userData?.credentialsLinked === true;
+
+  // Reset tab selection if security tab is hidden and user was on it
+  useEffect(() => {
+    if (!canChangePassword && value === 1) {
+      setValue(0);
+    }
+  }, [canChangePassword, value]);
+
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
@@ -97,29 +107,29 @@ const AccountSetting = () => {
 
   return (
     <PageContainer title={t('accountSettings.title')} description={t('accountSettings.pageDescription')}>
-<Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Box 
-              display="flex" 
-              alignItems="center" 
-              justifyContent="space-between" 
-              mb={3}
-              flexDirection={{ xs: 'column', sm: 'row' }}
-              gap={2}
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Box 
+            display="flex" 
+            alignItems="center" 
+            justifyContent="space-between" 
+            mb={3}
+            flexDirection={{ xs: 'column', sm: 'row' }}
+            gap={2}
+          >
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
+                textAlign: { xs: 'center', sm: 'left' },
+                width: '100%'
+              }}
             >
-              <Typography 
-                variant="h2" 
-                sx={{ 
-                  fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
-                  textAlign: { xs: 'center', sm: 'left' },
-                  width: '100%'
-                }}
-              >
-                {t('accountSettings.title')}
-              </Typography>
-            </Box>
-          </Grid>
+              {t('accountSettings.title')}
+            </Typography>
+          </Box>
         </Grid>
+      </Grid>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <BlankCard>
@@ -137,19 +147,14 @@ const AccountSetting = () => {
                   {...a11yProps(0)}
                 />
 
-                <Tab
-                  iconPosition="start"
-                  icon={<IconLock size="22" />}
-                  label={t('accountSettings.tabNames.security')}
-                  {...a11yProps(1)}
-                />
-
-                <Tab
-                  iconPosition="start"
-                  icon={<IconArticle size="22" />}
-                  label={t('accountSettings.tabNames.bills')}
-                  {...a11yProps(2)}
-                />
+                {canChangePassword && (
+                  <Tab
+                    iconPosition="start"
+                    icon={<IconLock size="22" />}
+                    label={t('accountSettings.tabNames.security')}
+                    {...a11yProps(1)}
+                  />
+                )}
               </Tabs>
             </Box>
             <Divider />
@@ -173,11 +178,12 @@ const AccountSetting = () => {
                       sessionUpdate={update}
                     />
                   </TabPanel>
-                  <TabPanel value={value} index={1}>
-                    <SecurityTab userData={userData} />
-                  </TabPanel>
-                  <TabPanel value={value} index={2}>
-                  </TabPanel>
+                  
+                  {canChangePassword && (
+                    <TabPanel value={value} index={1}>
+                      <SecurityTab userData={userData} />
+                    </TabPanel>
+                  )}
                 </>
               )}
             </CardContent>

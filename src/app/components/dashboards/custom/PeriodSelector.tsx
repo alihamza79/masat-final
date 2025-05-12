@@ -23,6 +23,7 @@ import {
 } from '@tabler/icons-react';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { enGB } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 export type PeriodType = 
@@ -99,8 +100,18 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   
   const handleDateDialogSubmit = () => {
     if (tempStartDate && tempEndDate) {
-      const startString = tempStartDate.toISOString().split('T')[0];
-      const endString = tempEndDate.toISOString().split('T')[0];
+      // Fix timezone issue by using explicit date components instead of ISO string
+      const formatToLocalDateString = (date: Date) => {
+        const year = date.getFullYear();
+        // Month is 0-indexed, so add 1 and pad with leading zero if needed
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
+      const startString = formatToLocalDateString(tempStartDate);
+      const endString = formatToLocalDateString(tempEndDate);
+      
       onPeriodChange('custom', startString, endString);
     }
     setOpenDateDialog(false);
@@ -109,8 +120,17 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   // Format date for display
   const getSelectedPeriodText = () => {
     if (selectedPeriod === 'custom' && customStartDate && customEndDate) {
-      const start = new Date(customStartDate).toLocaleDateString();
-      const end = new Date(customEndDate).toLocaleDateString();
+      // Format dates as day/month/year
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+      
+      const start = formatDate(customStartDate);
+      const end = formatDate(customEndDate);
       return `${start} - ${end}`;
     }
     
@@ -122,17 +142,38 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
     <Dialog open={openDateDialog} onClose={handleDateDialogClose}>
       <DialogTitle>{t('dashboard.period.selectDateRange')}</DialogTitle>
       <DialogContent>
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <LocalizationProvider dateAdapter={AdapterDateFns} locale={enGB}>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <DatePicker
               label={t('dashboard.period.startDate')}
               value={tempStartDate}
               onChange={(newValue: Date | null) => setTempStartDate(newValue)}
+              inputFormat="dd/MM/yyyy"
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   variant="outlined"
+                  placeholder="DD/MM/YYYY"
+                  sx={{ 
+                    '& .MuiInputBase-input': { 
+                      height: '1.4em',
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      display: 'flex',
+                      alignItems: 'center'
+                    }
+                  }}
+                  InputProps={{
+                    ...params.InputProps,
+                    style: { 
+                      height: '45px',
+                      lineHeight: '45px'
+                    }
+                  }}
                 />
               )}
             />
@@ -141,11 +182,32 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               value={tempEndDate}
               onChange={(newValue: Date | null) => setTempEndDate(newValue)}
               minDate={tempStartDate || undefined}
+              inputFormat="dd/MM/yyyy"
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   variant="outlined"
+                  placeholder="DD/MM/YYYY"
+                  sx={{ 
+                    '& .MuiInputBase-input': { 
+                      height: '1.4em',
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      display: 'flex',
+                      alignItems: 'center'
+                    }
+                  }}
+                  InputProps={{
+                    ...params.InputProps,
+                    style: { 
+                      height: '45px',
+                      lineHeight: '45px'
+                    }
+                  }}
                 />
               )}
             />

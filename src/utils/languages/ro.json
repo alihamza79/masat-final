@@ -40,6 +40,18 @@
         "reports": "Rapoarte",
         "expenses": "Cheltuieli"
     },
+    "profile": {
+        "userProfile": "Profil Utilizator",
+        "myAccount": "Contul Meu",
+        "accountSettings": "Setări Cont",
+        "integrations": "Integrări",
+        "emagIntegrations": "Integrări eMAG",
+        "subscriptions": "Abonamente",
+        "paymentsAndSubscriptions": "Plăți și Abonamente",
+        "unlimitedAccess": "Acces Nelimitat",
+        "upgrade": "Actualizare",
+        "logout": "Deconectare"
+    },
     "dashboard": {
         "title": "Panou de Control Vânzări",
         "pageDescription": "Panou de Control Vânzător eMAG",
@@ -575,6 +587,7 @@
             "country": "Țară",
             "selectCountry": "Selectează Țara",
             "taxRate": "Cotă de Impozitare (%)",
+            "selectTaxRate": "Selectează Cota de Impozitare",
             "isVatPayer": "Plătitor de TVA",
             "saveChanges": "Salvează Modificările",
             "saveSuccess": "Profilul a fost actualizat cu succes",

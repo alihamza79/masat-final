@@ -18,7 +18,7 @@ import {
   Skeleton
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import { IconSearch, IconCurrencyDollar, IconPercentage, IconInfoCircle } from '@tabler/icons-react';
+import { IconSearch, IconCurrencyDollar, IconPercentage, IconInfoCircle, IconPhoto } from '@tabler/icons-react';
 import DashboardCard from '../../shared/DashboardCard';
 import { useTranslation } from 'react-i18next';
 
@@ -128,6 +128,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
   const [commissionsLoading, setCommissionsLoading] = useState<Record<string, boolean>>({});
   const [productCommissions, setProductCommissions] = useState<Record<string, number>>({});
   const requestedProductsRef = useRef<Set<string>>(new Set());
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
 
   if (isLoading) {
     return <ProductTableSkeleton />;
@@ -217,6 +218,10 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
     }).format(value) + ' RON';
   };
 
+  const handleImageError = (productId: string) => {
+    setImgErrors(prev => ({ ...prev, [productId]: true }));
+  };
+
   return (
     <DashboardCard 
       title={t('dashboard.products.title')}
@@ -276,6 +281,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                     const productId = product.emagProductOfferId?.toString() || '';
                     const isLoadingCommission = commissionsLoading[productId];
                     const commission = productCommissions[productId];
+                    const hasImageError = imgErrors[product.id];
                     return (
                       <TableRow key={product.id} hover>
                         <TableCell>
@@ -286,11 +292,12 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                               gap: 2
                             }}
                           >
-                            {product.image && (
+                            {product.image && !hasImageError ? (
                               <Box 
                                 component="img"
                                 src={product.image}
                                 alt={product.name}
+                                onError={() => handleImageError(product.id)}
                                 sx={{
                                   width: 40,
                                   height: 40,
@@ -301,6 +308,23 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                                   bgcolor: 'background.paper'
                                 }}
                               />
+                            ) : (
+                              <Box 
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 1,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  bgcolor: 'background.paper',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'text.secondary'
+                                }}
+                              >
+                                <IconPhoto size={20} />
+                              </Box>
                             )}
                             <Box>
                               <Typography variant="body2" noWrap sx={{ maxWidth: { xs: 150, sm: 300 } }}>

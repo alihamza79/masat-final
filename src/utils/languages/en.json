@@ -40,6 +40,18 @@
         "reports": "Reports",
         "expenses": "Expenses"
     },
+    "profile": {
+        "userProfile": "User Profile",
+        "myAccount": "My Account",
+        "accountSettings": "Account Settings",
+        "integrations": "Integrations",
+        "emagIntegrations": "eMAG Integrations",
+        "subscriptions": "Subscriptions",
+        "paymentsAndSubscriptions": "Payments & Subscriptions",
+        "unlimitedAccess": "Unlimited Access",
+        "upgrade": "Upgrade",
+        "logout": "Logout"
+    },
     "dashboard": {
         "title": "Sales Dashboard",
         "pageDescription": "eMAG Seller Dashboard",
@@ -575,6 +587,7 @@
             "country": "Country",
             "selectCountry": "Select Country",
             "taxRate": "Tax Rate (%)",
+            "selectTaxRate": "Select Tax Rate",
             "isVatPayer": "VAT Payer",
             "saveChanges": "Save Changes",
             "saveSuccess": "Profile updated successfully",
