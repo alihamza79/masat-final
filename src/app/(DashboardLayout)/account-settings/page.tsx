@@ -107,29 +107,29 @@ const AccountSetting = () => {
 
   return (
     <PageContainer title={t('accountSettings.title')} description={t('accountSettings.pageDescription')}>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Box 
-            display="flex" 
-            alignItems="center" 
-            justifyContent="space-between" 
-            mb={3}
-            flexDirection={{ xs: 'column', sm: 'row' }}
-            gap={2}
-          >
-            <Typography 
-              variant="h2" 
-              sx={{ 
-                fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
-                textAlign: { xs: 'center', sm: 'left' },
-                width: '100%'
-              }}
+<Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box 
+              display="flex" 
+              alignItems="center" 
+              justifyContent="space-between" 
+              mb={3}
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
             >
-              {t('accountSettings.title')}
-            </Typography>
-          </Box>
+              <Typography 
+                variant="h2" 
+                sx={{ 
+                  fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
+                  textAlign: { xs: 'center', sm: 'left' },
+                  width: '100%'
+                }}
+              >
+                {t('accountSettings.title')}
+              </Typography>
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <BlankCard>
@@ -148,12 +148,12 @@ const AccountSetting = () => {
                 />
 
                 {canChangePassword && (
-                  <Tab
-                    iconPosition="start"
-                    icon={<IconLock size="22" />}
-                    label={t('accountSettings.tabNames.security')}
-                    {...a11yProps(1)}
-                  />
+                <Tab
+                  iconPosition="start"
+                  icon={<IconLock size="22" />}
+                  label={t('accountSettings.tabNames.security')}
+                  {...a11yProps(1)}
+                />
                 )}
               </Tabs>
             </Box>
@@ -180,9 +180,9 @@ const AccountSetting = () => {
                   </TabPanel>
                   
                   {canChangePassword && (
-                    <TabPanel value={value} index={1}>
-                      <SecurityTab userData={userData} />
-                    </TabPanel>
+                  <TabPanel value={value} index={1}>
+                    <SecurityTab userData={userData} />
+                  </TabPanel>
                   )}
                 </>
               )}
