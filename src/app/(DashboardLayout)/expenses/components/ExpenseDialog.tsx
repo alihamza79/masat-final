@@ -29,6 +29,7 @@ interface ExpenseDialogProps {
   expense?: Expense | null;
   onSave: (expense: Omit<Expense, '_id'> | Expense) => void;
   isSaving: boolean;
+  initialType?: ExpenseType;
 }
 
 const ExpenseDialog = ({ 
@@ -37,13 +38,14 @@ const ExpenseDialog = ({
   mode, 
   expense,
   onSave,
-  isSaving
+  isSaving,
+  initialType
 }: ExpenseDialogProps) => {
   const { t } = useTranslation();
   // Validation error state
   const [errors, setErrors] = useState<Record<string,string>>({});
 
-  const [type, setType] = useState<ExpenseType>('one-time');
+  const [type, setType] = useState<ExpenseType>(initialType ? initialType : 'one-time');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState<Date | null>(new Date());
@@ -78,7 +80,7 @@ const ExpenseDialog = ({
     if (!open) {
       // Small timeout to allow animation to complete
       const timer = setTimeout(() => {
-        setType('one-time');
+        setType(initialType ? initialType : 'one-time');
         setDescription('');
         setAmount('');
         setDate(new Date());
@@ -91,7 +93,7 @@ const ExpenseDialog = ({
       
       return () => clearTimeout(timer);
     }
-  }, [open]);
+  }, [open, initialType]);
 
   // Populate form when editing an existing expense
   useEffect(() => {

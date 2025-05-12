@@ -167,6 +167,7 @@ const ExpensesList = () => {
           expense={selectedExpense}
           onSave={handleSaveExpense}
           isSaving={isCreating || isUpdating}
+          initialType={selectedType === 'all' ? 'one-time' : selectedType}
         />
 
         {/* Delete confirmation dialog */}
