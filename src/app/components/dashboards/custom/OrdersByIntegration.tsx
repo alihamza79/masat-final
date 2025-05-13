@@ -221,6 +221,7 @@ const OrdersByIntegration: React.FC<OrdersByIntegrationProps> = ({
               width: '100%'
             }}>
               <Chart
+                key={`orders-by-integration-${JSON.stringify(orderCounts)}`}
                 options={chartOptions}
                 series={orderCounts}
                 type="pie"

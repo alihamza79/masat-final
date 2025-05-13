@@ -298,6 +298,7 @@ const EnhancedDistributionChart: React.FC<EnhancedDistributionChartProps> = ({
               }
             }}>
               <Chart
+                key={`enhanced-distribution-${JSON.stringify(values)}`}
                 options={chartOptions}
                 series={values}
                 type="donut"
