@@ -158,20 +158,43 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                   sx={{ 
                     '& .MuiInputBase-input': { 
                       height: '1.4em',
-                      padding: '10px 14px',
+                      padding: '8px 14px',
                       display: 'flex',
                       alignItems: 'center'
                     },
                     '& .MuiOutlinedInput-root': {
                       display: 'flex',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      height: '45px'
+                    },
+                    '& .MuiInputLabel-root': {
+                      lineHeight: '1.4375em',
+                      transform: 'translate(14px, 12px) scale(1)'
+                    },
+                    '& .MuiInputLabel-shrink': {
+                      transform: 'translate(14px, -9px) scale(0.75)'
+                    },
+                    '& .MuiInputAdornment-root': {
+                      height: '100%',
+                      maxHeight: '45px',
+                      margin: 0,
+                      '& .MuiButtonBase-root': {
+                        height: '100%',
+                        padding: '0 5px',
+                        borderRadius: '50%',
+                        aspectRatio: '1/1',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minWidth: 'unset',
+                        width: '36px'
+                      }
                     }
                   }}
                   InputProps={{
                     ...params.InputProps,
                     style: { 
-                      height: '45px',
-                      lineHeight: '45px'
+                      height: '45px'
                     }
                   }}
                 />
@@ -192,20 +215,43 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                   sx={{ 
                     '& .MuiInputBase-input': { 
                       height: '1.4em',
-                      padding: '10px 14px',
+                      padding: '8px 14px',
                       display: 'flex',
                       alignItems: 'center'
                     },
                     '& .MuiOutlinedInput-root': {
                       display: 'flex',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      height: '45px'
+                    },
+                    '& .MuiInputLabel-root': {
+                      lineHeight: '1.4375em',
+                      transform: 'translate(14px, 12px) scale(1)'
+                    },
+                    '& .MuiInputLabel-shrink': {
+                      transform: 'translate(14px, -9px) scale(0.75)'
+                    },
+                    '& .MuiInputAdornment-root': {
+                      height: '100%',
+                      maxHeight: '45px',
+                      margin: 0,
+                      '& .MuiButtonBase-root': {
+                        height: '100%',
+                        padding: '0 5px',
+                        borderRadius: '50%',
+                        aspectRatio: '1/1',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minWidth: 'unset',
+                        width: '36px'
+                      }
                     }
                   }}
                   InputProps={{
                     ...params.InputProps,
                     style: { 
-                      height: '45px',
-                      lineHeight: '45px'
+                      height: '45px'
                     }
                   }}
                 />

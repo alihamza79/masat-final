@@ -693,9 +693,14 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                                     justifyContent: 'space-between',
                                     width: '100%'
                                   }}>
-                                    <Typography sx={{ fontSize: '1.2rem' }}>
-                                      {country.flag}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <Typography sx={{ fontSize: '1.2rem' }}>
+                                        {country.flag}
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 500, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {country.name}
+                                      </Typography>
+                                    </Box>
                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                       +{country.dialCode}
                                     </Typography>

@@ -14,7 +14,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import AccountTab from '@/app/components/pages/account-setting/AccountTab';
 import SecurityTab from '@/app/components/pages/account-setting/SecurityTab';
 import BlankCard from '@/app/components/shared/BlankCard';
-import { IconLock, IconUserCircle } from '@tabler/icons-react';
+import { IconLock, IconUserCircle, IconReceipt } from '@tabler/icons-react';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -155,6 +155,13 @@ const AccountSetting = () => {
                   {...a11yProps(1)}
                 />
                 )}
+
+                <Tab
+                  iconPosition="start"
+                  icon={<IconReceipt size="22" />}
+                  label={t('accountSettings.tabNames.bills')}
+                  {...a11yProps(canChangePassword ? 2 : 1)}
+                />
               </Tabs>
             </Box>
             <Divider />
@@ -184,6 +191,17 @@ const AccountSetting = () => {
                     <SecurityTab userData={userData} />
                   </TabPanel>
                   )}
+                  
+                  <TabPanel value={value} index={canChangePassword ? 2 : 1}>
+                    <Box py={4} display="flex" flexDirection="column" alignItems="center">
+                      <Typography variant="h4" mb={2}>
+                        {t('accountSettings.bills.noInvoicesTitle', 'No invoices yet')}
+                      </Typography>
+                      <Typography variant="body1" color="textSecondary" align="center" maxWidth={450}>
+                        {t('accountSettings.bills.noInvoicesDescription', 'Your billing information and invoice history will appear here once available.')}
+                      </Typography>
+                    </Box>
+                  </TabPanel>
                 </>
               )}
             </CardContent>
