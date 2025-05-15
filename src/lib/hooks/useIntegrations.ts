@@ -72,8 +72,16 @@ export const useIntegrations = (options?: { enabled?: boolean }) => {
             
             // Now that integrations list is updated, trigger the sync check
             console.log(`Integration list updated. Triggering sync check for ${integrationId}...`);
-            await queryClient.invalidateQueries({ queryKey: [INTEGRATION_SYNC_QUERY_KEY] });
-            await queryClient.refetchQueries({ queryKey: [INTEGRATION_SYNC_QUERY_KEY] });
+            
+            // Directly trigger a sync for the new integration
+            if (syncIntegrationById) {
+              console.log(`Directly syncing new integration ${integrationId}...`);
+              await syncIntegrationById(integrationId);
+            } else {
+              // Fallback to the previous method if syncIntegrationById is not available
+              await queryClient.invalidateQueries({ queryKey: [INTEGRATION_SYNC_QUERY_KEY] });
+              await queryClient.refetchQueries({ queryKey: [INTEGRATION_SYNC_QUERY_KEY] });
+            }
           } catch (error) {
             console.error('Error in background sync process:', error);
           }

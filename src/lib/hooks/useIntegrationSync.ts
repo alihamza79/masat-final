@@ -658,9 +658,20 @@ export const useIntegrationSync = () => {
       }
       
       const integration = response.data.integration;
+      console.log(`Fetched integration details:`, integration.accountName);
+      
+      // For a new integration, always sync both orders and product offers
+      const isNewSync = !integration.lastOrdersImport && !integration.lastProductOffersImport;
+      if (isNewSync) {
+        console.log(`This appears to be a new integration. Syncing both orders and product offers.`);
+      }
       
       // Determine what needs to be synced based on last import times
-      const syncInfo = shouldSyncIntegration(integration);
+      // For new integrations, override the sync determination to always sync both
+      const syncInfo = isNewSync ? 
+        { shouldSync: true, syncOrders: true, syncProductOffers: true } : 
+        shouldSyncIntegration(integration);
+        
       const syncOrders = syncInfo.syncOrders !== undefined ? syncInfo.syncOrders : true;
       const syncProductOffers = syncInfo.syncProductOffers !== undefined ? syncInfo.syncProductOffers : true;
       
