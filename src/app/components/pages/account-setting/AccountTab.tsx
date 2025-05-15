@@ -10,9 +10,21 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
-import { IconAlertCircle } from '@tabler/icons-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { IconAlertCircle, IconSearch, IconChevronDown } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
+import { 
+  InputAdornment, 
+  Select, 
+  Paper, 
+  ClickAwayListener, 
+  Popper, 
+  TextField,
+  ListItemIcon,
+  InputBase
+} from '@mui/material';
+import { allCountries, CountryData } from 'country-telephone-data';
 
 // components
 import CustomFormLabel from '../../forms/theme-elements/CustomFormLabel';
@@ -26,11 +38,28 @@ import { useSession } from 'next-auth/react';
 // images
 import { Stack } from '@mui/system';
 
-// country codes
-const countryCodes = ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'RO', 'BG'];
-
 // Tax rate options
 const taxRateOptions = [1, 3, 16];
+
+// Define our extended country data type
+interface ExtendedCountryData extends CountryData {
+  flag: string;
+}
+
+// Country data preparation
+const countryData = allCountries.map((country: CountryData): ExtendedCountryData => ({
+  ...country,
+  flag: getFlagEmoji(country.iso2)
+}));
+
+// Function to get flag emoji from country code
+function getFlagEmoji(countryCode: string) {
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 // Define props interface
 interface AccountTabProps {
@@ -43,12 +72,7 @@ interface AccountTabProps {
 const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData, onDataUpdate, sessionUpdate }: AccountTabProps) => {
   const { data: session } = useSession();
   const { t } = useTranslation();
-  
-  // Get translated country names
-  const countries = countryCodes.map(code => ({
-    value: code,
-    label: t(`accountSettings.account.countries.${code}`)
-  }));
+  const theme = useTheme();
   
   // User and company state - initialized from props
   const [userData, setUserData] = useState({
@@ -69,7 +93,59 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
     isVatPayer: initialCompanyData?.isVatPayer || false
   });
   
-  const [phoneNumber, setPhoneNumber] = useState(initialUserData?.phone || '');
+  // Initialize phone number from existing data
+  // Phone format needs to be without '+' for the phone input component
+  const [phoneNumber, setPhoneNumber] = useState(
+    initialUserData?.phone ? initialUserData.phone.replace(/^\+/, '') : ''
+  );
+  
+  // State for country code and phone number parts
+  const [selectedCountry, setSelectedCountry] = useState<ExtendedCountryData>(
+    countryData.find((c) => c.iso2 === 'us') || countryData[0]
+  );
+  const [phoneNumberWithoutCode, setPhoneNumberWithoutCode] = useState('');
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const phoneInputRef = useRef<HTMLDivElement>(null);
+  
+  // Filtered countries based on search
+  const filteredCountries = countryData.filter((country: CountryData) => 
+    country.name.toLowerCase().includes(countrySearch.toLowerCase()) || 
+    country.dialCode.includes(countrySearch) ||
+    country.iso2.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+  
+  // Parse phone number on initial load and when it changes externally
+  useEffect(() => {
+    if (initialUserData?.phone) {
+      const phoneWithoutPlus = initialUserData.phone.replace(/^\+/, '');
+      
+      // Find the country by comparing the prefix
+      let foundCountry: ExtendedCountryData = countryData.find((c) => c.iso2 === 'us') || countryData[0]; // Default to US if no match
+      let foundPhoneNumber = phoneWithoutPlus;
+      
+      // Try to match the phone number to a country code
+      for (const country of countryData) {
+        if (phoneWithoutPlus.startsWith(country.dialCode)) {
+          foundCountry = country;
+          foundPhoneNumber = phoneWithoutPlus.substring(country.dialCode.length);
+          break;
+        }
+      }
+      
+      setSelectedCountry(foundCountry);
+      setPhoneNumberWithoutCode(foundPhoneNumber);
+    }
+  }, [initialUserData?.phone]);
+  
+  // Combine country code and phone number for saving
+  useEffect(() => {
+    if (selectedCountry && phoneNumberWithoutCode) {
+      setPhoneNumber(selectedCountry.dialCode + phoneNumberWithoutCode);
+    } else {
+      setPhoneNumber('');
+    }
+  }, [selectedCountry, phoneNumberWithoutCode]);
   
   // UI state
   const [loading, setLoading] = useState(false);
@@ -123,16 +199,6 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       });
     }
   }, [initialUserData, initialCompanyData]);
-  
-  // Update the phone number in userData when it changes
-  useEffect(() => {
-    if (phoneNumber !== userData.phone) {
-      setUserData(prev => ({
-        ...prev,
-        phone: phoneNumber
-      }));
-    }
-  }, [phoneNumber]);
   
   // Handle profile image change
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,6 +264,13 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
     setCompanyData(prev => ({ ...prev, country: event.target.value as string }));
   };
   
+  // Fix type issue in setSelectedCountry
+  const handleCountrySelect = (country: ExtendedCountryData) => {
+    setSelectedCountry(country);
+    setIsCountryDropdownOpen(false);
+    setCountrySearch('');
+  };
+  
   // Save profile and company data
   const handleSaveProfile = async () => {
     try {
@@ -208,7 +281,7 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
       // Prepare form data
       const updateData: any = {
         name: userData.name,
-        phone: userData.phone
+        phone: phoneNumber ? `+${phoneNumber}` : ''
       };
       
       // Check if user is trying to set tax settings without company details
@@ -441,24 +514,212 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                     >
                       {t('accountSettings.account.phone')}
                     </CustomFormLabel>
-                    <CustomTextField
-                      id="phone"
-                      name="phone"
-                      value={phoneNumber}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        // Only allow numeric input
-                        const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                        setPhoneNumber(numericValue);
+                    <Box
+                      ref={phoneInputRef}
+                      sx={{
+                        display: 'flex',
+                        width: '100%',
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        bgcolor: loading ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
+                        transition: 'all 0.2s',
+                        height: 37, // Exact height to match other inputs
+                        '&:hover': {
+                          borderColor: loading ? theme.palette.divider : theme.palette.text.primary,
+                        },
+                        '&:focus-within': {
+                          borderColor: theme.palette.primary.main,
+                          boxShadow: `0 0 0 1px ${theme.palette.primary.main}`
+                        }
                       }}
-                      variant="outlined"
-                      fullWidth
-                      disabled={loading}
-                      type="tel"
-                      inputProps={{
-                        inputMode: 'numeric',
-                        pattern: '[0-9]*'
-                      }}
-                    />
+                    >
+                      {/* Country code selector */}
+                      <Box
+                        onClick={() => !loading && setIsCountryDropdownOpen(true)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 8px 6px 12px', // Adjusted padding for proper alignment
+                          cursor: loading ? 'default' : 'pointer',
+                          position: 'relative',
+                          minWidth: '80px',
+                          height: '100%',
+                          '&:hover': {
+                            bgcolor: loading ? 'transparent' : 'rgba(0, 0, 0, 0.04)'
+                          },
+                          '&:after': {
+                            content: '""',
+                            position: 'absolute',
+                            right: 0,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            height: '60%',
+                            width: '1px',
+                            backgroundColor: theme.palette.divider
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
+                          <Typography sx={{ fontSize: '1rem' }}>
+                            {selectedCountry.flag}
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            +{selectedCountry.dialCode}
+                          </Typography>
+                        </Box>
+                        <IconChevronDown 
+                          size={16} 
+                          color={theme.palette.text.secondary} 
+                          style={{ opacity: loading ? 0.5 : 1 }}
+                        />
+                      </Box>
+
+                      {/* Phone number input */}
+                      <CustomTextField
+                        id="phone"
+                        value={phoneNumberWithoutCode}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          // Allow only numbers
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setPhoneNumberWithoutCode(value);
+                        }}
+                        disabled={loading}
+                        placeholder={t('accountSettings.account.phonePlaceholder')}
+                        inputProps={{
+                          inputMode: 'numeric',
+                          pattern: '[0-9]*',
+                          style: { height: '27px', padding: '6px 8px' } // Adjust height to match container
+                        }}
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: 'none'
+                          },
+                          '& .MuiInputBase-root': {
+                            height: '100%',
+                            fontSize: '0.875rem'
+                          },
+                          '& .MuiOutlinedInput-root': {
+                            paddingLeft: 1,
+                            height: '100%',
+                            paddingTop: 0,
+                            paddingBottom: 0
+                          }
+                        }}
+                      />
+                    </Box>
+
+                    {/* Country dropdown menu */}
+                    <Popper
+                      open={isCountryDropdownOpen}
+                      anchorEl={phoneInputRef.current}
+                      placement="bottom-start"
+                      disablePortal={false}
+                      modifiers={[
+                        {
+                          name: 'preventOverflow',
+                          enabled: true,
+                          options: {
+                            altAxis: true,
+                            altBoundary: true,
+                            boundary: 'clippingParents',
+                            rootBoundary: 'viewport',
+                          },
+                        },
+                        {
+                          name: 'flip',
+                          enabled: false,
+                        },
+                        {
+                          name: 'offset',
+                          options: {
+                            offset: [0, 2],
+                          },
+                        }
+                      ]}
+                      style={{ zIndex: 1300, width: phoneInputRef.current?.offsetWidth || 'auto', maxWidth: '250px' }}
+                    >
+                      <ClickAwayListener onClickAway={() => {
+                        setIsCountryDropdownOpen(false);
+                        setCountrySearch('');
+                      }}>
+                        <Paper elevation={4} sx={{ maxHeight: 350, overflow: 'auto' }}>
+                          <Box sx={{ p: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1 }}>
+                            <TextField
+                              autoFocus
+                              placeholder={t('accountSettings.account.searchCountry')}
+                              fullWidth
+                              variant="outlined"
+                              size="small"
+                              value={countrySearch}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <IconSearch size={18} />
+                                  </InputAdornment>
+                                ),
+                              }}
+                              onChange={(e) => {
+                                setCountrySearch(e.target.value);
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{ maxHeight: 280, overflow: 'auto' }}>
+                            {filteredCountries.length > 0 ? (
+                              filteredCountries.map((country: ExtendedCountryData) => (
+                                <MenuItem
+                                  key={country.iso2}
+                                  onClick={() => {
+                                    handleCountrySelect(country);
+                                  }}
+                                  sx={{ 
+                                    py: 0.75,
+                                    px: 2,
+                                    borderBottom: `1px solid ${theme.palette.divider}`,
+                                    '&:last-child': {
+                                      borderBottom: 'none'
+                                    },
+                                    height: 'auto',
+                                    minHeight: '36px',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'space-between',
+                                    width: '100%'
+                                  }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <Typography sx={{ fontSize: '1.2rem' }}>
+                                        {country.flag}
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 500, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {country.name}
+                                      </Typography>
+                                    </Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                      +{country.dialCode}
+                                    </Typography>
+                                  </Box>
+                                </MenuItem>
+                              ))
+                            ) : (
+                              <Box sx={{ p: 2, textAlign: 'center' }}>
+                                <Typography variant="body2" color="textSecondary">
+                                  {t('accountSettings.account.countryNotFound')}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        </Paper>
+                      </ClickAwayListener>
+                    </Popper>
+
+                    
                   </Grid>
                 </Grid>
               </Grid>
@@ -634,9 +895,9 @@ const AccountTab = ({ userData: initialUserData, companyData: initialCompanyData
                   error={fieldErrors.country}
                 >
                   <MenuItem value="">{t('accountSettings.account.selectCountry')}</MenuItem>
-                  {countries.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
+                  {countryData.map((option: CountryData) => (
+                    <MenuItem key={option.iso2} value={option.iso2}>
+                      {option.name}
                     </MenuItem>
                   ))}
                 </CustomSelect>
