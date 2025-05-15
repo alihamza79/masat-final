@@ -1,26 +1,25 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
+  Chip,
+  CircularProgress,
+  InputAdornment,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
   TablePagination,
-  Typography,
-  Paper,
+  TableRow,
   TextField,
-  InputAdornment,
-  CircularProgress,
-  Chip,
   Tooltip,
-  Skeleton
+  Typography
 } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
-import { IconSearch, IconCurrencyDollar, IconPercentage, IconInfoCircle, IconPhoto } from '@tabler/icons-react';
-import DashboardCard from '../../shared/DashboardCard';
+import { useTheme } from '@mui/material/styles';
+import { IconInfoCircle, IconPhoto, IconSearch } from '@tabler/icons-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import DashboardCard from '../../shared/DashboardCard';
 
 // Define types for our product data
 interface ProductPerformanceData {
@@ -331,7 +330,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                                 {product.name}
                               </Typography>
                               <Typography variant="caption" color="textSecondary">
-                                {product.part_number_key}
+                                <Box component="span" sx={{ fontWeight: 'bold' }}>PNK:</Box> {product.part_number_key} |   <Box component="span" sx={{ fontWeight: 'bold' }}>SKU:</Box> {product.part_number}
                               </Typography>
                             </Box>
                           </Box>

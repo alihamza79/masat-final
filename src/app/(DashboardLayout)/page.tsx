@@ -1,42 +1,40 @@
 "use client";
 import PageContainer from "@/app/components/container/PageContainer";
 import { useIntegrations } from "@/lib/hooks/useIntegrations";
-import { Alert, Box, CircularProgress, Grid, Stack, Typography } from "@mui/material";
+import { Alert, Box, Grid, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   IconCash,
+  IconCoin,
   IconCreditCard,
   IconHome,
-  IconPercentage,
   IconRefresh,
   IconReportMoney,
   IconShoppingCart,
   IconTimeline,
-  IconTruckDelivery,
-  IconCoin
+  IconTruckDelivery
 } from "@tabler/icons-react";
+import { useQuery } from '@tanstack/react-query';
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from "react-i18next";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Custom components
+import DashboardSkeleton from "@/app/components/dashboards/custom/DashboardSkeleton";
 import EnhancedDistributionChart from "@/app/components/dashboards/custom/EnhancedDistributionChart";
 import IntegrationFilter from "@/app/components/dashboards/custom/IntegrationFilter";
 import OrdersByIntegration from "@/app/components/dashboards/custom/OrdersByIntegration";
 import PeriodSelector, { PeriodType } from "@/app/components/dashboards/custom/PeriodSelector";
-import ProductOffersTable from "@/app/components/dashboards/custom/ProductOffersTable";
 import ProductPerformanceChart from "@/app/components/dashboards/custom/ProductPerformanceChart";
-import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
-import SimplifiedStatsCard, { SimplifiedStatsCardSkeleton } from "@/app/components/dashboards/custom/SimplifiedStatsCard";
-import DashboardCard from "@/app/components/shared/DashboardCard";
 import ProductTable from "@/app/components/dashboards/custom/ProductTable";
-import DashboardSkeleton from "@/app/components/dashboards/custom/DashboardSkeleton";
+import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
+import SimplifiedStatsCard from "@/app/components/dashboards/custom/SimplifiedStatsCard";
+import DashboardCard from "@/app/components/shared/DashboardCard";
 
 // Services and utilities
 import { calculateDateRange, formatDateForAPI } from "@/app/components/dashboards/custom/dateUtils";
-import dashboardService, { DashboardData, DASHBOARD_QUERY_KEY } from "@/lib/services/dashboardService";
+import dashboardService, { DASHBOARD_QUERY_KEY } from "@/lib/services/dashboardService";
 
 // Create simple chart components that don't use DashboardCard wrapper
 interface DistributionData {
