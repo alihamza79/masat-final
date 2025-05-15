@@ -133,6 +133,7 @@ const RegularExpenseFields = ({
             <DatePicker
               label={t('expenses.dialog.date')}
               value={date}
+              inputFormat="dd/MM/yyyy"
               onChange={(newDate) => {
                 if (newDate) {
                   const dt = newDate as Date;

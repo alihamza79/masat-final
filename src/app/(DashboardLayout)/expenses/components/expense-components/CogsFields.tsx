@@ -54,6 +54,7 @@ const CogsFields = ({
           <DatePicker
             label={t('expenses.dialog.purchaseDate')}
             value={date}
+            inputFormat="dd/MM/yyyy"
             onChange={(newDate) => {
               if (newDate) {
                 const dt = newDate as Date;

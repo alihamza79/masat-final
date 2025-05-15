@@ -20,7 +20,7 @@ const ExpenseRow = ({ expense, isMobile, isDeleting, onMenuOpen }: ExpenseRowPro
   // Format date in a readable format
   const formatDate = (dateString: string | Date) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy');
+      return format(new Date(dateString), 'dd/MM/yyyy');
     } catch (error) {
       return t('expenses.list.invalidDate');
     }
