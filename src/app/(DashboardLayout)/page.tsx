@@ -1,7 +1,7 @@
 "use client";
 import PageContainer from "@/app/components/container/PageContainer";
 import { useIntegrations } from "@/lib/hooks/useIntegrations";
-import { Alert, Box, Grid, Stack, Typography } from "@mui/material";
+import { Alert, Box, Grid, Stack, Typography, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   IconCash,
@@ -12,7 +12,8 @@ import {
   IconReportMoney,
   IconShoppingCart,
   IconTimeline,
-  IconTruckDelivery
+  IconTruckDelivery,
+  IconGitMerge
 } from "@tabler/icons-react";
 import { useQuery } from '@tanstack/react-query';
 import dynamic from "next/dynamic";
@@ -448,7 +449,20 @@ export default function Dashboard() {
         
         {/* No integrations created yet - only show after ALL loading is complete */}
         {!isLoadingIntegrations && !isLoading && integrations && integrations.length === 0 && (
-          <Alert severity="info" sx={{ mb: 3 }}>
+          <Alert 
+            severity="info" 
+            sx={{ mb: 3 }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                href="/integrations"
+                startIcon={<IconGitMerge size={16} />}
+              >
+                {t('dashboard.goToIntegrations')}
+              </Button>
+            }
+          >
             {t('dashboard.noIntegrationsCreated')}
           </Alert>
         )}
@@ -461,17 +475,30 @@ export default function Dashboard() {
           // Empty state when no integrations selected
           <Box sx={{ 
             display: 'flex', 
+            flexDirection: 'column',
             justifyContent: 'center', 
             alignItems: 'center', 
             p: 5, 
             backgroundColor: 'background.paper',
-            borderRadius: 1
+            borderRadius: 1,
+            gap: 3
           }}>
             <Typography variant="h6" color="textSecondary">
               {integrations && integrations.length > 0 
                 ? t('dashboard.selectToView')
                 : t('dashboard.createToView')}
             </Typography>
+            
+            {(!integrations || integrations.length === 0) && (
+              <Button 
+                variant="contained" 
+                color="primary"
+                href="/integrations"
+                startIcon={<IconGitMerge size={18} />}
+              >
+                {t('dashboard.goToIntegrations', 'Go to Integrations')}
+              </Button>
+            )}
           </Box>
         ) : (
           // Show dashboard when data is loaded

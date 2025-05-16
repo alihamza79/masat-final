@@ -53,12 +53,13 @@
         "logout": "Deconectare"
     },
     "dashboard": {
-        "title": "Panou de Control Vânzări",
-        "pageDescription": "Panou de Control Vânzător eMAG",
-        "noIntegrationsSelected": "Nicio integrare selectată. Vă rugăm să selectați cel puțin o integrare pentru a vizualiza datele panoului de control.",
-        "noIntegrationsCreated": "Nu aveți integrări configurate încă. Vă rugăm să creați o integrare pentru a vizualiza datele panoului de control.",
+        "title": "Tablou de bord vânzări",
+        "pageDescription": "Tablou de bord pentru vânzători eMAG",
+        "noIntegrationsSelected": "Nicio integrare selectată. Vă rugăm să selectați cel puțin o integrare pentru a vizualiza datele dvs. de tablou de bord.",
+        "noIntegrationsCreated": "Nu aveți nicio integrare configurată încă. Vă rugăm să creați o integrare pentru a vedea datele dvs. de tablou de bord.",
         "selectToView": "Selectați cel puțin o integrare pentru a vizualiza datele",
         "createToView": "Creați o integrare pentru a vizualiza datele",
+        "goToIntegrations": "Mergeți la Integrări",
         "stats": {
             "totalOrders": "Total Comenzi",
             "grossRevenue": "Venit Brut",

@@ -59,6 +59,7 @@
         "noIntegrationsCreated": "You don't have any integrations set up yet. Please create an integration to see your dashboard data.",
         "selectToView": "Select at least one integration to view dashboard data",
         "createToView": "Create an integration to view dashboard data",
+        "goToIntegrations": "Go to Integrations",
         "stats": {
             "totalOrders": "Total Orders",
             "grossRevenue": "Gross Revenue",
