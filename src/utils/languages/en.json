@@ -309,6 +309,7 @@
             "price": "RON",
             "noSavedCalculations": "No saved calculations found. Save a calculation to see it here.",
             "searchProducts": "Search products...",
+            "searchProductsPlaceholder": "Search product by name, SKU or PNK",
             "searchSavedCalculations": "Search saved calculations...",
             "productsFound": "products found",
             "calculationsFound": "calculations found",

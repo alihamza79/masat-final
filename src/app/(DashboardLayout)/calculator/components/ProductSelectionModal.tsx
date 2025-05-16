@@ -325,7 +325,10 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
           originalData: product,
           // Store raw IDs to help with matching
           rawProductId: productId,
-          rawIntegrationId: integrationIdStr
+          rawIntegrationId: integrationIdStr,
+          // Store part number and part number key for searching
+          part_number: product.part_number || '',
+          part_number_key: product.part_number_key || ''
         };
       }).filter(Boolean); // Remove null entries
       
@@ -386,7 +389,13 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
       const filtered = emagProducts.filter(product => 
         product.name.toLowerCase().includes(query) || 
         product.brand.toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query)
+        product.category.toLowerCase().includes(query) ||
+        // Add search by part_number and part_number_key
+        (product.part_number && product.part_number.toLowerCase().includes(query)) ||
+        (product.part_number_key && product.part_number_key.toLowerCase().includes(query)) ||
+        // Also check in originalData in case they're not extracted to the top level
+        (product.originalData?.part_number && product.originalData.part_number.toLowerCase().includes(query)) ||
+        (product.originalData?.part_number_key && product.originalData.part_number_key.toLowerCase().includes(query))
       );
       setFilteredEmagProducts(filtered);
     }
@@ -552,6 +561,45 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                 height: '100%',
                 objectFit: 'cover'
               }}
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                // If image fails to load, show a generic image icon instead
+                e.currentTarget.style.display = 'none';
+                
+                // Find parent and add icon
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  // Create icon container if it doesn't exist
+                  let iconContainer = parent.querySelector('.product-icon-fallback') as HTMLElement;
+                  
+                  if (!iconContainer) {
+                    iconContainer = document.createElement('div');
+                    iconContainer.className = 'product-icon-fallback';
+                    iconContainer.style.position = 'absolute';
+                    iconContainer.style.top = '0';
+                    iconContainer.style.left = '0';
+                    iconContainer.style.width = '100%';
+                    iconContainer.style.height = '100%';
+                    iconContainer.style.display = 'flex';
+                    iconContainer.style.alignItems = 'center';
+                    iconContainer.style.justifyContent = 'center';
+                    iconContainer.style.backgroundColor = theme.palette.mode === 'dark' ? '#2a3441' : '#f5f5f5';
+                    
+                    // Create icon element with a generic image icon
+                    const iconEl = document.createElement('div');
+                    iconEl.style.opacity = '0.7';
+                    iconEl.style.color = theme.palette.mode === 'dark' ? '#90a4ae' : '#607d8b';
+                    
+                    // Generic image icon
+                    iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="32" height="32" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M15 8h.01"></path><path d="M4 4m0 3a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3z"></path><path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path><path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path></svg>';
+                    
+                    iconContainer.appendChild(iconEl);
+                    parent.appendChild(iconContainer);
+                  } else {
+                    // Show the existing fallback
+                    iconContainer.style.display = 'flex';
+                  }
+                }
+              }}
             />
           ) : (
             <Box
@@ -563,36 +611,23 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                 height: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                backgroundColor: theme.palette.mode === 'dark' ? '#2a3441' : '#f5f5f5'
               }}
             >
               <Typography 
+                className="fallback-icon"
                 variant="h3" 
-                color="text.secondary"
-                sx={{ opacity: 0.7 }}
+                color={theme.palette.mode === 'dark' ? '#90a4ae' : '#607d8b'}
+                sx={{ opacity: 0.7, display: 'block' }}
               >
-                {(() => {
-                  // Select appropriate icon based on product category or brand
-                  const category = product.category?.toLowerCase() || '';
-                  const name = product.name?.toLowerCase() || '';
-                  
-                  if (product.brand === 'Apple' || name.includes('iphone') || name.includes('macbook') || name.includes('ipad')) {
-                    return <IconBrandApple size={32} />;
-                  } else if (category.includes('laptop') || name.includes('laptop')) {
-                    return <IconDeviceLaptop size={32} />;
-                  } else if (category.includes('audio') || name.includes('headphone') || name.includes('airpod') || name.includes('headset')) {
-                    return <IconHeadphones size={32} />;
-                  } else if (category.includes('smartphone') || category.includes('phone') || name.includes('phone')) {
-                    return <IconDeviceMobile size={32} />;
-                  } else if (category.includes('monitor') || category.includes('display') || name.includes('monitor')) {
-                    return <IconDeviceDesktop size={32} />;
-                  } else if (category.includes('clothing') || category.includes('apparel') || name.includes('shirt') || name.includes('clothing')) {
-                    return <IconShirt size={32} />;
-                  } else {
-                    // Default icon for other products
-                    return <IconPackage size={32} />;
-                  }
-                })()}
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M15 8h.01"></path>
+                  <path d="M4 4m0 3a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3z"></path>
+                  <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                  <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                </svg>
               </Typography>
             </Box>
           )}
@@ -1119,7 +1154,7 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               <TextField
                 fullWidth
                 size="small"
-                placeholder={t('calculator.productSelection.searchProducts')}
+                placeholder={t('calculator.productSelection.searchProductsPlaceholder')}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 InputProps={{

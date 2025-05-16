@@ -309,6 +309,7 @@
             "price": "RON",
             "noSavedCalculations": "Nu s-au găsit calcule salvate. Salvați un calcul pentru a-l vedea aici.",
             "searchProducts": "Caută produse...",
+            "searchProductsPlaceholder": "Caută produse după nume, SKU sau PNK",
             "searchSavedCalculations": "Caută calcule salvate...",
             "productsFound": "produse găsite",
             "calculationsFound": "calcule găsite",
