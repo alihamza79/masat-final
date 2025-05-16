@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   Box,
   Button,
@@ -47,6 +47,133 @@ interface PeriodSelectorProps {
   onPeriodChange: (period: PeriodType, startDate?: string, endDate?: string) => void;
 }
 
+// Memoized date picker component
+const MemoizedDatePicker = memo(({ 
+  label, 
+  value, 
+  onChange, 
+  renderInput, 
+  minDate,
+  inputFormat 
+}: any) => {
+  return (
+    <DatePicker
+      label={label}
+      value={value}
+      onChange={onChange}
+      inputFormat={inputFormat || "dd/MM/yyyy"}
+      minDate={minDate}
+      renderInput={renderInput}
+    />
+  );
+});
+
+// Custom Date Dialog Component
+const CustomDateDialog = memo(({
+  open,
+  onClose,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  onSubmit,
+  datePickerSx,
+  inputProps,
+  translations
+}: {
+  open: boolean;
+  onClose: () => void;
+  startDate: Date | null;
+  endDate: Date | null;
+  onStartDateChange: (date: Date | null) => void;
+  onEndDateChange: (date: Date | null) => void;
+  onSubmit: () => void;
+  datePickerSx: any;
+  inputProps: any;
+  translations: {
+    selectDateRange: string;
+    startDate: string;
+    endDate: string;
+    cancel: string;
+    apply: string;
+  };
+}) => {
+  // Memoize the render input functions
+  const renderStartDateInput = useCallback((params: any) => (
+    <TextField
+      {...params}
+      fullWidth
+      variant="outlined"
+      placeholder="DD/MM/YYYY"
+      sx={datePickerSx}
+      InputProps={{
+        ...params.InputProps,
+        ...inputProps
+      }}
+    />
+  ), [datePickerSx, inputProps]);
+
+  const renderEndDateInput = useCallback((params: any) => (
+    <TextField
+      {...params}
+      fullWidth
+      variant="outlined"
+      placeholder="DD/MM/YYYY"
+      sx={datePickerSx}
+      InputProps={{
+        ...params.InputProps,
+        ...inputProps
+      }}
+    />
+  ), [datePickerSx, inputProps]);
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      sx={{ 
+        '& .MuiDialog-paper': {
+          width: 'auto',
+          minWidth: '300px'
+        }
+      }}
+    >
+      <DialogTitle>{translations.selectDateRange}</DialogTitle>
+      <DialogContent>
+        <LocalizationProvider dateAdapter={AdapterDateFns} locale={enGB}>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <MemoizedDatePicker
+              label={translations.startDate}
+              value={startDate}
+              onChange={onStartDateChange}
+              inputFormat="dd/MM/yyyy"
+              renderInput={renderStartDateInput}
+            />
+            <MemoizedDatePicker
+              label={translations.endDate}
+              value={endDate}
+              onChange={onEndDateChange}
+              minDate={startDate || undefined}
+              inputFormat="dd/MM/yyyy"
+              renderInput={renderEndDateInput}
+            />
+          </Stack>
+        </LocalizationProvider>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>{translations.cancel}</Button>
+        <Button 
+          onClick={onSubmit} 
+          variant="contained" 
+          disabled={!startDate || !endDate}
+        >
+          {translations.apply}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+});
+
 const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   selectedPeriod,
   customStartDate,
@@ -94,11 +221,11 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
     }
   };
   
-  const handleDateDialogClose = () => {
+  const handleDateDialogClose = useCallback(() => {
     setOpenDateDialog(false);
-  };
+  }, []);
   
-  const handleDateDialogSubmit = () => {
+  const handleDateDialogSubmit = useCallback(() => {
     if (tempStartDate && tempEndDate) {
       // Fix timezone issue by using explicit date components instead of ISO string
       const formatToLocalDateString = (date: Date) => {
@@ -115,10 +242,10 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
       onPeriodChange('custom', startString, endString);
     }
     setOpenDateDialog(false);
-  };
+  }, [tempStartDate, tempEndDate, onPeriodChange]);
   
   // Format date for display
-  const getSelectedPeriodText = () => {
+  const getSelectedPeriodText = useCallback(() => {
     if (selectedPeriod === 'custom' && customStartDate && customEndDate) {
       // Format dates as day/month/year
       const formatDate = (dateString: string) => {
@@ -135,143 +262,95 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
     }
     
     return periodLabels[selectedPeriod] || t('dashboard.period.select');
-  };
+  }, [selectedPeriod, customStartDate, customEndDate, periodLabels, t]);
+
+  // Memoize the date picker style to prevent recalculation on each render
+  const datePickerSx = useMemo(() => ({
+    '& .MuiInputBase-input': { 
+      height: '1.4em',
+      padding: '8px 14px',
+      display: 'flex',
+      alignItems: 'center'
+    },
+    '& .MuiOutlinedInput-root': {
+      display: 'flex',
+      alignItems: 'center',
+      height: '45px'
+    },
+    '& .MuiInputLabel-root': {
+      lineHeight: '1.4375em',
+      transform: 'translate(14px, 12px) scale(1)'
+    },
+    '& .MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)'
+    },
+    '& .MuiInputAdornment-root': {
+      height: '100%',
+      maxHeight: '45px',
+      margin: 0,
+      '& .MuiButtonBase-root': {
+        height: '100%',
+        padding: '0 5px',
+        borderRadius: '50%',
+        aspectRatio: '1/1',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 'unset',
+        width: '36px'
+      }
+    }
+  }), []);
+
+  // Memoize input props to prevent recreating on each render
+  const inputProps = useMemo(() => ({
+    style: { height: '45px' }
+  }), []);
+
+  // Stabilize the date change handlers with useCallback
+  const handleStartDateChange = useCallback((newValue: Date | null) => {
+    setTempStartDate(newValue);
+  }, []);
+
+  const handleEndDateChange = useCallback((newValue: Date | null) => {
+    setTempEndDate(newValue);
+  }, []);
   
-  // Custom Dialog for date selection
-  const CustomDateDialog = () => (
-    <Dialog open={openDateDialog} onClose={handleDateDialogClose}>
-      <DialogTitle>{t('dashboard.period.selectDateRange')}</DialogTitle>
-      <DialogContent>
-        <LocalizationProvider dateAdapter={AdapterDateFns} locale={enGB}>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <DatePicker
-              label={t('dashboard.period.startDate')}
-              value={tempStartDate}
-              onChange={(newValue: Date | null) => setTempStartDate(newValue)}
-              inputFormat="dd/MM/yyyy"
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  fullWidth
-                  variant="outlined"
-                  placeholder="DD/MM/YYYY"
-                  sx={{ 
-                    '& .MuiInputBase-input': { 
-                      height: '1.4em',
-                      padding: '8px 14px',
-                      display: 'flex',
-                      alignItems: 'center'
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      display: 'flex',
-                      alignItems: 'center',
-                      height: '45px'
-                    },
-                    '& .MuiInputLabel-root': {
-                      lineHeight: '1.4375em',
-                      transform: 'translate(14px, 12px) scale(1)'
-                    },
-                    '& .MuiInputLabel-shrink': {
-                      transform: 'translate(14px, -9px) scale(0.75)'
-                    },
-                    '& .MuiInputAdornment-root': {
-                      height: '100%',
-                      maxHeight: '45px',
-                      margin: 0,
-                      '& .MuiButtonBase-root': {
-                        height: '100%',
-                        padding: '0 5px',
-                        borderRadius: '50%',
-                        aspectRatio: '1/1',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        minWidth: 'unset',
-                        width: '36px'
-                      }
-                    }
-                  }}
-                  InputProps={{
-                    ...params.InputProps,
-                    style: { 
-                      height: '45px'
-                    }
-                  }}
-                />
-              )}
-            />
-            <DatePicker
-              label={t('dashboard.period.endDate')}
-              value={tempEndDate}
-              onChange={(newValue: Date | null) => setTempEndDate(newValue)}
-              minDate={tempStartDate || undefined}
-              inputFormat="dd/MM/yyyy"
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  fullWidth
-                  variant="outlined"
-                  placeholder="DD/MM/YYYY"
-                  sx={{ 
-                    '& .MuiInputBase-input': { 
-                      height: '1.4em',
-                      padding: '8px 14px',
-                      display: 'flex',
-                      alignItems: 'center'
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      display: 'flex',
-                      alignItems: 'center',
-                      height: '45px'
-                    },
-                    '& .MuiInputLabel-root': {
-                      lineHeight: '1.4375em',
-                      transform: 'translate(14px, 12px) scale(1)'
-                    },
-                    '& .MuiInputLabel-shrink': {
-                      transform: 'translate(14px, -9px) scale(0.75)'
-                    },
-                    '& .MuiInputAdornment-root': {
-                      height: '100%',
-                      maxHeight: '45px',
-                      margin: 0,
-                      '& .MuiButtonBase-root': {
-                        height: '100%',
-                        padding: '0 5px',
-                        borderRadius: '50%',
-                        aspectRatio: '1/1',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        minWidth: 'unset',
-                        width: '36px'
-                      }
-                    }
-                  }}
-                  InputProps={{
-                    ...params.InputProps,
-                    style: { 
-                      height: '45px'
-                    }
-                  }}
-                />
-              )}
-            />
-          </Stack>
-        </LocalizationProvider>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleDateDialogClose}>{t('dashboard.period.cancel')}</Button>
-        <Button 
-          onClick={handleDateDialogSubmit} 
-          variant="contained" 
-          disabled={!tempStartDate || !tempEndDate}
-        >
-          {t('dashboard.period.apply')}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
+  // Translations for the date dialog
+  const dialogTranslations = useMemo(() => ({
+    selectDateRange: t('dashboard.period.selectDateRange'),
+    startDate: t('dashboard.period.startDate'),
+    endDate: t('dashboard.period.endDate'),
+    cancel: t('dashboard.period.cancel'),
+    apply: t('dashboard.period.apply')
+  }), [t]);
+
+  // Memoized dialog component
+  const dateDialog = useMemo(() => (
+    <CustomDateDialog
+      open={openDateDialog}
+      onClose={handleDateDialogClose}
+      startDate={tempStartDate}
+      endDate={tempEndDate}
+      onStartDateChange={handleStartDateChange}
+      onEndDateChange={handleEndDateChange}
+      onSubmit={handleDateDialogSubmit}
+      datePickerSx={datePickerSx}
+      inputProps={inputProps}
+      translations={dialogTranslations}
+    />
+  ), [
+    openDateDialog, 
+    handleDateDialogClose, 
+    tempStartDate, 
+    tempEndDate, 
+    handleStartDateChange, 
+    handleEndDateChange, 
+    handleDateDialogSubmit,
+    datePickerSx,
+    inputProps,
+    dialogTranslations
+  ]);
 
   return (
     <>
@@ -412,7 +491,7 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         </MenuItem>
       </Menu>
       
-      <CustomDateDialog />
+      {dateDialog}
     </>
   );
 };

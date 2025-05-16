@@ -74,11 +74,20 @@ const AccountSetting = () => {
   // Determine if security tab should be shown (only for users with credentials linked)
   const canChangePassword = userData?.credentialsLinked === true;
 
-  // Reset tab selection if security tab is hidden and user was on it
+  // This useEffect needs to be fixed - it's currently causing the Bills tab to redirect to Account
+  // when the Security tab is hidden
   useEffect(() => {
-    if (!canChangePassword && value === 1) {
-      setValue(0);
-    }
+    // We should only reset the tab if:
+    // 1. The security tab is hidden (canChangePassword is false)
+    // 2. The selected tab index is 1
+    // 3. The previous state included the security tab (which we can't easily check)
+    
+    // For now, we'll disable this redirect completely, as it's causing more problems than it solves
+    // If needed, we can add a more sophisticated solution later
+    
+    // if (!canChangePassword && value === 1) {
+    //   setValue(0);
+    // }
   }, [canChangePassword, value]);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
