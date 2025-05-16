@@ -60,8 +60,29 @@ const ProductSearchAutocomplete = ({
   };
 
   const renderOption = (props: any, option: any, { inputValue }: { inputValue: string }) => {
-    const parts = option.name.split(new RegExp(`(${inputValue})`, 'gi'));
     const imageUrl = getImageUrl(option);
+    
+    // Helper function to highlight matching text
+    const highlightMatch = (text: string, query: string) => {
+      if (!text || !query.trim()) return <span>{text || ''}</span>;
+      
+      const parts = text.split(new RegExp(`(${query})`, 'gi'));
+      return (
+        <>
+          {parts.map((part, i) => (
+            <span 
+              key={i} 
+              style={{
+                fontWeight: part.toLowerCase() === query.toLowerCase() ? 700 : 400,
+                color: part.toLowerCase() === query.toLowerCase() ? theme.palette.primary.main : 'inherit'
+              }}
+            >
+              {part}
+            </span>
+          ))}
+        </>
+      );
+    };
     
     return (
       <li {...props}>
@@ -95,19 +116,16 @@ const ProductSearchAutocomplete = ({
           )}
           <Box>
             <Typography>
-              {parts.map((part: string, index: number) => (
-                <span
-                  key={index}
-                  style={{
-                    fontWeight: part.toLowerCase() === inputValue.toLowerCase() ? 700 : 400,
-                  }}
-                >
-                  {part}
-                </span>
-              ))}
+              {highlightMatch(option.name, inputValue)}
             </Typography>
             <Typography variant="caption" color="textSecondary">
-              {t('expenses.dialog.sku')}: {option.part_number} | {t('expenses.dialog.pnk')}: {option.part_number_key}
+              <span style={{ display: 'inline-block', minWidth: '100px' }}>
+                {t('expenses.dialog.sku')}: {highlightMatch(option.part_number || '-', inputValue)}
+              </span>
+              |
+              <span style={{ display: 'inline-block', marginLeft: '8px' }}>
+                {t('expenses.dialog.pnk')}: {highlightMatch(option.part_number_key || '-', inputValue)}
+              </span>
             </Typography>
           </Box>
         </Box>
@@ -119,7 +137,21 @@ const ProductSearchAutocomplete = ({
     <Autocomplete
       id="product-search-autocomplete"
       options={filteredProducts}
-      getOptionLabel={(option) => option.name}
+      filterOptions={(x) => x}
+      getOptionLabel={(option) => {
+        if (typeof option === 'string') return option;
+        
+        // Create a more descriptive label including SKU and PNK when available
+        let label = option.name || '';
+        
+        // Only add identifiers to label if we're searching
+        if (searchQuery.trim() && (option.part_number || option.part_number_key)) {
+          if (option.part_number) label += ` [${option.part_number}]`;
+          if (option.part_number_key) label += ` (${option.part_number_key})`;
+        }
+        
+        return label;
+      }}
       noOptionsText={
         searchQuery.length > 0 ? t('expenses.dialog.noProductsFound') : t('expenses.dialog.typeToSearch')
       }
