@@ -168,12 +168,74 @@ export async function POST(request: NextRequest) {
     // and include integrationId
     const formattedProductOffers = productOffers.map(offer => {
       const { id, ...offerData } = offer;
+      // Use explicit field mapping to ensure all fields are saved
       return {
-        ...offerData,
+        // Required fields
         integrationId,
-        emagProductOfferId: id
+        emagProductOfferId: id,
+        status: offer.status || 0,
+        sale_price: offer.sale_price || 0,
+        recommended_price: offer.recommended_price || 0,
+        general_stock: offer.general_stock || 0,
+        estimated_stock: offer.estimated_stock || 0,
+        characteristics: offer.characteristics || [],
+        warranty: offer.warranty || 0,
+        
+        // Explicitly mapped fields from the eMAG API
+        attachments: offer.attachments || [],
+        auto_translated: offer.auto_translated || 0,
+        availability: offer.availability || [],
+        barcode: offer.barcode || [],
+        best_offer_recommended_price: offer.best_offer_recommended_price || 0,
+        best_offer_sale_price: offer.best_offer_sale_price || 0,
+        brand: offer.brand || null,
+        brand_name: offer.brand_name || null,
+        buy_button_rank: offer.buy_button_rank || 0,
+        category_id: offer.category_id || 0,
+        commission: offer.commission !== undefined ? offer.commission : null,
+        content_details: offer.content_details || null,
+        currency: offer.currency || null,
+        currency_type: offer.currency_type || null,
+        description: offer.description || null,
+        ean: offer.ean || [],
+        eu_representative: offer.eu_representative || false,
+        family: offer.family || null,
+        genius_eligibility: offer.genius_eligibility || 0,
+        genius_eligibility_type: offer.genius_eligibility_type || 0,
+        handling_time: offer.handling_time || [],
+        has_smart_deals_badge: offer.has_smart_deals_badge || false,
+        id: id, // Store the original ID as well
+        images: offer.images || [],
+        manufacturer: offer.manufacturer || false,
+        max_sale_price: offer.max_sale_price || 0,
+        min_sale_price: offer.min_sale_price || 0,
+        name: offer.name || null,
+        number_of_offers: offer.number_of_offers || 0,
+        offer_details: offer.offer_details || null,
+        offer_price_other_currency: offer.offer_price_other_currency || null,
+        offer_properties: offer.offer_properties || [],
+        offer_validation_status: offer.offer_validation_status || null,
+        ownership: offer.ownership || false,
+        part_number: offer.part_number || null,
+        part_number_key: offer.part_number_key || null,
+        recycleWarranties: offer.recycleWarranties || 0,
+        rrp_guidelines: offer.rrp_guidelines || null,
+        safety_information: offer.safety_information || null,
+        start_date: offer.start_date || [],
+        start_date_other_currency: offer.start_date_other_currency || [],
+        stock: offer.stock || [],
+        translation_validation_status: offer.translation_validation_status || [],
+        url: offer.url || null,
+        validation_status: offer.validation_status || [],
+        vat_id: offer.vat_id || 0,
+        vendor_category_id: offer.vendor_category_id || null
       };
     });
+    
+    // Add debug logging for a sample product offer
+    if (formattedProductOffers.length > 0) {
+      console.log('Sample formatted product offer:', JSON.stringify(formattedProductOffers[0], null, 2));
+    }
     
     // Start a MongoDB session and transaction
     session = await mongoose.startSession();
