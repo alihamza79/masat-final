@@ -139,6 +139,7 @@
             "searchProducts": "Search products...",
             "noProductsFound": "No products matching your search",
             "noProductData": "No product data available",
+            "profitTooltip": "Profit = Revenue - Cost of Goods - eMAG Commission",
             "columns": {
                 "product": "Product",
                 "avgPrice": "Avg. Price",

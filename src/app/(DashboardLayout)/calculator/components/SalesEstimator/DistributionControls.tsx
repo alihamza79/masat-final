@@ -221,7 +221,7 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                     }
                   }}
                   valueLabelDisplay="on"
-                  valueLabelFormat={(value) => `${value}%`}
+                  valueLabelFormat={(value) => `${Math.round(value)}%`}
                   visibleCards={visibleCards}
                 />
               </Box>
@@ -267,7 +267,7 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      ({getDisplayPercentage(type).toFixed(2)}%)
+                      ({Math.round(getDisplayPercentage(type))}%)
                     </Typography>
                   </Box>
                 ))}

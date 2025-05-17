@@ -139,6 +139,7 @@
             "searchProducts": "Caută produse...",
             "noProductsFound": "Nu există produse care să corespundă căutării",
             "noProductData": "Nu există date despre produse",
+            "profitTooltip": "Profit = Venit - Cost Produse - Comision eMAG",
             "columns": {
                 "product": "Produs",
                 "avgPrice": "Preț Mediu",

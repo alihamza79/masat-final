@@ -335,6 +335,7 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
         valueLabelFormat={valueLabelFormat}
         min={0}
         max={100}
+        step={0.1}
         aria-label="Distribution slider"
         marks={false}
         track={isTwoVisibleCalculators ? false : "normal"}

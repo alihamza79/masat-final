@@ -389,16 +389,87 @@ export const useSalesEstimatorCalculations = (
     // Skip if we're loading from context
     if (loadingFromContextRef.current) return;
     
+    // Save the new value for this type
     const newPieces = { ...manualPieces, [type]: value };
-    const total = Object.values(newPieces).reduce((sum, val) => sum + val, 0);
     
-    // Update total pieces
-    setTotalPieces(total);
+    // Don't update the total pieces - keep it the same
+    // We'll redistribute the remaining amount to the other calculators
     
-    // Calculate new percentages for slider
-    if (total > 0) {
-      const nonGeniusPercent = (newPieces['FBM-NonGenius'] / total) * 100;
-      const geniusPercent = (newPieces['FBM-Genius'] / total) * 100;
+    // Get array of visible calculator types
+    const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
+      .filter(([_, isVisible]) => isVisible)
+      .map(([type]) => type);
+    
+    // For a single calculator, just update the total
+    if (visibleTypes.length === 1) {
+      setTotalPieces(value);
+      setManualPieces(newPieces);
+      onDistributionChange(calculateDistributions(value, [100]));
+      return;
+    }
+    
+    // For multiple calculators, we need to recalculate the distribution
+    const otherVisibleTypes = visibleTypes.filter(t => t !== type);
+    
+    // If value is larger than total, adjust it to total
+    const adjustedValue = Math.min(value, totalPieces);
+    newPieces[type] = adjustedValue;
+    
+    // Calculate remaining pieces to distribute among other visible types
+    const remainingPieces = totalPieces - adjustedValue;
+    
+    if (visibleTypes.length === 2) {
+      // With two calculators, the other one gets all remaining pieces
+      newPieces[otherVisibleTypes[0]] = remainingPieces;
+      
+      // Calculate new slider value based on the percentages
+      const firstType = visibleTypes[0];
+      const firstPercent = (newPieces[firstType] / totalPieces) * 100;
+      
+      // Set slider value based on which calculators are visible
+      const sortedTypes = [...visibleTypes].sort();
+      let newSliderValue: number[];
+      
+      if (sortedTypes[0] === 'FBM-NonGenius' && (sortedTypes[1] === 'FBM-Genius' || sortedTypes[1] === 'FBE')) {
+        // First calculator is NonGenius (with either Genius or FBE)
+        newSliderValue = [firstType === 'FBM-NonGenius' ? firstPercent : 100 - firstPercent, 100];
+      } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
+        // Calculators are Genius and FBE
+        newSliderValue = [0, firstType === 'FBM-Genius' ? firstPercent : 100 - firstPercent];
+      } else {
+        // Fallback
+        newSliderValue = [firstPercent, 100];
+      }
+      
+      setSliderValue(newSliderValue);
+      setManualPieces(newPieces);
+      onDistributionChange(calculateDistributions(totalPieces, newSliderValue));
+    } else if (visibleTypes.length === 3) {
+      // With three calculators, distribute remaining pieces proportionally
+      // First, calculate current proportions between other two types
+      const otherType1 = otherVisibleTypes[0];
+      const otherType2 = otherVisibleTypes[1];
+      
+      const currentOther1 = distributions[otherType1].pieces;
+      const currentOther2 = distributions[otherType2].pieces;
+      const currentOtherTotal = currentOther1 + currentOther2;
+      
+      // If current other total is 0, split remaining pieces equally
+      if (currentOtherTotal <= 0) {
+        newPieces[otherType1] = remainingPieces / 2;
+        newPieces[otherType2] = remainingPieces / 2;
+      } else {
+        // Otherwise distribute proportionally
+        const other1Ratio = currentOther1 / currentOtherTotal;
+        const other2Ratio = currentOther2 / currentOtherTotal;
+        
+        newPieces[otherType1] = Math.round(remainingPieces * other1Ratio);
+        newPieces[otherType2] = remainingPieces - newPieces[otherType1]; // Ensure total still equals totalPieces
+      }
+      
+      // Calculate new percentages for slider
+      const nonGeniusPercent = (newPieces['FBM-NonGenius'] / totalPieces) * 100;
+      const geniusPercent = (newPieces['FBM-Genius'] / totalPieces) * 100;
       const newSliderValue = [
         nonGeniusPercent,
         nonGeniusPercent + geniusPercent
@@ -406,7 +477,7 @@ export const useSalesEstimatorCalculations = (
       
       setSliderValue(newSliderValue);
       setManualPieces(newPieces);
-      onDistributionChange(calculateDistributions(total, newSliderValue));
+      onDistributionChange(calculateDistributions(totalPieces, newSliderValue));
     }
   };
 

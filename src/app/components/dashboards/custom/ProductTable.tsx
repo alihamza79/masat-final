@@ -217,6 +217,21 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
     }).format(value) + ' RON';
   };
 
+  // Calculate real profit including eMAG commission
+  const calculateRealProfit = (product: ProductPerformanceData, commissionPercentage?: number) => {
+    const revenue = product.grossRevenue || 0;
+    const cog = product.costOfGoods || 0;
+    
+    // If we have the commission percentage, calculate commission amount and subtract it
+    if (commissionPercentage !== undefined) {
+      const commissionAmount = (revenue * commissionPercentage) / 100;
+      return revenue - cog - commissionAmount;
+    }
+    
+    // Fall back to original profit calculation if no commission data
+    return product.profit || 0;
+  };
+
   const handleImageError = (productId: string) => {
     setImgErrors(prev => ({ ...prev, [productId]: true }));
   };
@@ -271,7 +286,14 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                         </Box>
                       </Tooltip>
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.profit')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">
+                      <Tooltip title={t('dashboard.products.profitTooltip', 'Profit = Revenue - Cost of Goods - eMAG Commission')}>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                          <span>{t('dashboard.products.columns.profit')}</span>
+                          <IconInfoCircle size={14} />
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600 }} align="right">{t('dashboard.products.columns.grossRevenue')}</TableCell>
                   </TableRow>
                 </TableHead>
@@ -380,12 +402,17 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
                           )}
                         </TableCell>
                         <TableCell align="right">
-                          <Typography 
-                            variant="body2" 
-                            fontWeight={600}
+                          <Tooltip 
+                            title={t('dashboard.products.profitTooltip', 'Profit = Revenue - Cost of Goods - eMAG Commission')}
+                            arrow
                           >
-                            {formatCurrency(product.profit || 0)}
-                          </Typography>
+                            <Typography 
+                              variant="body2" 
+                              fontWeight={600}
+                            >
+                              {formatCurrency(calculateRealProfit(product, commission))}
+                            </Typography>
+                          </Tooltip>
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight={600}>
