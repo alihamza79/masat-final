@@ -426,7 +426,7 @@ const ProductTable = ({ data, isLoading }: ProductTableProps) => {
               </Table>
             </TableContainer>
             <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
+              rowsPerPageOptions={[5, 10, 25, 50, 100]}
               component="div"
               count={filteredData.length}
               rowsPerPage={rowsPerPage}
