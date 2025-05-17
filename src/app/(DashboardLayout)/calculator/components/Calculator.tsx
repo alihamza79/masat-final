@@ -166,20 +166,58 @@ const Calculator = () => {
       const integrationId = parts[1];
       const productId = parts[2];
       
-      // First try to find in our productIdMap
-      const product = productIdMapRef.current.get(productId);
-      if (product) {
-        return product.name;
-      }
-      
-      // If not in map, search through products array
+      // Try to find product using both integrationId and emagProductOfferId
+      // Look through products array with strict matching
       const foundProduct = products.find((p: any) => {
-        // Check both possible ID forms
-        return String(p._id) === productId || String(p.emagProductOfferId) === productId;
+        // Check integration ID match first
+        const integrationMatches = typeof p.integrationId === 'object' 
+          ? p.integrationId?._id?.toString() === integrationId 
+          : p.integrationId?.toString() === integrationId;
+        
+        // Then check product ID match (try emagProductOfferId first)
+        const productMatches = p.emagProductOfferId?.toString() === productId;
+        
+        return integrationMatches && productMatches;
       });
       
       if (foundProduct) {
         return foundProduct.name;
+      }
+      
+      // If not found with strict match, try with MongoDB _id
+      const foundByMongoId = products.find((p: any) => {
+        const integrationMatches = typeof p.integrationId === 'object' 
+          ? p.integrationId?._id?.toString() === integrationId 
+          : p.integrationId?.toString() === integrationId;
+        
+        const productMatches = p._id?.toString() === productId;
+        
+        return integrationMatches && productMatches;
+      });
+      
+      if (foundByMongoId) {
+        return foundByMongoId.name;
+      }
+      
+      // Final fallback - try by product ID only (less reliable)
+      const foundByIdOnly = products.find((p: any) => 
+        p.emagProductOfferId?.toString() === productId || 
+        p._id?.toString() === productId
+      );
+      
+      if (foundByIdOnly) {
+        return foundByIdOnly.name;
+      }
+      
+      // Check saved calculations for this eMAG product
+      const savedWithEmagProduct = savedCalculations.find(
+        calc => calc.emagProduct && 
+                calc.emagProduct.integrationId === integrationId && 
+                calc.emagProduct.productId === productId
+      );
+      
+      if (savedWithEmagProduct) {
+        return savedWithEmagProduct.title;
       }
       
       return `eMAG Product ${productId.slice(0, 8)}`;
@@ -423,26 +461,40 @@ const Calculator = () => {
       // Try to find the product in different ways to ensure we catch all possible formats
       let productOffer = null;
       
-      // First try direct match
+      // First try direct match with both integrationId and emagProductOfferId
       productOffer = products.find((p: any) => {
         // Check if integration ID matches (handle both string and object forms)
         const integrationMatches = typeof p.integrationId === 'object' 
           ? p.integrationId?._id?.toString() === integrationId 
           : p.integrationId?.toString() === integrationId;
           
-        // Check if product ID matches (either emagProductOfferId or _id)
-        const productMatches = 
-          (p.emagProductOfferId?.toString() === productId) || 
-          (p._id?.toString() === productId);
+        // Check if product ID matches emagProductOfferId specifically
+        const productMatches = p.emagProductOfferId?.toString() === productId;
         
         return integrationMatches && productMatches;
       });
       
       if (!productOffer) {
-        // Try a more lenient match if strict match failed
-        console.log('Direct match failed, trying looser matching...');
+        // If not found with emagProductOfferId, try with MongoDB _id
+        console.log('Direct match with emagProductOfferId failed, trying with MongoDB _id...');
         productOffer = products.find((p: any) => {
-          // Match only by product ID
+          // Check if integration ID matches (handle both string and object forms)
+          const integrationMatches = typeof p.integrationId === 'object' 
+            ? p.integrationId?._id?.toString() === integrationId 
+            : p.integrationId?.toString() === integrationId;
+            
+          // Check if product ID matches MongoDB _id
+          const productMatches = p._id?.toString() === productId;
+          
+          return integrationMatches && productMatches;
+        });
+      }
+      
+      if (!productOffer) {
+        // Try a more lenient match if strict match failed - match by product ID only
+        console.log('Direct match failed, trying looser matching by product ID only...');
+        productOffer = products.find((p: any) => {
+          // Match only by product ID (either emagProductOfferId or _id)
           return (p.emagProductOfferId?.toString() === productId) || 
                  (p._id?.toString() === productId);
         });
@@ -566,6 +618,10 @@ const Calculator = () => {
           setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
         return;
+      } else {
+        // If product not found, show an error toast
+        console.error('Product not found with IDs:', { integrationId, productId });
+        toast.error('Selected product could not be found. Please try another product.');
       }
     }
     // For integration products with colon separator

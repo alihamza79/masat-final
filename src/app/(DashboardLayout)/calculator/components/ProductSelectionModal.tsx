@@ -287,7 +287,8 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
         if (!product) return null;
         
         // Use emagProductOfferId or _id (database ID) if present
-        const productId = product.emagProductOfferId || (product._id ? product._id.toString() : null);
+        const productId = product.emagProductOfferId ? product.emagProductOfferId.toString() : 
+                         (product._id ? product._id.toString() : null);
         
         if (!productId) {
           console.log('Skipping product without ID:', product);
@@ -314,6 +315,9 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
           console.log('Product missing integration ID, using fallback:', product);
           integrationIdStr = 'unknown';
         }
+        
+        // Log the extracted IDs for debugging
+        console.log(`Product ${product.name || 'unknown'}: Integration ID=${integrationIdStr}, Product ID=${productId}`);
         
         return {
           id: `emag-${integrationIdStr}-${productId}`,
@@ -521,8 +525,40 @@ const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
         p: 2,
         cursor: 'pointer',
         border: '1px solid',
-        borderColor: selectedProduct === product.id ? 'primary.main' : 'divider',
-        bgcolor: selectedProduct === product.id ? 'primary.lighter' : 'background.paper',
+        borderColor: (() => {
+          // Check if the product is selected by comparing integrationId and productId
+          if (selectedProduct && selectedProduct.startsWith('emag-')) {
+            const parts = selectedProduct.split('-');
+            if (parts.length >= 3) {
+              const selectedIntegrationId = parts[1];
+              const selectedProductId = parts[2];
+              
+              // Match by both integration ID and product ID
+              if (selectedIntegrationId === product.rawIntegrationId &&
+                  selectedProductId === product.rawProductId) {
+                return 'primary.main';
+              }
+            }
+          }
+          return 'divider';
+        })(),
+        bgcolor: (() => {
+          // Check if the product is selected by comparing integrationId and productId
+          if (selectedProduct && selectedProduct.startsWith('emag-')) {
+            const parts = selectedProduct.split('-');
+            if (parts.length >= 3) {
+              const selectedIntegrationId = parts[1];
+              const selectedProductId = parts[2];
+              
+              // Match by both integration ID and product ID
+              if (selectedIntegrationId === product.rawIntegrationId &&
+                  selectedProductId === product.rawProductId) {
+                return 'primary.lighter';
+              }
+            }
+          }
+          return 'background.paper';
+        })(),
         transition: 'all 0.2s ease-in-out',
         height: '100%',
         display: 'flex',

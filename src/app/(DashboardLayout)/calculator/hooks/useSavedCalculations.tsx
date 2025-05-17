@@ -136,6 +136,12 @@ export const useSavedCalculations = () => {
           // If this is an eMAG product calculation, ensure the commission source is set to 'emag'
           if (savedCalculation.emagProduct) {
             dispatch({ type: 'SET_COMMISSION_SOURCE', payload: 'emag' });
+            
+            // Log the eMAG product details from the saved calculation
+            console.log('Loaded eMAG product details from saved calculation:', {
+              integrationId: savedCalculation.emagProduct.integrationId,
+              productId: savedCalculation.emagProduct.productId
+            });
           }
         }
       } else {
@@ -152,6 +158,14 @@ export const useSavedCalculations = () => {
           setCurrentSavedCalculationTitle(result.data.title || '');
           setCurrentSavedCalculationDescription(result.data.description || '');
           setCurrentSavedCalculationImage(result.data.image || '/products/default.jpg');
+          
+          // If this has an eMAG product, log it
+          if (result.data.emagProduct) {
+            console.log('Loaded eMAG product details from API:', {
+              integrationId: result.data.emagProduct.integrationId,
+              productId: result.data.emagProduct.productId
+            });
+          }
         }
         
         // Load the saved calculator state
