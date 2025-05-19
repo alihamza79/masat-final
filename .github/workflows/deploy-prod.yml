@@ -131,7 +131,7 @@ jobs:
       - name: Deployment Status
         if: always()
         run: |
-          if [ ${{ job.status }} == 'success' ]; then
+          if [ "${{ job.status }}" == 'success' ]; then
             echo "✅ Production deployment completed successfully!"
             echo "Image: ${{ steps.login-ecr.outputs.registry }}/masat-prod:${{ github.sha }}"
             echo "Deployed at: $(date)"
