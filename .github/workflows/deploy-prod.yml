@@ -1,9 +1,10 @@
-name: Deploy with Terraform
+name: Deploy to Production with Terraform
 
 on:
   push:
-    branches: [ "develop" ]
-  # Removed pull_request trigger to avoid unnecessary runs
+    branches: [ "main" ]
+  # Manual trigger
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,6 +12,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
@@ -45,7 +47,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/masat-dev:${{ github.sha }}
+          tags: ${{ steps.login-ecr.outputs.registry }}/masat-prod:${{ github.sha }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
           build-args: |
@@ -94,10 +96,15 @@ jobs:
         run: terraform validate
         working-directory: terraform
 
+      # Copy production tfvars file
+      - name: Copy Production tfvars
+        run: cp terraform.tfvars.prod terraform.tfvars
+        working-directory: terraform
+
       # Set common Terraform variables
       - name: Set Terraform Variables
         run: |
-          echo "TF_VAR_image_uri=${{ steps.login-ecr.outputs.registry }}/masat-dev:${{ github.sha }}" >> $GITHUB_ENV
+          echo "TF_VAR_image_uri=${{ steps.login-ecr.outputs.registry }}/masat-prod:${{ github.sha }}" >> $GITHUB_ENV
           echo "TF_VAR_mongo_atlas_private_key=${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}" >> $GITHUB_ENV
           echo "TF_VAR_mongo_atlas_public_key=${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}" >> $GITHUB_ENV
           echo "TF_VAR_atlas_org_id=${{ secrets.ATLAS_ORG_ID }}" >> $GITHUB_ENV
@@ -106,6 +113,7 @@ jobs:
           echo "TF_VAR_nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}" >> $GITHUB_ENV
           echo "TF_VAR_facebook_client_id=${{ secrets.FACEBOOK_CLIENT_ID }}" >> $GITHUB_ENV
           echo "TF_VAR_facebook_client_secret=${{ secrets.FACEBOOK_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "TF_VAR_env=prod" >> $GITHUB_ENV
 
       - name: Terraform Plan
         run: terraform plan -input=false
@@ -117,16 +125,16 @@ jobs:
 
       - name: Force ECS Service Update
         run: |
-          aws ecs update-service --cluster masat-dev-cluster --service masat-dev-ecs-service --force-new-deployment
+          aws ecs update-service --cluster masat-prod-cluster --service masat-prod-ecs-service --force-new-deployment
 
       # Add deployment status notification
       - name: Deployment Status
         if: always()
         run: |
           if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Deployment completed successfully!"
-            echo "Image: ${{ steps.login-ecr.outputs.registry }}/masat-dev:${{ github.sha }}"
+            echo "✅ Production deployment completed successfully!"
+            echo "Image: ${{ steps.login-ecr.outputs.registry }}/masat-prod:${{ github.sha }}"
             echo "Deployed at: $(date)"
           else
-            echo "❌ Deployment failed!"
+            echo "❌ Production deployment failed!"
           fi
