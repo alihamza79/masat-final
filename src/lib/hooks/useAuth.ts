@@ -37,6 +37,14 @@ export default function useAuth() {
         password,
       });
       
+      if (result?.ok) {
+        // Wait briefly before redirecting
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // For more reliable redirect
+        window.location.href = '/dashboard';
+      }
+      
       return result;
     } catch (error) {
       console.error('Login error:', error);

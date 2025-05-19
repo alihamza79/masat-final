@@ -162,28 +162,30 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
         setTimeout(() => {
           router.push('/auth/auth1/login');
         }, 2000);
-      } else {
+      } else if (signInResult?.ok) {
         // Sign-in successful, redirect to dashboard
         try {
-          // Use replace instead of push for better navigation
-          await router.replace('/');
+          // Wait briefly before redirecting
+          await new Promise(resolve => setTimeout(resolve, 200));
           
-          // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
-          setTimeout(() => {
-            if (window.location.pathname.includes('/auth')) {
-              window.location.href = '/';
-            }
-          }, 2000);
+          // Force reload - more reliable for auth redirects
+          window.location.href = '/';
         } catch (navError) {
           console.error("Navigation error:", navError);
           // Fallback to direct location change if router navigation fails
           window.location.href = '/';
+          
+          // Make sure to rethrow the error as recommended in the GitHub issue
+          throw navError;
         }
       }
       
     } catch (err) {
       console.error('Set password error:', err);
       setError('An error occurred while setting password');
+      
+      // Make sure to rethrow the error as recommended in the GitHub issue
+      throw err;
     } finally {
       setLoading(false);
     }

@@ -155,17 +155,21 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
           setTimeout(() => {
             onComplete();
           }, 2000);
-        } else {
-          // On successful login, redirect to dashboard
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 1500);
+        } else if (loginResult?.ok) {
+          // Wait briefly before redirecting
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Force window location change for more reliable redirect
+          window.location.href = '/dashboard';
         }
       } else {
         setError(response.data.message || 'Failed to set password');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred while setting your password');
+      
+      // Make sure to rethrow the error as recommended in the GitHub issue
+      throw err;
     } finally {
       setLoading(false);
     }

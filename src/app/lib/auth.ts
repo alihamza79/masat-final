@@ -158,6 +158,7 @@ export const authOptions: NextAuthOptions = {
         } catch (error) {
           console.error("Error during OAuth user creation:", error);
           // Don't fail the sign-in if we can't save to database
+          throw error;
         }
       }
       return true;
@@ -202,3 +203,6 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 }; 
+
+
+

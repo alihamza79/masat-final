@@ -132,7 +132,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       setSigningIn(true);
       setLoadingText("Authenticating...");
       
-      // Attempt sign in - pass remember device preference
+      // Attempt sign in - pass remember device preference and set redirect to false
       const result = await signIn("credentials", {
         redirect: false,
         email,
@@ -147,7 +147,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         setError(result.error);
         setLoading(false);
         setSigningIn(false);
-      } else {
+      } else if (result?.ok) {
         // Use router.replace instead of push for a cleaner redirect
         console.log("🌐 [CLIENT] Login successful, redirecting...");
         setLoadingText("Redirecting to dashboard...");
@@ -178,20 +178,19 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           
           console.log("🌐 [CLIENT] Redirecting to:", safeCallbackUrl);
           
-          // Use replace instead of push for better navigation
-          await router.replace(safeCallbackUrl);
+          // Wait briefly before redirecting
+          await new Promise(resolve => setTimeout(resolve, 200));
           
-          // If router.replace doesn't trigger navigation fast enough, force reload after 2 seconds
-          setTimeout(() => {
-            if (window.location.pathname.includes('/auth')) {
-              console.log("🌐 [CLIENT] Router navigation didn't complete, using fallback redirect");
-              window.location.href = safeCallbackUrl;
-            }
-          }, 2000);
+          // Force reload window location - this is more reliable for auth redirects
+          window.location.href = safeCallbackUrl;
+          
         } catch (navError) {
           console.error("🌐 [CLIENT] Navigation error:", navError);
           // Fallback to direct location change if router navigation fails
           window.location.href = '/dashboard';
+          
+          // Make sure to rethrow the error as recommended in the GitHub issue
+          throw navError;
         }
       }
     } catch (error) {
@@ -211,6 +210,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       
       setLoading(false);
       setSigningIn(false);
+      
+      // Make sure to rethrow the error as recommended in the GitHub issue
+      throw error;
     }
   };
 
