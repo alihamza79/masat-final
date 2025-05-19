@@ -57,7 +57,7 @@ resource "aws_ecs_task_definition" "this" {
           },
           {
             "name" : "NEXTAUTH_URL",
-            "value" : "https://masat-dev.shiftcrowd.eu"
+            "value" : "https://${local.url}"
           },
           {
             "name" : "NODE_ENV",
