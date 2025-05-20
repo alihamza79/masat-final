@@ -83,8 +83,9 @@ const TradeProfiles = () => {
 
   const handleCommissionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Only allow numbers and validate range
-    if (value === '' || (Number(value) >= 0 && Number(value) <= 100)) {
+    
+    // Only allow empty string or integer values between 0-100
+    if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0 && Number(value) <= 100)) {
       setEmagCommission(value);
       // When the user manually changes the commission, mark it as manual source
       dispatch({ type: 'SET_EMAG_COMMISSION', payload: value });
@@ -101,6 +102,34 @@ const TradeProfiles = () => {
             },
           });
         });
+      }
+    }
+  };
+
+  // Add handlers for commission field focus/blur
+  const handleCommissionFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Clear the field if the value is "0"
+    if (e.target.value === '0') {
+      setEmagCommission('');
+    }
+  };
+
+  const handleCommissionBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // If the field is empty when leaving it, set it back to "0"
+    if (e.target.value === '') {
+      setEmagCommission('0');
+      dispatch({ type: 'SET_EMAG_COMMISSION', payload: '0' });
+    }
+  };
+
+  // Handle key press to prevent invalid characters
+  const handleCommissionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent minus sign, period, comma and other non-numeric keys
+    if (e.key === '-' || e.key === '.' || e.key === ',' || !/[\d\s\b]/.test(e.key)) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && 
+          e.key !== 'Delete' && e.key !== 'Backspace' && 
+          e.key !== 'Tab' && !e.ctrlKey) {
+        e.preventDefault();
       }
     }
   };
@@ -271,13 +300,15 @@ const TradeProfiles = () => {
             <CustomTextField
               value={emagCommission}
               onChange={handleCommissionChange}
+              onFocus={handleCommissionFocus}
+              onBlur={handleCommissionBlur}
+              onKeyDown={handleCommissionKeyDown}
               fullWidth
-              type="number"
+              type="text"
               disabled={isEmagProductSelected}
               inputProps={{
-                min: 0,
-                max: 100,
-                step: "0.1",
+                inputMode: 'numeric',
+                pattern: '[0-9]*',
                 style: { 
                   textAlign: 'left', 
                   paddingLeft: '10px',

@@ -30,14 +30,14 @@
         "apps": "Apps",
         "myAccount": "My Account",
         "dashboard": "Dashboard",
-        "businessProfile": "Business Profile",
+        
         "subscriptionPayment": "Subscription and Payment",
         "integrations": "Integrations",
         "campaignCalculator": "PxL Calculator",
         "listingOptimizer": "Listing Optimizer",
         "keywordTracker": "Keyword Tracker",
         "xScan": "X Scan",
-        "reports": "Reports",
+        
         "expenses": "Expenses"
     },
     "profile": {

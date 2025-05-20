@@ -30,14 +30,14 @@
         "apps": "Aplicații",
         "myAccount": "Contul Meu",
         "dashboard": "Panou de Control",
-        "businessProfile": "Profil de Afaceri",
+        
         "subscriptionPayment": "Abonament și Plată",
         "integrations": "Integrări",
         "campaignCalculator": "Calculator PxL",
         "listingOptimizer": "Optimizator Listări",
         "keywordTracker": "Urmăritor Cuvinte Cheie",
         "xScan": "X Scan",
-        "reports": "Rapoarte",
+       
         "expenses": "Cheltuieli"
     },
     "profile": {

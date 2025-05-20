@@ -42,12 +42,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconChartLine,
     href: "/dashboard",
   },
-  {
-    id: uniqueId(),
-    title: "menu.businessProfile",
-    icon: IconUserCircle,
-    href: "/businefrrfss-profile",
-      },
+  
       {
         id: uniqueId(),
         title: "menu.expenses",
@@ -91,12 +86,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconAperture,
     href: "/x-scfran",
   },
-  {
-    id: uniqueId(),
-    title: "menu.reports",
-    icon: IconFileDescription,
-    href: "/repofrts",
-  }
+  
 ];
 
 export default Menuitems;
