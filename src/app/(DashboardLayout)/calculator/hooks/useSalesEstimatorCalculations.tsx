@@ -75,16 +75,12 @@ export const useSalesEstimatorCalculations = (
     // Set flag to indicate we're loading from context
     loadingFromContextRef.current = true;
     
-    // Debounce the update to prevent immediate re-renders
-    timerRef.current = setTimeout(() => {
-      setTotalPieces(contextData.totalPieces || 1);
-      setSliderValue(contextData.sliderValue || [33.33, 66.66]);
-      
-      // Clear the loading flag after a short delay
-      setTimeout(() => {
-        loadingFromContextRef.current = false;
-      }, 50);
-    }, 50);
+    // Update immediately without debounce for live updates
+    setTotalPieces(contextData.totalPieces || 1);
+    setSliderValue(contextData.sliderValue || [33.33, 66.66]);
+    
+    // Clear the loading flag immediately
+    loadingFromContextRef.current = false;
   };
 
   // Add effect to initialize/update from context when it changes (for loading saved calculations)
@@ -106,7 +102,7 @@ export const useSalesEstimatorCalculations = (
       JSON.stringify(lastState.salesEstimator) !== JSON.stringify(state.salesEstimator); // Actual change
     
     // Only update if state has changed and enough time has passed
-    if (stateHasChanged && timeSinceLastUpdate > 100) {
+    if (stateHasChanged && timeSinceLastUpdate > 30) { // Reduce debounce to 30ms for faster updates
       // Update our reference to the current state
       lastStateRef.current = {
         salesEstimator: JSON.parse(JSON.stringify(state.salesEstimator)),
@@ -115,9 +111,6 @@ export const useSalesEstimatorCalculations = (
       
       // Update the state with the new values from context
       updateStateFromContext(state.salesEstimator);
-      
-      // Mark as initialized
-      initializedFromSaved.current = true;
     }
   }, [state.salesEstimator]);
 
@@ -435,7 +428,7 @@ export const useSalesEstimatorCalculations = (
       .reduce((sum, [_, dist]) => sum + dist.pieces, 0);
   };
 
-  // Modify handlePiecesChange to directly update the total
+  // Modify handlePiecesChange to maintain the total when possible
   const handlePiecesChange = (type: CalculatorType, value: number) => {
     // Skip if we're loading from context
     if (loadingFromContextRef.current) return;
@@ -443,10 +436,37 @@ export const useSalesEstimatorCalculations = (
     // Mark this calculator as manually edited
     manuallyEnteredPieces.current[type] = true;
     
+    // Store the previous total for reference
+    const previousTotal = totalPieces;
+    
     // Get array of visible calculator types
     const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
       .filter(([_, isVisible]) => isVisible)
       .map(([type]) => type);
+    
+    // If there's only one visible calculator, simply update the value
+    if (visibleTypes.length === 1) {
+      // Update total immediately 
+      setTotalPieces(value);
+      
+      const newDistributions: Distributions = {
+        'FBM-NonGenius': { pieces: 0, percent: 0 },
+        'FBM-Genius': { pieces: 0, percent: 0 },
+        'FBE': { pieces: 0, percent: 0 }
+      };
+      newDistributions[visibleTypes[0]] = { pieces: value, percent: 100 };
+      
+      // Update manual pieces immediately
+      setManualPieces({
+        'FBM-NonGenius': newDistributions['FBM-NonGenius'].pieces,
+        'FBM-Genius': newDistributions['FBM-Genius'].pieces,
+        'FBE': newDistributions['FBE'].pieces
+      });
+      
+      // Notify parent of changes immediately
+      onDistributionChange(newDistributions);
+      return;
+    }
     
     // Create a new distributions object with the updated value
     const newDistributions: Distributions = {
@@ -464,10 +484,77 @@ export const useSalesEstimatorCalculations = (
       }
     };
     
-    // Calculate new total as the direct sum of all visible pieces
-    const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
+    // Calculate the difference between the new value and the old value
+    const oldValue = distributions[type].pieces;
+    const difference = value - oldValue;
     
-    // Calculate new percentages based on the new total
+    // Check if the changed value alone exceeds the total
+    if (value > previousTotal) {
+      // Only in this case should we increase the total
+      setTotalPieces(value);
+      
+      // All other calculators get set to zero
+      visibleTypes.forEach(calculatorType => {
+        if (calculatorType !== type) {
+          newDistributions[calculatorType].pieces = 0;
+        }
+      });
+    } else {
+      // We will maintain the previous total by redistributing
+      
+      // Get the other visible calculator types
+      const otherVisibleTypes = visibleTypes.filter(t => t !== type);
+      
+      if (otherVisibleTypes.length === 0) {
+        // If there are no other visible calculators, just update the total
+        setTotalPieces(value);
+      } else {
+        // Calculate total pieces for other calculators
+        const otherTotalPieces = otherVisibleTypes.reduce(
+          (sum, t) => sum + distributions[t].pieces, 
+          0
+        );
+        
+        // Calculate how many pieces we need to redistribute
+        const piecesToRedistribute = -difference;
+        
+        if (otherTotalPieces === 0) {
+          // If there are no other pieces, we can't redistribute
+          const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
+          setTotalPieces(newTotal);
+        } else {
+          // We can redistribute the difference proportionally among other calculators
+          let remainingToDistribute = piecesToRedistribute;
+          
+          // For increased accuracy, save the last calculator for exact adjustment
+          for (let i = 0; i < otherVisibleTypes.length - 1; i++) {
+            const t = otherVisibleTypes[i];
+            const proportion = distributions[t].pieces / otherTotalPieces;
+            const additionalPieces = Math.round(piecesToRedistribute * proportion);
+            
+            newDistributions[t].pieces += additionalPieces;
+            remainingToDistribute -= additionalPieces;
+          }
+          
+          // Add the remaining pieces to the last calculator to ensure the total remains exactly the same
+          const lastType = otherVisibleTypes[otherVisibleTypes.length - 1];
+          newDistributions[lastType].pieces += remainingToDistribute;
+          
+          // Ensure no negative values
+          if (newDistributions[lastType].pieces < 0) {
+            // If all pieces can't fit into the available calculators, we need to adjust the total
+            const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
+            setTotalPieces(Math.max(newTotal, value)); // Use whichever is larger
+          } else {
+            // Maintain the previous total explicitly
+            setTotalPieces(previousTotal);
+          }
+        }
+      }
+    }
+    
+    // Calculate new percentages based on the final pieces
+    const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
     if (newTotal > 0) {
       for (const t of visibleTypes) {
         newDistributions[t].percent = (newDistributions[t].pieces / newTotal) * 100;
@@ -477,8 +564,7 @@ export const useSalesEstimatorCalculations = (
     // Calculate new slider value
     const newSliderValue = calculateSliderValueFromDistribution(newDistributions, visibleTypes);
     
-    // Update state directly with the new total (crucial for synchronization)
-    setTotalPieces(newTotal);
+    // Update state immediately 
     setManualPieces({
       'FBM-NonGenius': newDistributions['FBM-NonGenius'].pieces,
       'FBM-Genius': newDistributions['FBM-Genius'].pieces,

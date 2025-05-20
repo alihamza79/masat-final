@@ -77,13 +77,11 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
     // Set flag to indicate this is our own change
     isInternalChangeRef.current = true;
     
-    // Immediately notify parent of change
+    // Immediately notify parent of change without delay
     onChange(parsedValue);
     
-    // Reset flag after a short delay
-    setTimeout(() => {
-      isInternalChangeRef.current = false;
-    }, 50);
+    // Reset flag immediately to allow quick consecutive updates
+    isInternalChangeRef.current = false;
     
   }, [onChange]);
 
@@ -114,9 +112,7 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
       if (value !== 0) {
         isInternalChangeRef.current = true;
         onChange(0);
-        setTimeout(() => {
-          isInternalChangeRef.current = false;
-        }, 50);
+        isInternalChangeRef.current = false;
       }
     } else {
       const parsedValue = parseInt(localValue, 10);
@@ -136,9 +132,7 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
         
         isInternalChangeRef.current = true;
         onChange(parsedValue);
-        setTimeout(() => {
-          isInternalChangeRef.current = false;
-        }, 50);
+        isInternalChangeRef.current = false;
       }
     }
   }, [localValue, onChange, value]);
@@ -153,9 +147,7 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
         
         isInternalChangeRef.current = true;
         onChange(0);
-        setTimeout(() => {
-          isInternalChangeRef.current = false;
-        }, 50);
+        isInternalChangeRef.current = false;
       } else {
         const parsedValue = parseInt(localValue, 10);
         
@@ -173,9 +165,7 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
           
           isInternalChangeRef.current = true;
           onChange(parsedValue);
-          setTimeout(() => {
-            isInternalChangeRef.current = false;
-          }, 50);
+          isInternalChangeRef.current = false;
         }
       }
       
