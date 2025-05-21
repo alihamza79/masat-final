@@ -26,13 +26,15 @@ import {
   IconDotsVertical,
   IconEye,
   IconBulb,
-  IconCode
+  IconCode,
+  IconBell
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { Feature } from '@/lib/hooks/useFeatures';
 import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
 import { useSession } from 'next-auth/react';
 import useFeatureOwnership from '@/lib/hooks/useFeatureOwnership';
+import useFeatureSubscription from '@/lib/hooks/useFeatureSubscription';
 
 interface FeaturesTableProps {
   features: Feature[];
@@ -283,12 +285,43 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
                     })()}
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton 
-                      onClick={(e) => handleMenuOpen(e, feature)}
-                      size="small"
-                    >
-                      <IconDotsVertical size={18} />
-                    </IconButton>
+                    <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
+                      {/* Eye icon for view */}
+                      <IconButton
+                        onClick={() => onViewFeature(feature)}
+                        size="small"
+                        color="default"
+                        sx={{ 
+                          width: 32, 
+                          height: 32, 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center' 
+                        }}
+                      >
+                        <IconEye size={18} />
+                      </IconButton>
+                      {/* Bell icon for subscribe/unsubscribe (if not owner) */}
+                      {!isOwner(feature) && (
+                        <FeatureSubscribeIconButton featureId={feature._id} />
+                      )}
+                      {/* 3-dot menu for edit/delete (only if owner) */}
+                      {isOwner(feature) && (
+                        <IconButton 
+                          onClick={(e) => handleMenuOpen(e, feature)}
+                          size="small"
+                          sx={{ 
+                            width: 32, 
+                            height: 32, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                          }}
+                        >
+                          <IconDotsVertical size={18} />
+                        </IconButton>
+                      )}
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))
@@ -323,13 +356,6 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
           horizontal: 'right',
         }}
       >
-        <MenuItem onClick={handleView}>
-          <ListItemIcon>
-            <IconEye size={18} />
-          </ListItemIcon>
-          <ListItemText>{t('features.actions.view')}</ListItemText>
-        </MenuItem>
-        
         {/* Only show edit option if user is the creator */}
         {selectedFeature && isOwner(selectedFeature) && (
           <MenuItem onClick={handleEdit}>
@@ -360,6 +386,27 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
         message={t('features.deleteDialog.content')}
       />
     </Paper>
+  );
+};
+
+const FeatureSubscribeIconButton: React.FC<{ featureId?: string }> = ({ featureId }) => {
+  const { isSubscribed, isLoading, toggleSubscription } = useFeatureSubscription(featureId || '');
+  return (
+    <IconButton
+      onClick={toggleSubscription}
+      size="small"
+      color={isSubscribed ? 'primary' : 'default'}
+      disabled={isLoading}
+      sx={{ 
+        width: 32, 
+        height: 32, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+      }}
+    >
+      {isLoading ? <CircularProgress size={16} /> : <IconBell size={18} />}
+    </IconButton>
   );
 };
 

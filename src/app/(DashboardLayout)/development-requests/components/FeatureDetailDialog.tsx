@@ -149,21 +149,23 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
         {/* Subscribe button - only show if not owner */}
         {!isOwner(feature) && (
           <Tooltip title={isSubscribed ? t('features.subscription.unsubscribe') : t('features.subscription.subscribe')}>
-            <IconButton
+            <Button
               onClick={handleSubscriptionToggle}
               disabled={isSubscriptionLoading}
               size="small"
-              color={isSubscribed ? 'primary' : 'default'}
-              sx={{ ml: 1 }}
+              color="primary"
+              variant={isSubscribed ? 'contained' : 'outlined'}
+              startIcon={
+                isSubscriptionLoading ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <IconBell size={20} />
+                )
+              }
+              sx={{ ml: 1, minWidth: 0, px: 2, whiteSpace: 'nowrap', fontWeight: 600 }}
             >
-              {isSubscriptionLoading ? (
-                <CircularProgress size={20} />
-              ) : isSubscribed ? (
-                <IconBell size={20} />
-              ) : (
-                <IconBellOff size={20} />
-              )}
-            </IconButton>
+              {isSubscribed ? t('common.unsubscribe', 'Unsubscribe') : t('common.subscribe', 'Subscribe')}
+            </Button>
           </Tooltip>
         )}
       </DialogTitle>
@@ -174,24 +176,6 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
             <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
               {feature.body}
             </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              mt: 2,
-              pt: 2,
-              borderTop: `1px solid ${theme.palette.divider}`,
-              color: 'text.secondary',
-              fontSize: '0.875rem'
-            }}>
-              <Typography variant="body2" color="textSecondary">
-                {t('features.detail.requestedBy', { name: feature.createdBy })}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {t('features.detail.dateCreated', { date: formatDate(feature.createdAt) })}
-              </Typography>
-            </Box>
           </Grid>
         </Grid>
       </DialogContent>
