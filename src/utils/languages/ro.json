@@ -6,11 +6,11 @@
         "Blog": "Blog",
         "Posts": "Postări",
         "Detail": "Detaliu",
-        "Ecommerce": "Ecommerce",
+        "Ecommerce": "Comerț electronic",
         "Shop": "Magazin",
         "List": "Listă",
-        "Checkout": "Finalizare",
-        "Chats": "Chat-uri",
+        "Checkout": "Finalizare comandă",
+        "Chats": "Conversații",
         "Users": "Utilizatori",
         "Profile": "Profil",
         "Followers": "Urmăritori",
@@ -28,17 +28,18 @@
     },
     "menu": {
         "apps": "Aplicații",
-        "myAccount": "Contul Meu",
-        "dashboard": "Panou de Control",
+        "myAccount": "Contul meu",
+        "dashboard": "Tablou de bord",
         
-        "subscriptionPayment": "Abonament și Plată",
+        "subscriptionPayment": "Abonament și plăți",
         "integrations": "Integrări",
         "campaignCalculator": "Calculator PxL",
-        "listingOptimizer": "Optimizator Listări",
-        "keywordTracker": "Urmăritor Cuvinte Cheie",
+        "listingOptimizer": "Optimizare listare",
+        "keywordTracker": "Urmăritor cuvinte cheie",
         "xScan": "X Scan",
-       
-        "expenses": "Cheltuieli"
+        
+        "expenses": "Cheltuieli",
+        "developmentRequests": "Cereri de Dezvoltare"
     },
     "profile": {
         "userProfile": "Profil Utilizator",
@@ -641,6 +642,68 @@
                 "noMatch": "Parolele nu se potrivesc",
                 "changeFailed": "Nu s-a putut schimba parola"
             }
+        }
+    },
+    "features": {
+        "pageTitle": "Cereri de Dezvoltare",
+        "pageDescription": "Gestionați cererile de funcționalități și ideile de dezvoltare",
+        "addButton": "Adaugă Cerere",
+        "refreshButton": "Reîmprospătare",
+        "refreshingButton": "Se reîmprospătează...",
+        "table": {
+            "subject": "Subiect",
+            "status": "Status",
+            "createdBy": "Creat de",
+            "updatedAt": "Ultima Actualizare",
+            "actions": "Acțiuni",
+            "noFeatures": "Nu s-au găsit cereri de funcționalități. Creați una nouă pentru a începe."
+        },
+        "actions": {
+            "view": "Vizualizare detalii",
+            "edit": "Editare",
+            "delete": "Ștergere"
+        },
+        "form": {
+            "createTitle": "Creare cerere funcționalitate",
+            "editTitle": "Editare cerere funcționalitate",
+            "subjectLabel": "Subiect",
+            "statusLabel": "Status",
+            "bodyLabel": "Descriere",
+            "createButton": "Creare cerere",
+            "updateButton": "Actualizare cerere",
+            "errors": {
+                "subjectRequired": "Subiectul este obligatoriu",
+                "bodyRequired": "Descrierea este obligatorie"
+            }
+        },
+        "status": {
+            "proposed": "Propusă",
+            "development": "În dezvoltare"
+        },
+        "detail": {
+            "requestedBy": "Solicitată de: {name}",
+            "dateCreated": "Creată la: {date}"
+        },
+        "deleteDialog": {
+            "title": "Ștergere cerere funcționalitate",
+            "content": "Sigur doriți să ștergeți această cerere de funcționalitate? Această acțiune nu poate fi anulată.",
+            "featureRequest": "această cerere de funcționalitate"
+        },
+        "toast": {
+            "createSuccess": "Cererea de funcționalitate a fost creată cu succes",
+            "createError": "Eroare la crearea cererii de funcționalitate",
+            "updateSuccess": "Cererea de funcționalitate a fost actualizată cu succes",
+            "updateError": "Eroare la actualizarea cererii de funcționalitate",
+            "deleteSuccess": "Cererea de funcționalitate a fost ștearsă cu succes",
+            "deleteError": "Eroare la ștergerea cererii de funcționalitate",
+            "refreshSuccess": "Cererile de funcționalitate au fost reîmprospătate cu succes",
+            "refreshError": "Eroare la reîmprospătarea cererilor de funcționalitate",
+            "fetchError": "Eroare la obținerea cererilor de funcționalitate",
+            "missingId": "ID-ul funcționalității este necesar pentru actualizare",
+            "error": "A apărut o eroare"
+        },
+        "search": {
+            "placeholder": "Caută cereri de funcționalitate..."
         }
     }
 } 

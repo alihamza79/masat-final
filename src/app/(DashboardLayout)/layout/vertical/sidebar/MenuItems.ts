@@ -30,7 +30,8 @@ import {
   IconZoomCode,
  
   IconCalculator,
-  IconUser
+  IconUser,
+  IconBulb
 } from "@tabler/icons-react";
 
 const Menuitems: MenuitemsType[] = [
@@ -67,6 +68,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconCalculator,
     href: "/calculator",
   },
+  
  
   {
     id: uniqueId(),
@@ -85,6 +87,12 @@ const Menuitems: MenuitemsType[] = [
     title: "menu.xScan",
     icon: IconAperture,
     href: "/x-scfran",
+  },
+  {
+    id: uniqueId(),
+    title: "menu.developmentRequests",
+    icon: IconBulb,
+    href: "/development-requests",
   },
   
 ];
