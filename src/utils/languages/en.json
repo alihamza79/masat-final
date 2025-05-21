@@ -456,6 +456,27 @@
         "addButton": "Add Request",
         "refreshButton": "Refresh",
         "refreshingButton": "Refreshing...",
+        "filter": {
+            "all": "All Development Requests",
+            "myRequests": "My Development Requests"
+        },
+        "subscription": {
+            "subscribe": "Subscribe to updates",
+            "unsubscribe": "Unsubscribe from updates",
+            "subscribeSuccess": "Subscribed to feature updates successfully",
+            "unsubscribeSuccess": "Unsubscribed from feature updates successfully",
+            "subscribeError": "Failed to subscribe to feature",
+            "unsubscribeError": "Failed to unsubscribe from feature"
+        },
+        "notifications": {
+            "title": "Notifications",
+            "markAllRead": "Mark All as Read",
+            "viewAll": "View All Notifications",
+            "noNotifications": "No notifications",
+            "update": "Update: {subject}",
+            "statusChange": "Status Changed: {subject}",
+            "statusChangedTo": "Status changed to \"{status}\""
+        },
         "table": {
             "subject": "Subject",
             "status": "Status",
@@ -624,7 +645,8 @@
             "hourAgo": "1 hour ago",
             "hoursAgo": "{{count}} hours ago",
             "dayAgo": "1 day ago",
-            "daysAgo": "{{count}} days ago"
+            "daysAgo": "{{count}} days ago",
+            "yesterday": "yesterday"
         }
     },
     "accountSettings": {

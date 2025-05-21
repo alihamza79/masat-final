@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import Feature from '@/models/Feature';
+import FeatureSubscription from '@/models/FeatureSubscription';
+import Notification from '@/models/Notification';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/lib/auth';
 import mongoose from 'mongoose';
@@ -161,6 +163,10 @@ export async function PUT(request: NextRequest) {
       );
     }
     
+    // Track what changed for notifications
+    const wasStatusChanged = status && feature.status !== status;
+    const wasContentChanged = (subject && feature.subject !== subject) || (featureBody && feature.body !== featureBody);
+    
     // Update fields if they're provided
     if (subject) feature.subject = subject;
     if (featureBody) feature.body = featureBody;
@@ -169,6 +175,37 @@ export async function PUT(request: NextRequest) {
     // Save updated feature
     feature.updatedAt = new Date();
     await feature.save();
+    
+    // Get subscribers to notify
+    const subscribers = await FeatureSubscription.find({ featureId: id });
+    
+    // If there are subscribers and there were changes, create notifications
+    if (subscribers.length > 0 && (wasStatusChanged || wasContentChanged)) {
+      const notificationType = wasStatusChanged ? 'feature_status_change' : 'feature_update';
+      const notificationTitle = wasStatusChanged 
+        ? `Status changed: ${feature.subject}`
+        : `Update: ${feature.subject}`;
+      
+      const notificationMessage = wasStatusChanged
+        ? `Status changed to "${status}"`
+        : 'Content has been updated';
+      
+      // Create notifications for all subscribers
+      const notifications = subscribers.map(sub => ({
+        userId: sub.userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: notificationType,
+        referenceId: feature._id,
+        referenceType: 'Feature',
+        read: false
+      }));
+      
+      // Bulk insert notifications
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+      }
+    }
     
     return NextResponse.json({
       success: true,
@@ -232,6 +269,9 @@ export async function DELETE(request: NextRequest) {
     
     // Delete the feature
     await Feature.findByIdAndDelete(id);
+    
+    // Also delete any subscriptions to this feature
+    await FeatureSubscription.deleteMany({ featureId: id });
     
     return NextResponse.json({
       success: true,

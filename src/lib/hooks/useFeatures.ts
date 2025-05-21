@@ -72,7 +72,7 @@ export const useFeatures = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  // Query for fetching all features
+  // Query for fetching all features with frequent polling
   const { 
     data: features = [], 
     isLoading, 
@@ -81,7 +81,10 @@ export const useFeatures = () => {
   } = useQuery({
     queryKey: FEATURES_QUERY_KEY,
     queryFn: () => fetchFeatures(t),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    // Use a shorter stale time to refresh more frequently
+    staleTime: 10000, // 10 seconds
+    // Refresh data in the background at regular intervals
+    refetchInterval: 10000, // 10 seconds
   });
 
   // Query for fetching a single feature by ID
@@ -89,7 +92,8 @@ export const useFeatures = () => {
     return useQuery({
       queryKey: [...FEATURES_QUERY_KEY, id],
       queryFn: () => getFeature(id, t),
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 10000, // 10 seconds
+      refetchInterval: 10000, // 10 seconds
       enabled: !!id, // Only run if ID is provided
     });
   };
@@ -112,6 +116,9 @@ export const useFeatures = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FEATURES_QUERY_KEY });
       toast.success(t('features.toast.updateSuccess') || 'Feature request updated successfully');
+      
+      // Also invalidate the notifications query to update any relevant notifications
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
     onError: (error: Error) => {
       toast.error(error.message || t('features.toast.updateError') || 'Failed to update feature request');
@@ -128,6 +135,9 @@ export const useFeatures = () => {
       queryClient.invalidateQueries({ queryKey: FEATURES_QUERY_KEY });
       toast.success(t('features.toast.deleteSuccess') || 'Feature request deleted successfully');
       setIsDeleting(null);
+      
+      // Also invalidate the notifications query to update any relevant notifications
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
     onError: (error: Error) => {
       toast.error(error.message || t('features.toast.deleteError') || 'Failed to delete feature request');
@@ -135,11 +145,16 @@ export const useFeatures = () => {
     },
   });
 
+  // Function to force refresh features
+  const forceRefresh = () => {
+    return queryClient.invalidateQueries({ queryKey: FEATURES_QUERY_KEY });
+  };
+
   return {
     features,
     isLoading,
     error,
-    refetch,
+    refetch: forceRefresh,
     getFeatureById,
     createFeature: createMutation.mutate,
     isCreating: createMutation.isPending,

@@ -10,12 +10,16 @@ import {
   Chip,
   Divider,
   useTheme,
-  Grid
+  Grid,
+  IconButton,
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Feature } from '@/lib/hooks/useFeatures';
-import { IconBulb, IconCode, IconEdit } from '@tabler/icons-react';
+import { IconBulb, IconCode, IconEdit, IconBell, IconBellOff } from '@tabler/icons-react';
 import useFeatureOwnership from '@/lib/hooks/useFeatureOwnership';
+import useFeatureSubscription from '@/lib/hooks/useFeatureSubscription';
 
 interface FeatureDetailDialogProps {
   open: boolean;
@@ -33,6 +37,17 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const { isOwner } = useFeatureOwnership();
+  
+  // Use feature subscription hook if feature is available
+  const { 
+    isSubscribed, 
+    isLoading: isLoadingSubscription, 
+    toggleSubscription,
+    isSubscribing,
+    isUnsubscribing
+  } = useFeatureSubscription(feature?._id || '');
+  
+  const isSubscriptionLoading = isLoadingSubscription || isSubscribing || isUnsubscribing;
   
   if (!feature) {
     return null;
@@ -95,6 +110,16 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
     }
   };
 
+  const handleSubscriptionToggle = async () => {
+    if (isSubscriptionLoading) return;
+    
+    try {
+      await toggleSubscription();
+    } catch (error) {
+      console.error('Failed to toggle subscription:', error);
+    }
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -114,10 +139,33 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <Typography variant="h6" component="div" sx={{ pr: 2 }}>
-          {feature.subject}
-        </Typography>
-        {renderStatusChip(feature.status)}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pr: 2 }}>
+          <Typography variant="h6" component="div">
+            {feature.subject}
+          </Typography>
+          {renderStatusChip(feature.status)}
+        </Box>
+        
+        {/* Subscribe button - only show if not owner */}
+        {!isOwner(feature) && (
+          <Tooltip title={isSubscribed ? t('features.subscription.unsubscribe') : t('features.subscription.subscribe')}>
+            <IconButton
+              onClick={handleSubscriptionToggle}
+              disabled={isSubscriptionLoading}
+              size="small"
+              color={isSubscribed ? 'primary' : 'default'}
+              sx={{ ml: 1 }}
+            >
+              {isSubscriptionLoading ? (
+                <CircularProgress size={20} />
+              ) : isSubscribed ? (
+                <IconBell size={20} />
+              ) : (
+                <IconBellOff size={20} />
+              )}
+            </IconButton>
+          </Tooltip>
+        )}
       </DialogTitle>
       <Divider />
       <DialogContent>
@@ -126,6 +174,24 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
             <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
               {feature.body}
             </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              mt: 2,
+              pt: 2,
+              borderTop: `1px solid ${theme.palette.divider}`,
+              color: 'text.secondary',
+              fontSize: '0.875rem'
+            }}>
+              <Typography variant="body2" color="textSecondary">
+                {t('features.detail.requestedBy', { name: feature.createdBy })}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                {t('features.detail.dateCreated', { date: formatDate(feature.createdAt) })}
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
       </DialogContent>

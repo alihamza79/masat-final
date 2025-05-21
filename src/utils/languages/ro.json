@@ -562,7 +562,8 @@
             "hourAgo": "acum 1 oră",
             "hoursAgo": "acum {{count}} ore",
             "dayAgo": "acum 1 zi",
-            "daysAgo": "acum {{count}} zile"
+            "daysAgo": "acum {{count}} zile",
+            "yesterday": "ieri"
         }
     },
     "accountSettings": {
@@ -650,6 +651,27 @@
         "addButton": "Adaugă Cerere",
         "refreshButton": "Reîmprospătare",
         "refreshingButton": "Se reîmprospătează...",
+        "filter": {
+            "all": "Toate Cererile de Dezvoltare",
+            "myRequests": "Cererile Mele de Dezvoltare"
+        },
+        "subscription": {
+            "subscribe": "Abonează-te la actualizări",
+            "unsubscribe": "Dezabonează-te de la actualizări",
+            "subscribeSuccess": "Abonare la actualizări realizată cu succes",
+            "unsubscribeSuccess": "Dezabonare de la actualizări realizată cu succes",
+            "subscribeError": "Eroare la abonare",
+            "unsubscribeError": "Eroare la dezabonare"
+        },
+        "notifications": {
+            "title": "Notificări",
+            "markAllRead": "Marchează toate ca citite",
+            "viewAll": "Vezi toate notificările",
+            "noNotifications": "Nu există notificări",
+            "update": "Actualizare: {subject}",
+            "statusChange": "Stare Modificată: {subject}",
+            "statusChangedTo": "Starea a fost schimbată la \"{status}\""
+        },
         "table": {
             "subject": "Subiect",
             "status": "Status",
