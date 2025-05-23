@@ -297,76 +297,40 @@ export const useIntegrationSync = () => {
         return [];
       }
       
-      // Process pages in parallel batches
-      for (let batchStart = 1; batchStart <= totalPages; batchStart += BATCH_SIZE) {
-        const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, totalPages);
-        console.log(`Processing product offers batch: pages ${batchStart}-${batchEnd} of ${totalPages}`);
-        
-        // Create an array of page numbers for this batch
-        const pageNumbers = Array.from(
-          { length: batchEnd - batchStart + 1 }, 
-          (_, i) => batchStart + i
-        );
-        
-        // Fetch all pages in this batch concurrently
-        const batchResults = await Promise.all(
-          pageNumbers.map(async (page) => {
-            console.log(`Fetching product offers page ${page}/${totalPages} for integration ${integrationId}...`);
-            
-            try {
-              const response = await axios.get(
-                `/api/integrations/${integrationId}/product-offers?page=${page}&pageSize=${PRODUCT_OFFERS_PAGE_SIZE}`
-              );
-              
-              if (!response.data.success) {
-                throw new Error(response.data.error || 'Failed to fetch product offers');
-              }
-              
-              const responseData = response.data.data;
-              // Decrypt the response data before parsing
-              const decryptedData = decryptResponse(responseData.productOffersData);
-              const productOffersData = JSON.parse(decryptedData);
-              
-              if (productOffersData.productOffers && productOffersData.productOffers.length > 0) {
-                // Add integrationId to each product offer (should already be there, but ensuring it)
-                const productOffersWithId = productOffersData.productOffers.map((offer: any) => ({
-                  ...offer,
-                  integrationId
-                }));
-                
-                console.log(`Fetched ${productOffersWithId.length} product offers from page ${page}/${totalPages}`);
-                return productOffersWithId;
-              } else {
-                console.log(`No product offers found on page ${page}/${totalPages}`);
-                return [];
-              }
-            } catch (error: any) {
-              console.error(`Error fetching product offers for integration ${integrationId}:`, error);
-              const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
-              throw new Error(`Failed to fetch product offers: ${errMsg}`);
-            }
-          })
-        );
-        
-        // Flatten the batch results and add to the allProductOffers array
-        const batchProductOffers = batchResults.flat();
-        allProductOffers.push(...batchProductOffers);
-        
-        // Calculate progress percentage
-        const progress = Math.round((batchEnd / totalPages) * 100);
+      // Process pages sequentially
+      for (let page = 1; page <= totalPages; page++) {
+        console.log(`Fetching product offers page ${page}/${totalPages} for integration ${integrationId}...`);
+        try {
+          const response = await axios.get(`/api/integrations/${integrationId}/product-offers?page=${page}&pageSize=${PRODUCT_OFFERS_PAGE_SIZE}`);
+          if (!response.data.success) {
+            throw new Error(response.data.error || 'Failed to fetch product offers');
+          }
+          const responseData = response.data.data;
+          const decryptedData = decryptResponse(responseData.productOffersData);
+          const productOffersData = JSON.parse(decryptedData);
+          let pageProductOffers = [];
+          if (productOffersData.productOffers && productOffersData.productOffers.length > 0) {
+            pageProductOffers = productOffersData.productOffers.map((offer: any) => ({
+              ...offer,
+              integrationId
+            }));
+            console.log(`Fetched ${pageProductOffers.length} product offers from page ${page}/${totalPages}`);
+          } else {
+            console.log(`No product offers found on page ${page}/${totalPages}`);
+          }
+          allProductOffers.push(...pageProductOffers);
+        } catch (error: any) {
+          console.error(`Error fetching product offers for integration ${integrationId} on page ${page}:`, error);
+          const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
+          throw new Error(`Failed to fetch product offers: ${errMsg}`);
+        }
+        const progress = Math.round((page / totalPages) * 100);
         console.log(`Product offers import progress: ${progress}% (${allProductOffers.length} product offers so far)`);
-        
-        // Update progress in the store ONLY - don't update DB count until fully saved
         updateProgress(integrationId, {
           productOffersProgress: progress,
           productOffersCount: allProductOffers.length
         });
-        
-        // Update status in DB after each batch
-        await updateIntegrationStatus(
-          integrationId, 
-          'loading'
-        );
+        await updateIntegrationStatus(integrationId, 'loading');
       }
       
       console.log(`Completed fetching all ${allProductOffers.length} product offers for integration ${integrationId}`);
