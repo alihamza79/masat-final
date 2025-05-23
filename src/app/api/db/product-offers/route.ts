@@ -40,14 +40,7 @@ export async function GET(request: NextRequest) {
     // Parse query params for filtering
     const url = new URL(request.url);
     const integrationId = url.searchParams.get('integrationId');
-    const pageStr = url.searchParams.get('page');
-    const pageSizeStr = url.searchParams.get('pageSize');
     const search = url.searchParams.get('search');
-    
-    // Default pagination values
-    const page = pageStr ? parseInt(pageStr, 10) : 1;
-    const pageSize = pageSizeStr ? parseInt(pageSizeStr, 10) : 100;
-    const skip = (page - 1) * pageSize;
     
     // Build query object
     let query: any = {};
@@ -95,26 +88,15 @@ export async function GET(request: NextRequest) {
     
     // Fetch product offers that belong to the user's integrations
     const productOffers = await ProductOffer.find(query)
-      .limit(pageSize)
-      .skip(skip)
       .sort({ updatedAt: -1 })
       .populate('integrationId', 'name type platformId shopId');
     
-    // Count total documents for pagination
-    const totalCount = await ProductOffer.countDocuments(query);
-    const totalPages = Math.ceil(totalCount / pageSize);
-    
-    console.log(`Found ${productOffers.length} product offers out of ${totalCount} total`);
+    console.log(`Fetched all ${productOffers.length} product offers for the user`);
 
     return NextResponse.json({ 
       success: true, 
       data: { 
         productOffers,
-        count: productOffers.length,
-        totalCount,
-        totalPages,
-        page,
-        pageSize
       } 
     });
   } catch (error: any) {
