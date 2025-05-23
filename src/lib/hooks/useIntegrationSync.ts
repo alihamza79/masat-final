@@ -340,9 +340,10 @@ export const useIntegrationSync = () => {
                 console.log(`No product offers found on page ${page}/${totalPages}`);
                 return [];
               }
-            } catch (error) {
-              console.error(`Error fetching product offers page ${page}:`, error);
-              throw error;
+            } catch (error: any) {
+              console.error(`Error fetching product offers for integration ${integrationId}:`, error);
+              const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
+              throw new Error(`Failed to fetch product offers: ${errMsg}`);
             }
           })
         );
@@ -548,12 +549,13 @@ export const useIntegrationSync = () => {
           console.log(`Successfully imported ${productOffersCount} product offers for integration ${integrationId}`);
           // Set the timestamp at the moment of success
           lastProductOffersImport = new Date();
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error importing product offers for integration ${integrationId}:`, error);
+          const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
           await updateIntegrationStatus(
             integrationId, 
             'error', 
-            `Error importing product offers: ${error instanceof Error ? error.message : String(error)}`
+            `Error importing product offers: ${errMsg}`
           );
           return;
         }
@@ -712,7 +714,8 @@ export const useIntegrationSync = () => {
           lastOrdersImport = new Date();
         } catch (error: any) {
           console.error(`Error fetching or storing orders for integration ${integrationId}:`, error);
-          throw error;
+          const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
+          throw new Error(`Error importing orders: ${errMsg}`);
         }
       } else {
         console.log(`Skipping orders sync for integration ${integrationId} (not due yet)`);
@@ -734,11 +737,13 @@ export const useIntegrationSync = () => {
             lastProductOffersImport = new Date();
           } catch (error: any) {
             console.error(`Error storing product offers for integration ${integrationId}:`, error);
-            throw error;
+            const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
+            throw new Error(`Error storing product offers: ${errMsg}`);
           }
         } catch (error: any) {
           console.error(`Error fetching product offers for integration ${integrationId}:`, error);
-          throw error;
+          const errMsg = error.response?.data?.error || (error instanceof Error ? error.message : String(error));
+          throw new Error(`Error importing product offers: ${errMsg}`);
         }
       } else {
         console.log(`Skipping product offers sync for integration ${integrationId} (not due yet)`);
@@ -766,13 +771,16 @@ export const useIntegrationSync = () => {
       console.error(`Error syncing integration ${integrationId}:`, error);
       
       // Update status to error
+      // If the error is already a formatted message from our code, use it directly
+      const errorMessage = error.message || 'An unexpected error occurred during synchronization';
+      
       await updateIntegrationStatus(
         integrationId, 
         'error', 
-        error.message || 'An unexpected error occurred during synchronization'
+        errorMessage
       );
       
-      return { success: false, error: error.message || 'Failed to sync integration' };
+      return { success: false, error: errorMessage };
     }
   }, [updateIntegrationStatus, queryClient, fetchOrdersFromEmagApi, fetchProductOffersFromEmagApi, saveOrdersToDb, saveProductOffersToDb, shouldSyncIntegration, invalidateAndRefetchQueries]);
 
