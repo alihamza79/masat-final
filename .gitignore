@@ -75,3 +75,4 @@ terraform.rc
 /terraform/.terraform.lock.hcl
 /build_docker_image.sh
 /lambdas/daily-task.zip
+/terraform/terraform.tfvars.prod

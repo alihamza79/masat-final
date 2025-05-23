@@ -158,6 +158,28 @@ docker run -p 3000:3000 --env-file .env.production masat-nextjs
 
 The `terraform` directory contains infrastructure as code for deploying the application to AWS.
 
+### Environments
+
+The application supports multiple deployment environments:
+
+- **Development (dev)**: The default environment for testing and development
+- **Production (prod)**: The environment for production use
+
+### Deployment Process
+
+#### Development Environment
+
+The development environment is automatically deployed when changes are pushed to the `develop` branch.
+
+#### Production Environment
+
+To deploy to the production environment:
+
+1. Push changes to the `main` branch, or
+2. Manually trigger the production deployment workflow in GitHub Actions
+
+The production environment uses separate infrastructure resources and configuration to ensure stability and security.
+
 ## Improvement List
 
 See the [TODO.md](./doc/TODO.md) file for a comprehensive list of planned improvements and tasks.
