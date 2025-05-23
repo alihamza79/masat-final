@@ -469,6 +469,16 @@
             "subscribeError": "Failed to subscribe to feature",
             "unsubscribeError": "Failed to unsubscribe from feature"
         },
+        "vote": {
+            "vote": "Vote",
+            "voted": "Voted",
+            "addVote": "Vote for this feature",
+            "removeVote": "Remove vote",
+            "voteSuccess": "Vote added successfully",
+            "unvoteSuccess": "Vote removed successfully",
+            "voteError": "Failed to vote for feature",
+            "unvoteError": "Failed to remove vote"
+        },
         "notifications": {
             "title": "Notifications",
             "markAllRead": "Mark All as Read",
@@ -481,6 +491,7 @@
         "table": {
             "subject": "Subject",
             "status": "Status",
+            "votes": "Votes",
             "createdBy": "Created By",
             "updatedAt": "Last Updated",
             "actions": "Actions",
@@ -532,7 +543,10 @@
         },
         "search": {
             "placeholder": "Search feature requests..."
-        }
+        },
+        "createdBy": "Created by",
+        "created": "Created",
+        "updated": "Updated"
     },
     "notifications": {
         "pageTitle": "Notifications",

@@ -6,14 +6,9 @@ import {
   DialogActions,
   TextField,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   CircularProgress,
   Box,
-  useTheme,
-  FormHelperText
+  useTheme
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Feature, FeatureStatus } from '@/lib/hooks/useFeatures';
@@ -21,7 +16,7 @@ import { Feature, FeatureStatus } from '@/lib/hooks/useFeatures';
 export interface FeatureFormData {
   subject: string;
   body: string;
-  status: FeatureStatus;
+  // status: FeatureStatus; // Removed from form
 }
 
 interface FeatureFormDialogProps {
@@ -49,14 +44,12 @@ const FeatureFormDialog: React.FC<FeatureFormDialogProps> = ({
 
   const [formData, setFormData] = useState<FeatureFormData>({
     subject: '',
-    body: '',
-    status: 'Proposed'
+    body: ''
   });
 
   const [errors, setErrors] = useState({
     subject: '',
-    body: '',
-    status: ''
+    body: ''
   });
 
   // Reset form when dialog opens or initialData changes
@@ -65,20 +58,17 @@ const FeatureFormDialog: React.FC<FeatureFormDialogProps> = ({
       if (initialData) {
         setFormData({
           subject: initialData.subject || '',
-          body: initialData.body || '',
-          status: initialData.status || 'Proposed'
+          body: initialData.body || ''
         });
       } else {
         setFormData({
           subject: '',
-          body: '',
-          status: 'Proposed'
+          body: ''
         });
       }
       setErrors({
         subject: '',
-        body: '',
-        status: ''
+        body: ''
       });
       setLocalSubmitting(false);
     }
@@ -101,18 +91,10 @@ const FeatureFormDialog: React.FC<FeatureFormDialogProps> = ({
     }
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<{ value: unknown }>) => {
-    setFormData(prev => ({
-      ...prev,
-      status: e.target.value as FeatureStatus
-    }));
-  };
-
   const validateForm = (): boolean => {
     const newErrors = {
       subject: '',
-      body: '',
-      status: ''
+      body: ''
     };
     
     if (!formData.subject.trim()) {
@@ -125,7 +107,7 @@ const FeatureFormDialog: React.FC<FeatureFormDialogProps> = ({
     
     setErrors(newErrors);
     
-    return !newErrors.subject && !newErrors.body && !newErrors.status;
+    return !newErrors.subject && !newErrors.body;
   };
 
   const handleSubmit = async () => {
@@ -189,31 +171,6 @@ const FeatureFormDialog: React.FC<FeatureFormDialogProps> = ({
               }
             }}
           />
-          
-          {isEditMode && (
-            <FormControl fullWidth margin="normal" sx={{ mb: 2 }} error={!!errors.status}>
-              <InputLabel id="status-label">
-                {t('features.form.statusLabel')}
-              </InputLabel>
-              <Select
-                labelId="status-label"
-                id="status"
-                value={formData.status}
-                onChange={handleStatusChange as any}
-                label={t('features.form.statusLabel')}
-                disabled={submitting}
-                sx={{
-                  '& .MuiSelect-select': {
-                    padding: '16px 14px'
-                  }
-                }}
-              >
-                <MenuItem value="Proposed">{t('features.status.proposed')}</MenuItem>
-                <MenuItem value="Development">{t('features.status.development')}</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-          
           <TextField
             margin="normal"
             id="body"

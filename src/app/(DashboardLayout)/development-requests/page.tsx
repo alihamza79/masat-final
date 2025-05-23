@@ -23,20 +23,13 @@ import Toast from '@/app/components/common/Toast';
 import { useTranslation } from 'react-i18next';
 import useAuth from '@/lib/hooks/useAuth';
 import FeaturesTable from './components/FeaturesTable';
-import FeatureFormDialog from './components/FeatureFormDialog';
+import FeatureFormDialog, { FeatureFormData } from './components/FeatureFormDialog';
 import FeatureDetailDialog from './components/FeatureDetailDialog';
 import { useFeatures, Feature, FeatureStatus } from '@/lib/hooks/useFeatures';
 import useFeatureOwnership from '@/lib/hooks/useFeatureOwnership';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-
-// Define FeatureFormData interface
-export interface FeatureFormData {
-  subject: string;
-  body: string;
-  status: FeatureStatus;
-}
 
 // Define filter types
 type FilterType = 'all' | 'my';
@@ -309,16 +302,23 @@ const DevelopmentRequestsPage = () => {
   const handleSubmitFeature = async (data: FeatureFormData): Promise<void> => {
     try {
       if (selectedFeature?._id) {
-        // Update existing feature
-        await updateFeature({ ...data, _id: selectedFeature._id });
+        // Update existing feature - need to add the status back
+        await updateFeature({ 
+          ...data, 
+          status: selectedFeature.status, // Add status from selectedFeature
+          _id: selectedFeature._id 
+        });
         // Close the dialog after a short delay to show loading state
         setTimeout(() => {
           setOpenFormDialog(false);
           setSelectedFeature(null);
         }, 500);
       } else {
-        // Create new feature
-        await createFeature(data);
+        // Create new feature - need to add default status
+        await createFeature({
+          ...data,
+          status: 'Proposed' // Add default status for new features
+        });
         // Close the dialog after a short delay to show loading state
         setTimeout(() => {
           setOpenFormDialog(false);

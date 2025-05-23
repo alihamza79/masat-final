@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
@@ -16,19 +16,9 @@ export interface UserData {
  */
 export function useCurrentUser() {
   const { data: sessionData } = useSession();
-  const [lastRefetchTime, setLastRefetchTime] = useState(Date.now());
-
-  // Force a refetch every 30 seconds if needed
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastRefetchTime(Date.now());
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['current-user', lastRefetchTime],
+    queryKey: ['current-user'],
     queryFn: async (): Promise<UserData> => {
       try {
         // First attempt to use our MongoDB user endpoint
@@ -75,20 +65,17 @@ export function useCurrentUser() {
       // No authenticated user found
       return { id: '', isAuthenticated: false };
     },
-    staleTime: 1000 * 30, // 30 seconds
-    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    retry: 1,
   });
-
-  const manualRefresh = () => {
-    setLastRefetchTime(Date.now());
-    return refetch();
-  };
 
   return {
     user: data,
     isLoading,
     error,
-    refetch: manualRefresh
+    refetch
   };
 }
 

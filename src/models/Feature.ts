@@ -6,6 +6,7 @@ export interface IFeature extends Document {
   status: 'Proposed' | 'Development';
   userId: mongoose.Types.ObjectId;
   createdBy: string;
+  voteCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +26,7 @@ const FeatureSchema: Schema = new Schema({
     ref: 'User'
   },
   createdBy: { type: String, required: true },
+  voteCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

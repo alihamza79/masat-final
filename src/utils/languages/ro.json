@@ -664,6 +664,16 @@
             "subscribeError": "Eroare la abonare",
             "unsubscribeError": "Eroare la dezabonare"
         },
+        "vote": {
+            "vote": "Votează",
+            "voted": "Votat",
+            "addVote": "Votează această funcționalitate",
+            "removeVote": "Elimină votul",
+            "voteSuccess": "Vot adăugat cu succes",
+            "unvoteSuccess": "Vot eliminat cu succes",
+            "voteError": "Eroare la votarea funcționalității",
+            "unvoteError": "Eroare la eliminarea votului"
+        },
         "notifications": {
             "title": "Notificări",
             "markAllRead": "Marchează toate ca citite",
@@ -676,6 +686,7 @@
         "table": {
             "subject": "Subiect",
             "status": "Status",
+            "votes": "Voturi",
             "createdBy": "Creat de",
             "updatedAt": "Ultima Actualizare",
             "actions": "Acțiuni",
@@ -727,7 +738,10 @@
         },
         "search": {
             "placeholder": "Caută cereri de funcționalitate..."
-        }
+        },
+        "createdBy": "Creat de",
+        "created": "Creat la",
+        "updated": "Actualizat la"
     },
     "notifications": {
         "pageTitle": "Notificări",
