@@ -37,14 +37,15 @@ const Notifications = () => {
   const previousUnreadCount = useRef(0);
   const [showNewIndicator, setShowNewIndicator] = useState(false);
   
-  const { 
-    notifications, 
-    unreadCount, 
-    isLoading, 
-    markOneAsRead, 
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    markOneAsRead,
     markAllAsRead, 
     refetchNotifications 
-  } = useNotifications(10);
+  } = useNotifications({ limit: 10 });
 
   // Visual indicator for new notifications
   useEffect(() => {

@@ -39,7 +39,8 @@
         "xScan": "X Scan",
         
         "expenses": "Expenses",
-        "developmentRequests": "Development Requests"
+        "developmentRequests": "Development Requests",
+        "notifications": "Notifications"
     },
     "profile": {
         "userProfile": "User Profile",
@@ -531,6 +532,53 @@
         },
         "search": {
             "placeholder": "Search feature requests..."
+        }
+    },
+    "notifications": {
+        "pageTitle": "Notifications",
+        "pageDescription": "Manage your notifications",
+        "markAllRead": "Mark All as Read",
+        "refresh": "Refresh",
+        "deleteAll": "Delete All",
+        "viewFeature": "View Feature",
+        "filter": {
+            "all": "All Notifications",
+            "unread": "Unread Notifications",
+            "read": "Read Notifications"
+        },
+        "timeFilter": {
+            "all": "All Time",
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "week": "Last 7 Days",
+            "month": "Last 30 Days"
+        },
+        "table": {
+            "type": "Type",
+            "message": "Message",
+            "date": "Date",
+            "actions": "Actions",
+            "noNotifications": "No notifications found."
+        },
+        "actions": {
+            "view": "View Details",
+            "markRead": "Mark as Read",
+            "delete": "Delete"
+        },
+        "deleteDialog": {
+            "title": "Delete Notification",
+            "content": "Are you sure you want to delete this notification? This action cannot be undone."
+        },
+        "deleteAllDialog": {
+            "title": "Delete All Notifications",
+            "content": "Are you sure you want to delete all notifications? This action cannot be undone."
+        },
+        "deleteSuccess": "Notification deleted successfully",
+        "deleteError": "Failed to delete notification",
+        "deleteAllSuccess": "All notifications deleted successfully",
+        "deleteAllError": "Failed to delete all notifications",
+        "search": {
+            "placeholder": "Search notifications..."
         }
     },
     "integrations": {

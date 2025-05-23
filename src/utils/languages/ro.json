@@ -39,7 +39,8 @@
         "xScan": "X Scan",
         
         "expenses": "Cheltuieli",
-        "developmentRequests": "Cereri de Dezvoltare"
+        "developmentRequests": "Cereri de Dezvoltare",
+        "notifications": "Notificări"
     },
     "profile": {
         "userProfile": "Profil Utilizator",
@@ -726,6 +727,53 @@
         },
         "search": {
             "placeholder": "Caută cereri de funcționalitate..."
+        }
+    },
+    "notifications": {
+        "pageTitle": "Notificări",
+        "pageDescription": "Administrează notificările tale",
+        "markAllRead": "Marchează Toate ca Citite",
+        "refresh": "Reîmprospătare",
+        "deleteAll": "Șterge Toate",
+        "viewFeature": "Vezi Funcționalitatea",
+        "filter": {
+            "all": "Toate Notificările",
+            "unread": "Notificări Necitite",
+            "read": "Notificări Citite"
+        },
+        "timeFilter": {
+            "all": "Tot Timpul",
+            "today": "Astăzi",
+            "yesterday": "Ieri",
+            "week": "Ultimele 7 Zile",
+            "month": "Ultimele 30 Zile"
+        },
+        "table": {
+            "type": "Tip",
+            "message": "Mesaj",
+            "date": "Data",
+            "actions": "Acțiuni",
+            "noNotifications": "Nu s-au găsit notificări."
+        },
+        "actions": {
+            "view": "Vezi Detalii",
+            "markRead": "Marchează ca Citit",
+            "delete": "Șterge"
+        },
+        "deleteDialog": {
+            "title": "Șterge Notificare",
+            "content": "Ești sigur că vrei să ștergi această notificare? Această acțiune nu poate fi anulată."
+        },
+        "deleteAllDialog": {
+            "title": "Șterge Toate Notificările",
+            "content": "Ești sigur că vrei să ștergi toate notificările? Această acțiune nu poate fi anulată."
+        },
+        "deleteSuccess": "Notificare ștearsă cu succes",
+        "deleteError": "Eroare la ștergerea notificării",
+        "deleteAllSuccess": "Toate notificările au fost șterse cu succes",
+        "deleteAllError": "Eroare la ștergerea tuturor notificărilor",
+        "search": {
+            "placeholder": "Caută notificări..."
         }
     }
 } 
