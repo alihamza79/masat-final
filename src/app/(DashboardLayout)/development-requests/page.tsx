@@ -112,11 +112,20 @@ const DevelopmentRequestsPage = () => {
     
     // Then check sessionStorage (client-side only)
     let featureIdFromStorage = null;
+    let notificationClicked = false;
+    
     if (typeof window !== 'undefined') {
       featureIdFromStorage = sessionStorage.getItem('selectedFeatureId');
-      // Clear the session storage immediately to prevent unwanted reopening
-      if (featureIdFromStorage) {
-        sessionStorage.removeItem('selectedFeatureId');
+      notificationClicked = Boolean(sessionStorage.getItem('featureNotificationClicked'));
+      
+      // Always clear the sessionStorage items immediately to prevent reopening
+      sessionStorage.removeItem('selectedFeatureId');
+      sessionStorage.removeItem('featureNotificationClicked');
+      
+      // If this was NOT clicked from a notification, ignore the stored feature ID
+      // This prevents reopening when simply navigating back to the page
+      if (!notificationClicked && !featureIdFromUrl) {
+        featureIdFromStorage = null;
       }
     }
     
@@ -124,13 +133,7 @@ const DevelopmentRequestsPage = () => {
     const featureId = featureIdFromUrl || featureIdFromStorage;
     
     if (featureId && features.length > 0) {
-      // Force refresh features if coming from a notification click
-      const notificationClicked = typeof window !== 'undefined' && 
-        sessionStorage.getItem('featureNotificationClicked');
-      
       if (notificationClicked) {
-        // Clear the flag
-        sessionStorage.removeItem('featureNotificationClicked');
         // Force refresh features to get latest data
         refetch().then(() => {
           // After refresh, find the updated feature and show dialog
@@ -140,8 +143,8 @@ const DevelopmentRequestsPage = () => {
             setOpenDetailDialog(true);
           }
         });
-      } else {
-        // Regular flow - find feature and show dialog
+      } else if (featureIdFromUrl) {
+        // Regular flow for URL parameters - find feature and show dialog
         const feature = features.find((f: Feature) => f._id === featureId);
         if (feature) {
           setSelectedFeature(feature);
@@ -194,6 +197,10 @@ const DevelopmentRequestsPage = () => {
       const { featureId } = event.detail;
       
       if (featureId) {
+        // Close any open dialog first
+        setOpenDetailDialog(false);
+        setSelectedFeature(null);
+        
         // Set loading state
         setIsLoadingNotificationFeature(true);
         
@@ -266,8 +273,25 @@ const DevelopmentRequestsPage = () => {
   };
 
   const handleCloseDetailDialog = () => {
+    // Reset all related state
     setOpenDetailDialog(false);
     setSelectedFeature(null);
+    setIsLoadingNotificationFeature(false);
+    setPendingFeatureId(null);
+    
+    // Clear the feature ID from URL if it exists
+    if (typeof window !== 'undefined' && searchParams.get('featureId')) {
+      // Remove the featureId parameter from URL without full page refresh
+      const url = new URL(window.location.href);
+      url.searchParams.delete('featureId');
+      window.history.replaceState({}, '', url);
+    }
+    
+    // Also ensure any leftover storage is cleared
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('selectedFeatureId');
+      sessionStorage.removeItem('featureNotificationClicked');
+    }
   };
 
   const handleCloseToast = () => {
