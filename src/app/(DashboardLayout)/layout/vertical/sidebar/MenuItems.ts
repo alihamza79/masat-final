@@ -30,7 +30,8 @@ import {
   IconZoomCode,
  
   IconCalculator,
-  IconUser
+  IconUser,
+  IconBulb
 } from "@tabler/icons-react";
 
 const Menuitems: MenuitemsType[] = [
@@ -42,12 +43,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconChartLine,
     href: "/dashboard",
   },
-  {
-    id: uniqueId(),
-    title: "menu.businessProfile",
-    icon: IconUserCircle,
-    href: "/businefrrfss-profile",
-      },
+  
       {
         id: uniqueId(),
         title: "menu.expenses",
@@ -72,6 +68,7 @@ const Menuitems: MenuitemsType[] = [
     icon: IconCalculator,
     href: "/calculator",
   },
+  
  
   {
     id: uniqueId(),
@@ -93,10 +90,11 @@ const Menuitems: MenuitemsType[] = [
   },
   {
     id: uniqueId(),
-    title: "menu.reports",
-    icon: IconFileDescription,
-    href: "/repofrts",
-  }
+    title: "menu.developmentRequests",
+    icon: IconBulb,
+    href: "/development-requests",
+  },
+  
 ];
 
 export default Menuitems;

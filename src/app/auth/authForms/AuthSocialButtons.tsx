@@ -1,12 +1,9 @@
 'use client'
 import CustomSocialButton from "@/app/components/forms/theme-elements/CustomSocialButton";
-import { Stack } from "@mui/system";
 import { Avatar, Box, CircularProgress } from "@mui/material";
-import { signInType } from "@/app/(DashboardLayout)/types/auth/auth";
+import { Stack } from "@mui/system";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
 
 interface Props {
   title: string;
@@ -23,6 +20,8 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
       await signIn('google', { callbackUrl: '/', remember: rememberDevice });
     } catch (error) {
       console.error('Google sign in error:', error);
+      setGoogleLoading(false);
+      throw error;
     }
   };
 
@@ -33,6 +32,7 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
     } catch (error) {
       console.error('Facebook sign in error:', error);
       setFacebookLoading(false);
+      throw error;
     }
   };
 

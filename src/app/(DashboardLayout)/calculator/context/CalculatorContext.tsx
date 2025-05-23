@@ -281,42 +281,32 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
       };
 
     case 'UPDATE_SALES_ESTIMATOR':
-      // Perform a deep equality check to see if the state actually needs to update
+      // Start with the current salesEstimator state
       const currentSalesEstimator = state.salesEstimator;
-      const newSalesEstimator = {
+      
+      // Create the updated salesEstimator with the new payload
+      const updatedSalesEstimator = {
         ...currentSalesEstimator,
         ...action.payload
       };
       
-      // Check if totalPieces actually changed
-      const piecesUnchanged = 
-        newSalesEstimator.totalPieces === currentSalesEstimator.totalPieces;
-      
-      // Check if sliderValue is unchanged (both arrays with same values)
-      const sliderUnchanged = 
-        (!newSalesEstimator.sliderValue && !currentSalesEstimator.sliderValue) ||
-        (Array.isArray(newSalesEstimator.sliderValue) && 
-         Array.isArray(currentSalesEstimator.sliderValue) &&
-         newSalesEstimator.sliderValue.length === currentSalesEstimator.sliderValue.length &&
-         newSalesEstimator.sliderValue.every((val, idx) => 
-           Math.abs(val - currentSalesEstimator.sliderValue[idx]) < 0.001
-         ));
-      
-      // Check if distribution is unchanged
-      const distributionUnchanged = 
-        (!newSalesEstimator.distribution && !currentSalesEstimator.distribution) ||
-        (JSON.stringify(newSalesEstimator.distribution) === 
-         JSON.stringify(currentSalesEstimator.distribution));
-      
-      // If nothing changed, return the same state to prevent unnecessary renders
-      if (piecesUnchanged && sliderUnchanged && distributionUnchanged) {
-        return state;
+      // Calculate and ensure correct total
+      if (action.payload.distribution) {
+        // Recalculate total from actual distribution
+        const visibleTypes = Object.keys(action.payload.distribution);
+        const calculatedTotal = visibleTypes.reduce((sum, type) => {
+          return sum + (action.payload.distribution?.[type]?.pieces || 0);
+        }, 0);
+        
+        // If the distribution pieces don't match the provided total, use the calculated total
+        if (calculatedTotal !== updatedSalesEstimator.totalPieces) {
+          updatedSalesEstimator.totalPieces = calculatedTotal;
+        }
       }
       
-      // Otherwise update with the new values
       return {
         ...state,
-        salesEstimator: newSalesEstimator
+        salesEstimator: updatedSalesEstimator
       };
 
     case 'RESET_CATEGORIES':
@@ -328,7 +318,7 @@ function calculatorReducer(state: CalculatorState, action: Action): CalculatorSt
     case 'RESET_SALES_ESTIMATOR':
       return {
         ...state,
-        salesEstimator: initialState.salesEstimator
+        salesEstimator: initialState.salesEstimator,
       };
 
     case 'RESET':

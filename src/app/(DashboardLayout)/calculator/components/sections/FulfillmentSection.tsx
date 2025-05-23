@@ -418,12 +418,30 @@ const FulfillmentSection: React.FC<FulfillmentSectionProps> = ({
                       sx={{
                         cursor: 'pointer',
                         border: '1px solid',
-                        borderColor: 'divider',
+                        borderColor: 'primary.main',
                         borderRadius: 1,
                         p: 1,
                         textAlign: 'center',
                         fontSize: '13px',
-                        bgcolor: 'background.paper'
+                        bgcolor: 'background.paper',
+                        boxShadow: '0 0 3px rgba(0, 0, 0, 0.1)',
+                        position: 'relative',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          borderColor: 'primary.dark',
+                          bgcolor: 'action.hover',
+                          boxShadow: '0 0 5px rgba(0, 0, 0, 0.15)',
+                        },
+                        '&::after': {
+                          content: '"✎"',
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          fontSize: '16px',
+                          color: 'primary.main',
+                          fontWeight: 600
+                        }
                       }}
                     >
                       {formatCurrency(data.fulfillmentCost, false)}

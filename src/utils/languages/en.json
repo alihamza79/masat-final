@@ -30,15 +30,17 @@
         "apps": "Apps",
         "myAccount": "My Account",
         "dashboard": "Dashboard",
-        "businessProfile": "Business Profile",
+        
         "subscriptionPayment": "Subscription and Payment",
         "integrations": "Integrations",
         "campaignCalculator": "PxL Calculator",
         "listingOptimizer": "Listing Optimizer",
         "keywordTracker": "Keyword Tracker",
         "xScan": "X Scan",
-        "reports": "Reports",
-        "expenses": "Expenses"
+        
+        "expenses": "Expenses",
+        "developmentRequests": "Development Requests",
+        "notifications": "Notifications"
     },
     "profile": {
         "userProfile": "User Profile",
@@ -449,6 +451,136 @@
             "missingId": "Expense ID is required for update"
         }
     },
+    "features": {
+        "pageTitle": "Development Requests",
+        "pageDescription": "Manage feature requests and development ideas",
+        "addButton": "Add Request",
+        "refreshButton": "Refresh",
+        "refreshingButton": "Refreshing...",
+        "filter": {
+            "all": "All Development Requests",
+            "myRequests": "My Development Requests"
+        },
+        "subscription": {
+            "subscribe": "Subscribe to updates",
+            "unsubscribe": "Unsubscribe from updates",
+            "subscribeSuccess": "Subscribed to feature updates successfully",
+            "unsubscribeSuccess": "Unsubscribed from feature updates successfully",
+            "subscribeError": "Failed to subscribe to feature",
+            "unsubscribeError": "Failed to unsubscribe from feature"
+        },
+        "notifications": {
+            "title": "Notifications",
+            "markAllRead": "Mark All as Read",
+            "viewAll": "View All Notifications",
+            "noNotifications": "No notifications",
+            "update": "Update: {subject}",
+            "statusChange": "Status Changed: {subject}",
+            "statusChangedTo": "Status changed to \"{status}\""
+        },
+        "table": {
+            "subject": "Subject",
+            "status": "Status",
+            "createdBy": "Created By",
+            "updatedAt": "Last Updated",
+            "actions": "Actions",
+            "noFeatures": "No feature requests found. Create a new one to get started."
+        },
+        "actions": {
+            "view": "View Details",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "form": {
+            "createTitle": "Create Feature Request",
+            "editTitle": "Edit Feature Request",
+            "subjectLabel": "Subject",
+            "statusLabel": "Status",
+            "bodyLabel": "Description",
+            "createButton": "Create Request",
+            "updateButton": "Update Request",
+            "errors": {
+                "subjectRequired": "Subject is required",
+                "bodyRequired": "Description is required"
+            }
+        },
+        "status": {
+            "proposed": "Proposed",
+            "development": "Development"
+        },
+        "detail": {
+            "requestedBy": "Requested by: {name}",
+            "dateCreated": "Created on: {date}"
+        },
+        "deleteDialog": {
+            "title": "Delete Feature Request",
+            "content": "Are you sure you want to delete this feature request? This action cannot be undone.",
+            "featureRequest": "this feature request"
+        },
+        "toast": {
+            "createSuccess": "Feature request created successfully",
+            "createError": "Failed to create feature request",
+            "updateSuccess": "Feature request updated successfully",
+            "updateError": "Failed to update feature request",
+            "deleteSuccess": "Feature request deleted successfully",
+            "deleteError": "Failed to delete feature request",
+            "refreshSuccess": "Feature requests refreshed successfully",
+            "refreshError": "Failed to refresh feature requests",
+            "fetchError": "Failed to fetch feature requests",
+            "missingId": "Feature ID is required for update",
+            "error": "An error occurred"
+        },
+        "search": {
+            "placeholder": "Search feature requests..."
+        }
+    },
+    "notifications": {
+        "pageTitle": "Notifications",
+        "pageDescription": "Manage your notifications",
+        "markAllRead": "Mark All as Read",
+        "refresh": "Refresh",
+        "deleteAll": "Delete All",
+        "viewFeature": "View Feature",
+        "filter": {
+            "all": "All Notifications",
+            "unread": "Unread Notifications",
+            "read": "Read Notifications"
+        },
+        "timeFilter": {
+            "all": "All Time",
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "week": "Last 7 Days",
+            "month": "Last 30 Days"
+        },
+        "table": {
+            "type": "Type",
+            "message": "Message",
+            "date": "Date",
+            "actions": "Actions",
+            "noNotifications": "No notifications found."
+        },
+        "actions": {
+            "view": "View Details",
+            "markRead": "Mark as Read",
+            "delete": "Delete"
+        },
+        "deleteDialog": {
+            "title": "Delete Notification",
+            "content": "Are you sure you want to delete this notification? This action cannot be undone."
+        },
+        "deleteAllDialog": {
+            "title": "Delete All Notifications",
+            "content": "Are you sure you want to delete all notifications? This action cannot be undone."
+        },
+        "deleteSuccess": "Notification deleted successfully",
+        "deleteError": "Failed to delete notification",
+        "deleteAllSuccess": "All notifications deleted successfully",
+        "deleteAllError": "Failed to delete all notifications",
+        "search": {
+            "placeholder": "Search notifications..."
+        }
+    },
     "integrations": {
         "title": "eMAG Integrations",
         "addButton": "Add Integration",
@@ -561,7 +693,8 @@
             "hourAgo": "1 hour ago",
             "hoursAgo": "{{count}} hours ago",
             "dayAgo": "1 day ago",
-            "daysAgo": "{{count}} days ago"
+            "daysAgo": "{{count}} days ago",
+            "yesterday": "yesterday"
         }
     },
     "accountSettings": {

@@ -1,46 +1,33 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { Alert, Snackbar, AlertColor } from '@mui/material';
+import React from 'react';
+import { Snackbar, Alert, AlertProps } from '@mui/material';
 
-export interface ToastProps {
+interface ToastProps {
   open: boolean;
   message: string;
-  severity: AlertColor;
-  duration?: number;
+  severity: AlertProps['severity'];
   onClose: () => void;
+  duration?: number;
 }
 
 const Toast: React.FC<ToastProps> = ({
   open,
   message,
   severity,
-  duration = 6000,
-  onClose
+  onClose,
+  duration = 5000,
 }) => {
-  const [isOpen, setIsOpen] = useState(open);
-
-  useEffect(() => {
-    setIsOpen(open);
-  }, [open]);
-
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setIsOpen(false);
-    onClose();
-  };
-
   return (
     <Snackbar
-      open={isOpen}
+      open={open}
       autoHideDuration={duration}
-      onClose={handleClose}
-      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      onClose={onClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
     >
-      <Alert
-        onClose={handleClose}
-        severity={severity}
+      <Alert 
+        onClose={onClose} 
+        severity={severity} 
+        elevation={6} 
         variant="filled"
         sx={{ width: '100%' }}
       >

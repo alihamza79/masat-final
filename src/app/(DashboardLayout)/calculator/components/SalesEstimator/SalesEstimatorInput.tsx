@@ -20,19 +20,19 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
   const [isFocused, setIsFocused] = useState(false);
   const [localValue, setLocalValue] = useState('');
   const previousValueRef = useRef(value);
-  const changeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInternalChangeRef = useRef(false);
+  const userEnteredValueRef = useRef<string | null>(null);
 
-  // Update local value when prop value changes, but only if we're not mid-edit
+  // Update local value when prop value changes
   useEffect(() => {
     // If this is our own internal change, skip to avoid loops
     if (isInternalChangeRef.current) {
       return;
     }
     
-    // Only update if not focused and the value has meaningfully changed
+    // Only update if not focused or if the value has meaningfully changed
     const prevValue = previousValueRef.current;
-    const valueHasChanged = Math.abs(value - prevValue) > 0.001; // Add small epsilon for float comparison
+    const valueHasChanged = value !== prevValue; 
     
     if (!isFocused && valueHasChanged) {
       previousValueRef.current = value;
@@ -41,40 +41,13 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
       if (value === 0) {
         setLocalValue('0');
       } else {
-        setLocalValue(Math.round(value).toString());
+        setLocalValue(value.toString());
       }
+      
+      // Update user entered value to match
+      userEnteredValueRef.current = value.toString();
     }
   }, [value, isFocused]);
-
-  // Clean up any pending timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (changeTimeoutRef.current) {
-        clearTimeout(changeTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Debounced onChange to prevent rapid updates
-  const debouncedOnChange = useCallback((newValue: number) => {
-    // Clear any existing timeout
-    if (changeTimeoutRef.current) {
-      clearTimeout(changeTimeoutRef.current);
-    }
-    
-    // Set flag to indicate this is our own change
-    isInternalChangeRef.current = true;
-    
-    // Call onChange after a short delay
-    changeTimeoutRef.current = setTimeout(() => {
-      onChange(newValue);
-      
-      // Reset the flag after a short delay to prevent immediate feedback loops
-      setTimeout(() => {
-        isInternalChangeRef.current = false;
-      }, 50);
-    }, 50);
-  }, [onChange]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -82,6 +55,7 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
     // Allow empty string while typing
     if (newValue === '') {
       setLocalValue('');
+      userEnteredValueRef.current = '';
       return;
     }
 
@@ -94,19 +68,31 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
     if (isNaN(parsedValue)) return;
     if (parsedValue < 0) return;
 
-    // Update local value while typing
+    // Update local value while typing - EXACTLY as entered
     setLocalValue(numericValue);
     
-    // Only trigger onChange if value actually changed to avoid loops
-    if (parsedValue !== value) {
-      debouncedOnChange(parsedValue);
-    }
-  }, [value, debouncedOnChange]);
+    // Store the user entered value
+    userEnteredValueRef.current = numericValue;
+    
+    // Set flag to indicate this is our own change
+    isInternalChangeRef.current = true;
+    
+    // Immediately notify parent of change without delay
+    onChange(parsedValue);
+    
+    // Reset flag immediately to allow quick consecutive updates
+    isInternalChangeRef.current = false;
+    
+  }, [onChange]);
 
   // Handle focus
   const handleFocus = useCallback(() => {
     setIsFocused(true);
-    if (value === 0) {
+    
+    // When focused, always show the exact value
+    if (userEnteredValueRef.current !== null) {
+      setLocalValue(userEnteredValueRef.current);
+    } else if (value === 0) {
       setLocalValue('');
     } else {
       setLocalValue(value.toString());
@@ -117,31 +103,85 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
   const handleBlur = useCallback(() => {
     setIsFocused(false);
     
-    // On blur always update with the final value
+    // On blur always update with the final value immediately
     if (localValue === '' || parseFloat(localValue) === 0) {
       setLocalValue('0');
+      userEnteredValueRef.current = '0';
       
-      // Only call onChange if the value has actually changed
+      // Call onChange directly
       if (value !== 0) {
-        debouncedOnChange(0);
+        isInternalChangeRef.current = true;
+        onChange(0);
+        isInternalChangeRef.current = false;
       }
     } else {
-      const parsedValue = parseFloat(localValue);
+      const parsedValue = parseInt(localValue, 10);
+      
+      // Ensure value is valid
+      if (isNaN(parsedValue) || parsedValue < 0) {
+        // Revert to previous valid value
+        setLocalValue(value.toString());
+        userEnteredValueRef.current = value.toString();
+        return;
+      }
+      
       // Only set new value if different from current to avoid unnecessary updates
-      if (Math.abs(parsedValue - value) > 0.001) { // Use epsilon for float comparison
-        const formattedValue = parsedValue.toFixed(2);
-        setLocalValue(formattedValue);
-        debouncedOnChange(parseFloat(formattedValue));
+      if (parsedValue !== value) {
+        setLocalValue(parsedValue.toString());
+        userEnteredValueRef.current = parsedValue.toString();
+        
+        isInternalChangeRef.current = true;
+        onChange(parsedValue);
+        isInternalChangeRef.current = false;
       }
     }
-  }, [localValue, debouncedOnChange, value]);
+  }, [localValue, onChange, value]);
+  
+  // Handle key press - add immediate update on Enter key
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      // If Enter is pressed, update immediately
+      if (localValue === '' || parseFloat(localValue) === 0) {
+        setLocalValue('0');
+        userEnteredValueRef.current = '0';
+        
+        isInternalChangeRef.current = true;
+        onChange(0);
+        isInternalChangeRef.current = false;
+      } else {
+        const parsedValue = parseInt(localValue, 10);
+        
+        // Ensure value is valid
+        if (isNaN(parsedValue) || parsedValue < 0) {
+          // Revert to previous valid value
+          setLocalValue(value.toString());
+          userEnteredValueRef.current = value.toString();
+          return;
+        }
+        
+        if (parsedValue !== value) {
+          setLocalValue(parsedValue.toString());
+          userEnteredValueRef.current = parsedValue.toString();
+          
+          isInternalChangeRef.current = true;
+          onChange(parsedValue);
+          isInternalChangeRef.current = false;
+        }
+      }
+      
+      // Remove focus from input
+      (e.target as HTMLElement).blur();
+    }
+  }, [localValue, onChange, value]);
 
-  // Display value logic
+  // Display value logic - never round the value, use exact values
   const displayValue = isFocused 
     ? localValue 
-    : typeof value === 'number' 
-      ? (value === 0 ? '0' : Math.round(value).toString()) 
-      : value;
+    : userEnteredValueRef.current !== null
+      ? userEnteredValueRef.current
+      : typeof value === 'number' 
+        ? (value === 0 ? '0' : value.toString()) 
+        : value;
 
   return (
     <Stack 
@@ -169,6 +209,7 @@ const SalesEstimatorInput: React.FC<SalesEstimatorInputProps> = React.memo(({
           onChange={handleChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onKeyPress={handleKeyPress}
           variant="standard"
           InputProps={{
             disableUnderline: true,

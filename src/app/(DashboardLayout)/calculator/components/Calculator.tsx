@@ -517,6 +517,25 @@ const Calculator = () => {
           });
         });
         
+        // Get integration details - MOVED UP before commission fetching
+        let integrationDetails = integrations.find(integration => integration._id === integrationId);
+        
+        if (!integrationDetails) {
+          // If not found in store, fetch it directly
+          integrationDetails = await fetchIntegrationDetails(integrationId);
+        }
+
+        console.log('Integration details:', integrationDetails);
+
+        // IMMEDIATELY update visible cards based on integration type
+        if (integrationDetails && integrationDetails.accountType === 'FBE') {
+          console.log('Setting visible cards for FBE only');
+          setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
+        } else {
+          console.log('Setting visible cards for all calculator types');
+          setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
+        }
+        
         // Get product offer ID from product for commission calculation
         const productOfferId = anyProductOffer.emagProductOfferId ? anyProductOffer.emagProductOfferId.toString() : null;
         
@@ -599,24 +618,7 @@ const Calculator = () => {
             });
           }
         }
-        
-        // Get integration details
-        let integrationDetails = integrations.find(integration => integration._id === integrationId);
-        
-        if (!integrationDetails) {
-          // If not found in store, fetch it directly
-          integrationDetails = await fetchIntegrationDetails(integrationId);
-        }
 
-        console.log('Integration details:', integrationDetails);
-
-        if (integrationDetails && integrationDetails.accountType === 'FBE') {
-          console.log('Setting visible cards for FBE only');
-          setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
-        } else {
-          console.log('Setting visible cards for all calculator types');
-          setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
-        }
         return;
       } else {
         // If product not found, show an error toast
@@ -648,6 +650,25 @@ const Calculator = () => {
             }
           });
         });
+
+        // Get integration details - MOVED UP before commission fetching
+        let integrationDetails = integrations.find(integration => integration._id === integrationId);
+        
+        if (!integrationDetails) {
+          // If not found in store, fetch it directly
+          integrationDetails = await fetchIntegrationDetails(integrationId);
+        }
+
+        console.log('Integration details (colon notation):', integrationDetails);
+
+        // IMMEDIATELY update visible cards based on integration type
+        if (integrationDetails && integrationDetails.accountType === 'FBE') {
+          console.log('Setting visible cards for FBE only (colon notation)');
+          setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
+        } else {
+          console.log('Setting visible cards for all calculator types (colon notation)');
+          setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
+        }
         
         // Get product offer ID from product for commission calculation
         const productOfferId = anyProductOffer.emagProductOfferId ? anyProductOffer.emagProductOfferId.toString() : null;
@@ -730,24 +751,6 @@ const Calculator = () => {
               });
             });
           }
-        }
-        
-        // Get integration details
-        let integrationDetails = integrations.find(integration => integration._id === integrationId);
-        
-        if (!integrationDetails) {
-          // If not found in store, fetch it directly
-          integrationDetails = await fetchIntegrationDetails(integrationId);
-        }
-
-        console.log('Integration details (colon notation):', integrationDetails);
-
-        if (integrationDetails && integrationDetails.accountType === 'FBE') {
-          console.log('Setting visible cards for FBE only (colon notation)');
-          setVisibleCards({ 'FBM-NonGenius': false, 'FBM-Genius': false, 'FBE': true });
-        } else {
-          console.log('Setting visible cards for all calculator types (colon notation)');
-          setVisibleCards({ 'FBM-NonGenius': true, 'FBM-Genius': true, 'FBE': true });
         }
       }
     }

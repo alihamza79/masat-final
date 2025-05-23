@@ -41,6 +41,14 @@ export const useSalesEstimatorCalculations = (
   }>({ timestamp: 0 });
   const loadingFromContextRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Add missing refs
+  const manuallyEnteredPieces = useRef<Record<CalculatorType, boolean>>({
+    'FBM-NonGenius': false,
+    'FBM-Genius': false,
+    'FBE': false
+  });
+  const lastTotalPiecesBeforeManualEdit = useRef<number>(0);
 
   // Initialize state from context, defaulting if not available
   const [totalPieces, setTotalPieces] = useState<number>(() => {
@@ -67,16 +75,12 @@ export const useSalesEstimatorCalculations = (
     // Set flag to indicate we're loading from context
     loadingFromContextRef.current = true;
     
-    // Debounce the update to prevent immediate re-renders
-    timerRef.current = setTimeout(() => {
-      setTotalPieces(contextData.totalPieces || 1);
-      setSliderValue(contextData.sliderValue || [33.33, 66.66]);
-      
-      // Clear the loading flag after a short delay
-      setTimeout(() => {
-        loadingFromContextRef.current = false;
-      }, 50);
-    }, 50);
+    // Update immediately without debounce for live updates
+    setTotalPieces(contextData.totalPieces || 1);
+    setSliderValue(contextData.sliderValue || [33.33, 66.66]);
+    
+    // Clear the loading flag immediately
+    loadingFromContextRef.current = false;
   };
 
   // Add effect to initialize/update from context when it changes (for loading saved calculations)
@@ -98,7 +102,7 @@ export const useSalesEstimatorCalculations = (
       JSON.stringify(lastState.salesEstimator) !== JSON.stringify(state.salesEstimator); // Actual change
     
     // Only update if state has changed and enough time has passed
-    if (stateHasChanged && timeSinceLastUpdate > 100) {
+    if (stateHasChanged && timeSinceLastUpdate > 30) { // Reduce debounce to 30ms for faster updates
       // Update our reference to the current state
       lastStateRef.current = {
         salesEstimator: JSON.parse(JSON.stringify(state.salesEstimator)),
@@ -107,9 +111,6 @@ export const useSalesEstimatorCalculations = (
       
       // Update the state with the new values from context
       updateStateFromContext(state.salesEstimator);
-      
-      // Mark as initialized
-      initializedFromSaved.current = true;
     }
   }, [state.salesEstimator]);
 
@@ -160,7 +161,10 @@ export const useSalesEstimatorCalculations = (
         secondPercentage = 100 - firstPercentage;
       }
       
-      const firstPieces = Math.floor((firstPercentage / 100) * pieces);
+      // Calculate first pieces using round for better accuracy
+      const firstPieces = Math.round((firstPercentage / 100) * pieces);
+      
+      // Ensure exact total by calculating second pieces as remainder
       const secondPieces = pieces - firstPieces;
       
       newDistributions[visibleTypes[0]] = { pieces: firstPieces, percent: firstPercentage };
@@ -175,16 +179,42 @@ export const useSalesEstimatorCalculations = (
       const secondPercentage = percentages[1] - percentages[0];
       const thirdPercentage = 100 - percentages[1];
       
-      const firstPieces = Math.floor((firstPercentage / 100) * pieces);
-      const secondPieces = Math.floor((secondPercentage / 100) * pieces);
-      const thirdPieces = pieces - firstPieces - secondPieces;
+      // Calculate first two pieces directly
+      const firstPieces = Math.round((firstPercentage / 100) * pieces);
+      const secondPieces = Math.round((secondPercentage / 100) * pieces);
       
-      newDistributions['FBM-NonGenius'] = { pieces: firstPieces, percent: firstPercentage };
-      newDistributions['FBM-Genius'] = { pieces: secondPieces, percent: secondPercentage };
-      newDistributions['FBE'] = { pieces: thirdPieces, percent: thirdPercentage };
+      // Calculate third piece to ensure sum equals total pieces exactly
+      let thirdPieces = pieces - firstPieces - secondPieces;
+      
+      // Handle edge case when third pieces is negative due to rounding
+      if (thirdPieces < 0) {
+        // Adjust the largest piece to ensure non-negative third pieces
+        if (firstPieces >= secondPieces) {
+          newDistributions['FBM-NonGenius'] = { pieces: firstPieces + thirdPieces, percent: firstPercentage };
+          newDistributions['FBM-Genius'] = { pieces: secondPieces, percent: secondPercentage };
+          newDistributions['FBE'] = { pieces: 0, percent: thirdPercentage };
+        } else {
+          newDistributions['FBM-NonGenius'] = { pieces: firstPieces, percent: firstPercentage };
+          newDistributions['FBM-Genius'] = { pieces: secondPieces + thirdPieces, percent: secondPercentage };
+          newDistributions['FBE'] = { pieces: 0, percent: thirdPercentage };
+        }
+      } else {
+        newDistributions['FBM-NonGenius'] = { pieces: firstPieces, percent: firstPercentage };
+        newDistributions['FBM-Genius'] = { pieces: secondPieces, percent: secondPercentage };
+        newDistributions['FBE'] = { pieces: thirdPieces, percent: thirdPercentage };
+      }
     }
     
     return newDistributions;
+  };
+
+  // First, add a utility function to convert a generic distribution record to the Distributions type
+  const convertToDistributions = (dist: Record<string, { pieces: number; percent: number }>): Distributions => {
+    return {
+      'FBM-NonGenius': dist['FBM-NonGenius'] || { pieces: 0, percent: 0 },
+      'FBM-Genius': dist['FBM-Genius'] || { pieces: 0, percent: 0 },
+      'FBE': dist['FBE'] || { pieces: 0, percent: 0 }
+    };
   };
 
   // Get current distributions
@@ -203,10 +233,13 @@ export const useSalesEstimatorCalculations = (
       // This ensures we have proper values even for saved calculations
       if (state.salesEstimator?.distribution) {
         // If saved data exists, notify parent of the loaded distribution
-        onDistributionChange(state.salesEstimator.distribution);
+        const typedDistribution = convertToDistributions(state.salesEstimator.distribution);
+        const validatedDistribution = validateTotalMatchesSum(typedDistribution);
+        onDistributionChange(validatedDistribution);
       } else {
         // Otherwise calculate a new distribution
-        onDistributionChange(calculateDistributions(totalPieces, sliderValue));
+        const newDistribution = calculateDistributions(totalPieces, sliderValue);
+        onDistributionChange(newDistribution);
       }
       return;
     }
@@ -263,7 +296,8 @@ export const useSalesEstimatorCalculations = (
       setTimeout(() => {
         // Calculate new distributions based on the percentages
         const newDistributions = calculateDistributions(totalPieces, newSliderValue);
-        onDistributionChange(newDistributions);
+        const validatedDistribution = validateTotalMatchesSum(newDistributions);
+        onDistributionChange(validatedDistribution);
       }, 0);
     }
     
@@ -274,7 +308,8 @@ export const useSalesEstimatorCalculations = (
       
       // Calculate new distributions based on the percentages
       const newDistributions = calculateDistributions(totalPieces, newSliderValue);
-      onDistributionChange(newDistributions);
+      const validatedDistribution = validateTotalMatchesSum(newDistributions);
+      onDistributionChange(validatedDistribution);
     }
   }, [visibleCards, totalPieces, onDistributionChange, state.salesEstimator]);
 
@@ -381,113 +416,275 @@ export const useSalesEstimatorCalculations = (
     if (loadingFromContextRef.current) return;
     
     setSliderValue(newValue);
-    onDistributionChange(calculateDistributions(totalPieces, newValue));
+    const newDistribution = calculateDistributions(totalPieces, newValue);
+    const validatedDistribution = validateTotalMatchesSum(newDistribution);
+    onDistributionChange(validatedDistribution);
   };
 
-  // Handle pieces change
+  // Add this function to calculate the sum of all pieces
+  const calculateActualTotal = () => {
+    return Object.entries(distributions)
+      .filter(([type]) => visibleCards[type as CalculatorType])
+      .reduce((sum, [_, dist]) => sum + dist.pieces, 0);
+  };
+
+  // Modify handlePiecesChange to maintain the total when possible
   const handlePiecesChange = (type: CalculatorType, value: number) => {
     // Skip if we're loading from context
     if (loadingFromContextRef.current) return;
     
-    // Save the new value for this type
-    const newPieces = { ...manualPieces, [type]: value };
+    // Mark this calculator as manually edited
+    manuallyEnteredPieces.current[type] = true;
     
-    // Don't update the total pieces - keep it the same
-    // We'll redistribute the remaining amount to the other calculators
+    // Store the previous total for reference
+    const previousTotal = totalPieces;
     
     // Get array of visible calculator types
     const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
       .filter(([_, isVisible]) => isVisible)
       .map(([type]) => type);
     
-    // For a single calculator, just update the total
+    // If there's only one visible calculator, simply update the value
     if (visibleTypes.length === 1) {
+      // Update total immediately 
       setTotalPieces(value);
-      setManualPieces(newPieces);
-      onDistributionChange(calculateDistributions(value, [100]));
+      
+      const newDistributions: Distributions = {
+        'FBM-NonGenius': { pieces: 0, percent: 0 },
+        'FBM-Genius': { pieces: 0, percent: 0 },
+        'FBE': { pieces: 0, percent: 0 }
+      };
+      newDistributions[visibleTypes[0]] = { pieces: value, percent: 100 };
+      
+      // Update manual pieces immediately
+      setManualPieces({
+        'FBM-NonGenius': newDistributions['FBM-NonGenius'].pieces,
+        'FBM-Genius': newDistributions['FBM-Genius'].pieces,
+        'FBE': newDistributions['FBE'].pieces
+      });
+      
+      // Notify parent of changes immediately
+      onDistributionChange(newDistributions);
       return;
     }
     
-    // For multiple calculators, we need to recalculate the distribution
-    const otherVisibleTypes = visibleTypes.filter(t => t !== type);
-    
-    // If value is larger than total, adjust it to total
-    const adjustedValue = Math.min(value, totalPieces);
-    newPieces[type] = adjustedValue;
-    
-    // Calculate remaining pieces to distribute among other visible types
-    const remainingPieces = totalPieces - adjustedValue;
-    
-    if (visibleTypes.length === 2) {
-      // With two calculators, the other one gets all remaining pieces
-      newPieces[otherVisibleTypes[0]] = remainingPieces;
-      
-      // Calculate new slider value based on the percentages
-      const firstType = visibleTypes[0];
-      const firstPercent = (newPieces[firstType] / totalPieces) * 100;
-      
-      // Set slider value based on which calculators are visible
-      const sortedTypes = [...visibleTypes].sort();
-      let newSliderValue: number[];
-      
-      if (sortedTypes[0] === 'FBM-NonGenius' && (sortedTypes[1] === 'FBM-Genius' || sortedTypes[1] === 'FBE')) {
-        // First calculator is NonGenius (with either Genius or FBE)
-        newSliderValue = [firstType === 'FBM-NonGenius' ? firstPercent : 100 - firstPercent, 100];
-      } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
-        // Calculators are Genius and FBE
-        newSliderValue = [0, firstType === 'FBM-Genius' ? firstPercent : 100 - firstPercent];
-      } else {
-        // Fallback
-        newSliderValue = [firstPercent, 100];
+    // Create a new distributions object with the updated value
+    const newDistributions: Distributions = {
+      'FBM-NonGenius': {
+        pieces: type === 'FBM-NonGenius' ? value : distributions['FBM-NonGenius'].pieces,
+        percent: 0 // we'll calculate this after
+      },
+      'FBM-Genius': {
+        pieces: type === 'FBM-Genius' ? value : distributions['FBM-Genius'].pieces,
+        percent: 0 // we'll calculate this after
+      },
+      'FBE': {
+        pieces: type === 'FBE' ? value : distributions['FBE'].pieces,
+        percent: 0 // we'll calculate this after
       }
+    };
+    
+    // Calculate the difference between the new value and the old value
+    const oldValue = distributions[type].pieces;
+    const difference = value - oldValue;
+    
+    // Check if the changed value alone exceeds the total
+    if (value > previousTotal) {
+      // Only in this case should we increase the total
+      setTotalPieces(value);
       
-      setSliderValue(newSliderValue);
-      setManualPieces(newPieces);
-      onDistributionChange(calculateDistributions(totalPieces, newSliderValue));
-    } else if (visibleTypes.length === 3) {
-      // With three calculators, distribute remaining pieces proportionally
-      // First, calculate current proportions between other two types
-      const otherType1 = otherVisibleTypes[0];
-      const otherType2 = otherVisibleTypes[1];
+      // All other calculators get set to zero
+      visibleTypes.forEach(calculatorType => {
+        if (calculatorType !== type) {
+          newDistributions[calculatorType].pieces = 0;
+        }
+      });
+    } else {
+      // We will maintain the previous total by redistributing
       
-      const currentOther1 = distributions[otherType1].pieces;
-      const currentOther2 = distributions[otherType2].pieces;
-      const currentOtherTotal = currentOther1 + currentOther2;
+      // Get the other visible calculator types
+      const otherVisibleTypes = visibleTypes.filter(t => t !== type);
       
-      // If current other total is 0, split remaining pieces equally
-      if (currentOtherTotal <= 0) {
-        newPieces[otherType1] = remainingPieces / 2;
-        newPieces[otherType2] = remainingPieces / 2;
+      if (otherVisibleTypes.length === 0) {
+        // If there are no other visible calculators, just update the total
+        setTotalPieces(value);
       } else {
-        // Otherwise distribute proportionally
-        const other1Ratio = currentOther1 / currentOtherTotal;
-        const other2Ratio = currentOther2 / currentOtherTotal;
+        // Calculate total pieces for other calculators
+        const otherTotalPieces = otherVisibleTypes.reduce(
+          (sum, t) => sum + distributions[t].pieces, 
+          0
+        );
         
-        newPieces[otherType1] = Math.round(remainingPieces * other1Ratio);
-        newPieces[otherType2] = remainingPieces - newPieces[otherType1]; // Ensure total still equals totalPieces
+        // Calculate how many pieces we need to redistribute
+        const piecesToRedistribute = -difference;
+        
+        if (otherTotalPieces === 0) {
+          // If there are no other pieces, we can't redistribute
+          const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
+          setTotalPieces(newTotal);
+        } else {
+          // We can redistribute the difference proportionally among other calculators
+          let remainingToDistribute = piecesToRedistribute;
+          
+          // For increased accuracy, save the last calculator for exact adjustment
+          for (let i = 0; i < otherVisibleTypes.length - 1; i++) {
+            const t = otherVisibleTypes[i];
+            const proportion = distributions[t].pieces / otherTotalPieces;
+            const additionalPieces = Math.round(piecesToRedistribute * proportion);
+            
+            newDistributions[t].pieces += additionalPieces;
+            remainingToDistribute -= additionalPieces;
+          }
+          
+          // Add the remaining pieces to the last calculator to ensure the total remains exactly the same
+          const lastType = otherVisibleTypes[otherVisibleTypes.length - 1];
+          newDistributions[lastType].pieces += remainingToDistribute;
+          
+          // Ensure no negative values
+          if (newDistributions[lastType].pieces < 0) {
+            // If all pieces can't fit into the available calculators, we need to adjust the total
+            const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
+            setTotalPieces(Math.max(newTotal, value)); // Use whichever is larger
+          } else {
+            // Maintain the previous total explicitly
+            setTotalPieces(previousTotal);
+          }
+        }
       }
-      
-      // Calculate new percentages for slider
-      const nonGeniusPercent = (newPieces['FBM-NonGenius'] / totalPieces) * 100;
-      const geniusPercent = (newPieces['FBM-Genius'] / totalPieces) * 100;
-      const newSliderValue = [
-        nonGeniusPercent,
-        nonGeniusPercent + geniusPercent
-      ];
-      
-      setSliderValue(newSliderValue);
-      setManualPieces(newPieces);
-      onDistributionChange(calculateDistributions(totalPieces, newSliderValue));
     }
+    
+    // Calculate new percentages based on the final pieces
+    const newTotal = visibleTypes.reduce((sum, t) => sum + newDistributions[t].pieces, 0);
+    if (newTotal > 0) {
+      for (const t of visibleTypes) {
+        newDistributions[t].percent = (newDistributions[t].pieces / newTotal) * 100;
+      }
+    }
+    
+    // Calculate new slider value
+    const newSliderValue = calculateSliderValueFromDistribution(newDistributions, visibleTypes);
+    
+    // Update state immediately 
+    setManualPieces({
+      'FBM-NonGenius': newDistributions['FBM-NonGenius'].pieces,
+      'FBM-Genius': newDistributions['FBM-Genius'].pieces,
+      'FBE': newDistributions['FBE'].pieces
+    });
+    setSliderValue(newSliderValue);
+    
+    // Notify parent of changes immediately
+    onDistributionChange(newDistributions);
   };
 
-  // Handle total pieces change
+  // Completely replace the validateTotalMatchesSum implementation
+  const validateTotalMatchesSum = (dist: Distributions): Distributions => {
+    // Get visible calculator types
+    const visibleTypes = (Object.entries(visibleCards) as [CalculatorType, boolean][])
+      .filter(([_, isVisible]) => isVisible)
+      .map(([type]) => type);
+    
+    // Calculate the actual sum of pieces
+    const actualSum = visibleTypes.reduce((sum, type) => sum + dist[type].pieces, 0);
+    
+    // The crucial change: update totalPieces to match the sum
+    if (actualSum !== totalPieces) {
+      // Update the total pieces directly
+      setTotalPieces(actualSum);
+    }
+    
+    // Recalculate percentages based on actual sum
+    if (actualSum > 0) {
+      const adjustedDist = {...dist};
+      for (const type of visibleTypes) {
+        adjustedDist[type].percent = (adjustedDist[type].pieces / actualSum) * 100;
+      }
+      return adjustedDist;
+    }
+    
+    return dist;
+  };
+
+  // Modify handleTotalPiecesChange to include validation
   const handleTotalPiecesChange = (value: number) => {
     // Skip if we're loading from context
     if (loadingFromContextRef.current) return;
     
+    // Check if any of the distribution pieces have been manually entered
+    const anyManualPieces = Object.values(manuallyEnteredPieces.current).some(Boolean);
+    
+    if (anyManualPieces) {
+      // If pieces were manually entered, maintain proportions
+      const currentTotal = calculateActualTotal();
+      if (currentTotal > 0) {
+        const ratio = value / currentTotal;
+        
+        // Create new distribution maintaining same proportions
+        const newDistributions: Distributions = {
+          'FBM-NonGenius': {
+            pieces: Math.round(distributions['FBM-NonGenius'].pieces * ratio),
+            percent: distributions['FBM-NonGenius'].percent
+          },
+          'FBM-Genius': {
+            pieces: Math.round(distributions['FBM-Genius'].pieces * ratio),
+            percent: distributions['FBM-Genius'].percent
+          },
+          'FBE': {
+            pieces: 0, // Will calculate to ensure exact sum
+            percent: distributions['FBE'].percent
+          }
+        };
+        
+        // Adjust last piece to ensure the total is exactly equal to value
+        const calculatedSum = newDistributions['FBM-NonGenius'].pieces + newDistributions['FBM-Genius'].pieces;
+        newDistributions['FBE'].pieces = value - calculatedSum;
+        
+        // If there's an issue with negative pieces, recalculate more evenly
+        if (newDistributions['FBE'].pieces < 0) {
+          // Use percentages to divide pieces
+          newDistributions['FBM-NonGenius'].pieces = Math.round((distributions['FBM-NonGenius'].percent / 100) * value);
+          newDistributions['FBM-Genius'].pieces = Math.round((distributions['FBM-Genius'].percent / 100) * value);
+          newDistributions['FBE'].pieces = value - newDistributions['FBM-NonGenius'].pieces - newDistributions['FBM-Genius'].pieces;
+        }
+        
+        // Directly set the total pieces and update manual pieces
+        setTotalPieces(value);
+        setManualPieces({
+          'FBM-NonGenius': newDistributions['FBM-NonGenius'].pieces,
+          'FBM-Genius': newDistributions['FBM-Genius'].pieces,
+          'FBE': newDistributions['FBE'].pieces
+        });
+        
+        // Notify parent of changes immediately
+        const validatedDistribution = validateTotalMatchesSum(newDistributions);
+        onDistributionChange(validatedDistribution);
+        
+        return;
+      }
+    }
+    
+    // For non-manual changes or edge cases, use the standard approach
     setTotalPieces(value);
-    onDistributionChange(calculateDistributions(value, sliderValue));
+    
+    // Reset manual pieces tracking as the total is now authoritative
+    manuallyEnteredPieces.current = {
+      'FBM-NonGenius': false,
+      'FBM-Genius': false,
+      'FBE': false
+    };
+    
+    // Recalculate distributions based on the new total and current slider value
+    const newDistributions = calculateDistributions(value, sliderValue);
+    
+    // Ensure our distribution exactly adds up to the total value
+    const validatedDistribution = validateTotalMatchesSum(newDistributions);
+    onDistributionChange(validatedDistribution);
+    
+    // Update manualPieces state to reflect the new distribution from total
+    setManualPieces({
+      'FBM-NonGenius': validatedDistribution['FBM-NonGenius'].pieces,
+      'FBM-Genius': validatedDistribution['FBM-Genius'].pieces,
+      'FBE': validatedDistribution['FBE'].pieces
+    });
   };
 
   // Calculate all metrics
@@ -502,6 +699,32 @@ export const useSalesEstimatorCalculations = (
   const taxPercentage = totalRevenue !== 0 ? (Math.abs(totalTaxes) / totalRevenue) * 100 : 0;
   const vatPercentage = totalRevenue !== 0 ? (Math.abs(totalVatToBePaid) / totalRevenue) * 100 : 0;
   const expensePercentage = totalRevenue !== 0 ? (Math.abs(totalExpense) / totalRevenue * 100) : 0;
+
+  // Add a function to calculate the slider value from a distribution
+  const calculateSliderValueFromDistribution = (
+    distribution: Distributions,
+    visibleTypes: CalculatorType[]
+  ): number[] => {
+    if (visibleTypes.length <= 1) {
+      return [100];
+    }
+    
+    if (visibleTypes.length === 2) {
+      visibleTypes.sort();
+      if (visibleTypes[0] === 'FBM-NonGenius') {
+        return [distribution['FBM-NonGenius'].percent, 100];
+      } else if (visibleTypes[0] === 'FBM-Genius' && visibleTypes[1] === 'FBE') {
+        return [0, distribution['FBM-Genius'].percent];
+      }
+      return [distribution[visibleTypes[0]].percent, 100];
+    }
+    
+    // For three calculators
+    return [
+      distribution['FBM-NonGenius'].percent,
+      distribution['FBM-NonGenius'].percent + distribution['FBM-Genius'].percent
+    ];
+  };
 
   return {
     totalPieces,

@@ -33,6 +33,11 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
     .filter(([_, isVisible]) => isVisible)
     .map(([type]) => type as CalculatorType);
     
+  // Calculate the actual total from all visible distribution pieces
+  const actualTotalPieces = React.useMemo(() => {
+    return visibleTypes.reduce((sum, type) => sum + (distributions[type]?.pieces || 0), 0);
+  }, [distributions, visibleTypes]);
+
   // Helper function to get the correct percentage for display based on calculator type
   const getDisplayPercentage = (type: CalculatorType): number => {
     // For a single calculator, it's always 100%
@@ -40,37 +45,11 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
       return 100;
     }
     
-    // For exactly two calculators
-    if (visibleTypes.length === 2) {
-      // Sort visible types to maintain consistent order
-      const sortedTypes = [...visibleTypes].sort();
-      
-      if (sortedTypes[0] === 'FBM-NonGenius' && sortedTypes[1] === 'FBM-Genius') {
-        // FBM-NonGenius and FBM-Genius are visible
-        if (type === 'FBM-NonGenius') {
-          return sliderValue[0];
-        } else {
-          return 100 - sliderValue[0];
-        }
-      } else if (sortedTypes[0] === 'FBM-NonGenius' && sortedTypes[1] === 'FBE') {
-        // FBM-NonGenius and FBE are visible
-        if (type === 'FBM-NonGenius') {
-          return sliderValue[0];
-        } else {
-          return 100 - sliderValue[0];
-        }
-      } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
-        // FBM-Genius and FBE are visible
-        if (type === 'FBM-Genius') {
-          return sliderValue[1]; // Using sliderValue[1] for this combination
-        } else {
-          return 100 - sliderValue[1];
-        }
-      }
-    }
+    const pieces = distributions[type]?.pieces || 0;
+    // Use actualTotalPieces for percentage calculation to ensure consistency
+    const percentage = actualTotalPieces > 0 ? (pieces / actualTotalPieces) * 100 : 0;
     
-    // Default to distribution percentage
-    return distributions[type].percent;
+    return percentage;
   };
 
   return (
@@ -111,7 +90,7 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
             }}>
               <SalesEstimatorInput
                 label={t('calculator.salesEstimator.numberOfSales')}
-                value={totalPieces}
+                value={actualTotalPieces}
                 onChange={handleTotalPiecesChange}
                 showLabel={false}
               />
@@ -267,7 +246,7 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      ({Math.round(getDisplayPercentage(type))}%)
+                      ({getDisplayPercentage(type).toFixed(0)}%)
                     </Typography>
                   </Box>
                 ))}
