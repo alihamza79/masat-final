@@ -13,13 +13,15 @@ import {
   Grid,
   IconButton,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  Stack
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Feature } from '@/lib/hooks/useFeatures';
-import { IconBulb, IconCode, IconEdit, IconBell, IconBellOff } from '@tabler/icons-react';
+import { IconBulb, IconCode, IconEdit, IconBell, IconBellOff, IconThumbUp } from '@tabler/icons-react';
 import useFeatureOwnership from '@/lib/hooks/useFeatureOwnership';
 import useFeatureSubscription from '@/lib/hooks/useFeatureSubscription';
+import useFeatureVoting from '@/lib/hooks/useFeatureVoting';
 
 interface FeatureDetailDialogProps {
   open: boolean;
@@ -47,7 +49,17 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
     isUnsubscribing
   } = useFeatureSubscription(feature?._id || '');
   
+  // Use feature voting hook
+  const {
+    hasVoted,
+    isLoading: isLoadingVote,
+    toggleVote,
+    isVoting,
+    isRemovingVote
+  } = useFeatureVoting(feature?._id || '');
+  
   const isSubscriptionLoading = isLoadingSubscription || isSubscribing || isUnsubscribing;
+  const isVoteLoading = isLoadingVote || isVoting || isRemovingVote;
   
   if (!feature) {
     return null;
@@ -120,6 +132,16 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
     }
   };
 
+  const handleVoteToggle = async () => {
+    if (isVoteLoading) return;
+    
+    try {
+      await toggleVote();
+    } catch (error) {
+      console.error('Failed to toggle vote:', error);
+    }
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -129,56 +151,105 @@ const FeatureDetailDialog: React.FC<FeatureDetailDialogProps> = ({
       PaperProps={{
         sx: {
           borderRadius: 1,
-          maxWidth: '500px'
+          maxWidth: '550px'
         }
       }}
     >
-      <DialogTitle sx={{ 
-        pb: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pr: 2 }}>
-          <Typography variant="h6" component="div">
-            {feature.subject}
-          </Typography>
-          {renderStatusChip(feature.status)}
-        </Box>
+      <DialogTitle sx={{ pb: 1 }}>
+        {/* Feature Title - Now on its own line with full width */}
+        <Typography variant="h4" component="div" sx={{ wordBreak: "break-word", mb: 2 }}>
+          {feature.subject}
+        </Typography>
         
-        {/* Subscribe button - only show if not owner */}
-        {!isOwner(feature) && (
-          <Tooltip title={isSubscribed ? t('features.subscription.unsubscribe') : t('features.subscription.subscribe')}>
-            <Button
-              onClick={handleSubscriptionToggle}
-              disabled={isSubscriptionLoading}
+        {/* Info and Action Bar - Moved below title */}
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          alignItems="center" 
+          justifyContent="space-between" 
+          sx={{ mt: 1 }}
+        >
+          {/* Left side - Status and Vote count */}
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            {renderStatusChip(feature.status)}
+            
+            <Chip
+              icon={<IconThumbUp size={16} />}
+              label={feature.voteCount || 0}
               size="small"
-              color="primary"
-              variant={isSubscribed ? 'contained' : 'outlined'}
-              startIcon={
-                isSubscriptionLoading ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <IconBell size={20} />
-                )
-              }
-              sx={{ ml: 1, minWidth: 0, px: 2, whiteSpace: 'nowrap', fontWeight: 600 }}
-            >
-              {isSubscribed ? t('common.unsubscribe', 'Unsubscribe') : t('common.subscribe', 'Subscribe')}
-            </Button>
-          </Tooltip>
-        )}
+              sx={{
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                '.MuiChip-icon': {
+                  color: theme.palette.primary.main,
+                }
+              }}
+            />
+          </Stack>
+          
+          {/* Right Side - Action Buttons */}
+          <Stack direction="row" spacing={1}>
+            {/* Only show vote and subscribe buttons if not owner */}
+            {!isOwner(feature) && (
+              <>
+                {/* Vote button */}
+                <Tooltip title={hasVoted ? t('features.vote.removeVote') : t('features.vote.addVote')}>
+                  <Button
+                    onClick={handleVoteToggle}
+                    disabled={isVoteLoading}
+                    size="small"
+                    color="primary"
+                    variant={hasVoted ? 'contained' : 'outlined'}
+                    startIcon={
+                      isVoteLoading ? (
+                        <CircularProgress size={16} />
+                      ) : (
+                        <IconThumbUp size={16} />
+                      )
+                    }
+                    sx={{ minWidth: 0, px: 1, whiteSpace: 'nowrap' }}
+                  >
+                    {hasVoted ? t('features.vote.voted') : t('features.vote.vote')}
+                  </Button>
+                </Tooltip>
+                
+                {/* Subscribe button */}
+                <Tooltip title={isSubscribed ? t('features.subscription.unsubscribe') : t('features.subscription.subscribe')}>
+                  <Button
+                    onClick={handleSubscriptionToggle}
+                    disabled={isSubscriptionLoading}
+                    size="small"
+                    color="primary"
+                    variant={isSubscribed ? 'contained' : 'outlined'}
+                    startIcon={
+                      isSubscriptionLoading ? (
+                        <CircularProgress size={16} />
+                      ) : (
+                        <IconBell size={16} />
+                      )
+                    }
+                    sx={{ minWidth: 0, px: 1, whiteSpace: 'nowrap' }}
+                  >
+                    {isSubscribed ? t('common.unsubscribe', 'Unsubscribe') : t('common.subscribe', 'Subscribe')}
+                  </Button>
+                </Tooltip>
+              </>
+            )}
+          </Stack>
+        </Stack>
       </DialogTitle>
+      
       <Divider />
-      <DialogContent>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-              {feature.body}
-            </Typography>
-          </Grid>
-        </Grid>
+      
+      {/* Feature creation info removed */}
+      
+      <DialogContent sx={{ pt: 3 }}>
+        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+          {feature.body}
+        </Typography>
       </DialogContent>
+      
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} variant="outlined">
           {t('common.close')}

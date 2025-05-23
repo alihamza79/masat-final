@@ -14,6 +14,7 @@ export interface Feature {
   status: FeatureStatus;
   userId?: Types.ObjectId | string;
   createdBy?: string;
+  voteCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -26,7 +27,9 @@ const fetchFeatures = async (t?: any) => {
   if (!response.data.success) {
     throw new Error(response.data.error || (t ? t('features.toast.fetchError') : 'Failed to fetch features'));
   }
-  return response.data.data.features;
+  // Sort features by voteCount in descending order
+  const features = response.data.data.features;
+  return features.sort((a: Feature, b: Feature) => (b.voteCount || 0) - (a.voteCount || 0));
 };
 
 const getFeature = async (id: string, t?: any) => {

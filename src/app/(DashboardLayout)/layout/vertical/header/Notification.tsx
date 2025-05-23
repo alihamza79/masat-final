@@ -119,7 +119,11 @@ const Notifications = () => {
       
       // Store feature ID in sessionStorage
       if (typeof window !== 'undefined') {
-        // Store the ID and also set a timestamp to force reload of feature data
+        // First clear any existing flags to ensure clean state
+        sessionStorage.removeItem('selectedFeatureId');
+        sessionStorage.removeItem('featureNotificationClicked');
+        
+        // Then set new values
         sessionStorage.setItem('selectedFeatureId', notification.referenceId);
         sessionStorage.setItem('featureNotificationClicked', Date.now().toString());
         

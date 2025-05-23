@@ -14,11 +14,13 @@ import {
   CircularProgress,
   TablePagination,
   useTheme,
+  Theme,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Tooltip
+  Tooltip,
+  Badge
 } from '@mui/material';
 import {
   IconEdit,
@@ -27,7 +29,8 @@ import {
   IconEye,
   IconBulb,
   IconCode,
-  IconBell
+  IconBell,
+  IconThumbUp
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { Feature } from '@/lib/hooks/useFeatures';
@@ -35,6 +38,7 @@ import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmatio
 import { useSession } from 'next-auth/react';
 import useFeatureOwnership from '@/lib/hooks/useFeatureOwnership';
 import useFeatureSubscription from '@/lib/hooks/useFeatureSubscription';
+import useFeatureVoting from '@/lib/hooks/useFeatureVoting';
 
 interface FeaturesTableProps {
   features: Feature[];
@@ -49,6 +53,24 @@ interface FormattedDate {
   fullDate: string;
   relativeTime: string;
 }
+
+// Helper function for consistent icon button styling
+const getIconButtonStyle = (theme: Theme, hasColor = false, color: string | null = null) => ({
+  width: 28, 
+  height: 28, 
+  display: 'flex', 
+  alignItems: 'center', 
+  justifyContent: 'center',
+  backgroundColor: theme.palette.action.hover,
+  borderRadius: '8px',
+  transition: 'background 0.2s, color 0.2s',
+  color: hasColor ? color : 'inherit',
+  '&:hover': {
+    backgroundColor: theme.palette.action.selected,
+    // Don't change the icon color on hover if it has a specific color
+    color: hasColor ? color : 'inherit'
+  }
+});
 
 const FeaturesTable: React.FC<FeaturesTableProps> = ({
   features,
@@ -238,23 +260,24 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
         <Table stickyHeader aria-label="features table">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ minWidth: 250 }}>{t('features.table.subject')}</TableCell>
-              <TableCell sx={{ width: 150 }}>{t('features.table.status')}</TableCell>
+              <TableCell sx={{ minWidth: 180 }}>{t('features.table.subject')}</TableCell>
+              <TableCell sx={{ width: 120 }}>{t('features.table.status')}</TableCell>
+              <TableCell sx={{ width: 100 }}>{t('features.table.votes')}</TableCell>
               <TableCell sx={{ width: 150 }}>{t('features.table.createdBy')}</TableCell>
-              <TableCell sx={{ width: 180 }}>{t('features.table.updatedAt')}</TableCell>
-              <TableCell align="right" sx={{ width: 100 }}>{t('features.table.actions')}</TableCell>
+              <TableCell sx={{ width: 160 }}>{t('features.table.updatedAt')}</TableCell>
+              <TableCell align="right" sx={{ width: 120 }}>{t('features.table.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ height: 300 }}>
+                <TableCell colSpan={6} align="center" sx={{ height: 300 }}>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : displayedFeatures.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ height: 200 }}>
+                <TableCell colSpan={6} align="center" sx={{ height: 200 }}>
                   <Typography variant="body1" color="textSecondary">
                     {t('features.table.noFeatures')}
                   </Typography>
@@ -272,6 +295,17 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
                   </TableCell>
                   <TableCell>
                     {renderStatusChip(feature.status)}
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" alignItems="center">
+                      <IconThumbUp 
+                        size={16} 
+                        style={{ marginRight: '4px', color: theme.palette.primary.main }}
+                      />
+                      <Typography variant="body2" fontWeight={500}>
+                        {feature.voteCount || 0}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   <TableCell>{feature.createdBy}</TableCell>
                   <TableCell>
@@ -291,32 +325,26 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
                         onClick={() => onViewFeature(feature)}
                         size="small"
                         color="default"
-                        sx={{ 
-                          width: 32, 
-                          height: 32, 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center' 
-                        }}
+                        sx={getIconButtonStyle(theme)}
                       >
                         <IconEye size={18} />
                       </IconButton>
-                      {/* Bell icon for subscribe/unsubscribe (if not owner) */}
-                      {!isOwner(feature) && (
-                        <FeatureSubscribeIconButton featureId={feature._id} />
-                      )}
-                      {/* 3-dot menu for edit/delete (only if owner) */}
-                      {isOwner(feature) && (
+                      
+                      {/* Only show vote and subscribe buttons if not owner */}
+                      {!isOwner(feature) ? (
+                        <>
+                          {/* Vote button */}
+                          <FeatureVoteIconButton featureId={feature._id} />
+                          
+                          {/* Bell icon for subscribe/unsubscribe */}
+                          <FeatureSubscribeIconButton featureId={feature._id} />
+                        </>
+                      ) : (
+                        /* 3-dot menu for edit/delete (only if owner) */
                         <IconButton 
                           onClick={(e) => handleMenuOpen(e, feature)}
                           size="small"
-                          sx={{ 
-                            width: 32, 
-                            height: 32, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                          }}
+                          sx={getIconButtonStyle(theme)}
                         >
                           <IconDotsVertical size={18} />
                         </IconButton>
@@ -391,22 +419,36 @@ const FeaturesTable: React.FC<FeaturesTableProps> = ({
 
 const FeatureSubscribeIconButton: React.FC<{ featureId?: string }> = ({ featureId }) => {
   const { isSubscribed, isLoading, toggleSubscription } = useFeatureSubscription(featureId || '');
+  const theme = useTheme();
   return (
     <IconButton
       onClick={toggleSubscription}
       size="small"
       color={isSubscribed ? 'primary' : 'default'}
       disabled={isLoading}
-      sx={{ 
-        width: 32, 
-        height: 32, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }}
+      sx={getIconButtonStyle(theme, isSubscribed, theme.palette.primary.main)}
     >
       {isLoading ? <CircularProgress size={16} /> : <IconBell size={18} />}
     </IconButton>
+  );
+};
+
+const FeatureVoteIconButton: React.FC<{ featureId?: string }> = ({ featureId }) => {
+  const { hasVoted, isLoading, toggleVote } = useFeatureVoting(featureId || '');
+  const theme = useTheme();
+  
+  return (
+    <Tooltip title={hasVoted ? "Remove vote" : "Vote for this feature"}>
+      <IconButton
+        onClick={toggleVote}
+        size="small"
+        color={hasVoted ? 'primary' : 'default'}
+        disabled={isLoading}
+        sx={getIconButtonStyle(theme, hasVoted, theme.palette.primary.main)}
+      >
+        {isLoading ? <CircularProgress size={16} /> : <IconThumbUp size={18} />}
+      </IconButton>
+    </Tooltip>
   );
 };
 
