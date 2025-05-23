@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import { Grid, Box, Typography, Button, CircularProgress } from '@mui/material';
+import { Grid, Box, Typography, Button, CircularProgress, Alert, AlertTitle } from '@mui/material';
 import PageHeader from '@/app/components/analytics-header/PageHeader';
 import IntegrationsTable from './components/IntegrationsTable';
 import PageContainer from '@/app/components/container/PageContainer';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { INTEGRATIONS_STATUS_QUERY_KEY, useIntegrationSync } from '@/lib/hooks/useIntegrationSync';
 import useAuth from '@/lib/hooks/useAuth';
+import { useIntegrationSyncStore } from './store/integrationSyncStore';
 
 const IntegrationsPage = () => {
   const { t } = useTranslation();
@@ -27,6 +28,7 @@ const IntegrationsPage = () => {
 
   const queryClient = useQueryClient();
   const { syncAllIntegrations } = useIntegrationSync();
+  const { isSyncing } = useIntegrationSyncStore();
 
   const { 
     integrations,
@@ -39,6 +41,11 @@ const IntegrationsPage = () => {
   } = useIntegrations();
 
   const { isAuthenticated, loading } = useAuth();
+
+  // Check if any integration is currently syncing
+  const isAnySyncing = integrations.some(integration => 
+    integration._id ? isSyncing(integration._id) : false
+  );
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -69,7 +76,22 @@ const IntegrationsPage = () => {
       // Trigger data sync for all integrations
       if (integrations && integrations.length > 0) {
         // Use a smaller interval for the manual refresh (5 minutes for orders)
-        await syncAllIntegrations(integrations as any, 300000);
+        const syncResult = await syncAllIntegrations(integrations as any, 300000);
+        
+        if (syncResult && syncResult.syncedCount > 0) {
+          showToast(
+            t('integrations.toast.syncSuccess', {
+              count: syncResult.syncedCount,
+              defaultValue: `Successfully synced ${syncResult.syncedCount} integration(s)`
+            }),
+            'success'
+          );
+        } else if (syncResult && syncResult.skippedCount === integrations.length) {
+          showToast(
+            t('integrations.toast.allUpToDate', 'All integrations are up to date'),
+            'info'
+          );
+        }
       }
       
       // Refresh integration list
@@ -158,6 +180,16 @@ const IntegrationsPage = () => {
   return (
     <PageContainer title={t('integrations.title')} description={t('integrations.title')}>
       <Box>
+        {isAnySyncing && (
+          <Alert 
+            severity="warning" 
+            sx={{ mb: 3 }}
+          >
+            <AlertTitle>{t('integrations.syncWarning.title', 'Sync in Progress')}</AlertTitle>
+            {t('integrations.syncWarning.message', 'Please do not close this window until the integration sync process is completed.')}
+          </Alert>
+        )}
+
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Box 

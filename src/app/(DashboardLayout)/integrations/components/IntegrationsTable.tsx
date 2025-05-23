@@ -17,7 +17,9 @@ import {
   CircularProgress,
   Box,
   Stack,
-  Tooltip
+  Tooltip,
+  Alert,
+  AlertTitle
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconCheck, IconX } from '@tabler/icons-react';
 import IntegrationFormDialog, { IntegrationFormData } from './IntegrationFormDialog';
@@ -208,6 +210,40 @@ const IntegrationsTableRow = memo(({
     refetchInterval: 30000 // Refetch every 30 seconds
   });
 
+  // Fetch actual counts from the database
+  const { data: actualOrdersCount, isLoading: isLoadingOrdersCount } = useQuery({
+    queryKey: ['integration-orders-count', integration._id],
+    queryFn: async () => {
+      if (!integration._id) return null;
+      try {
+        const response = await axios.get(`/api/db/orders/count?integrationId=${integration._id}`);
+        return response.data.success ? response.data.data.count : null;
+      } catch (error) {
+        console.error(`Error fetching orders count for integration ${integration._id}:`, error);
+        return null;
+      }
+    },
+    enabled: !!integration._id,
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+
+  // Fetch product offers count
+  const { data: actualProductOffersCount, isLoading: isLoadingProductOffersCount } = useQuery({
+    queryKey: ['integration-product-offers-count', integration._id],
+    queryFn: async () => {
+      if (!integration._id) return null;
+      try {
+        const response = await axios.get(`/api/db/product-offers/count?integrationId=${integration._id}`);
+        return response.data.success ? response.data.data.totalCount : null;
+      } catch (error) {
+        console.error(`Error fetching product offers count for integration ${integration._id}:`, error);
+        return null;
+      }
+    },
+    enabled: !!integration._id,
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+
   // Use loading state from store or DB depending on what's available
   let importStatus: ImportStatus = integrationStatus?.importStatus || 'idle';
   const isCurrentlySyncing = integration._id ? isSyncing(integration._id) : false;
@@ -217,8 +253,10 @@ const IntegrationsTableRow = memo(({
     importStatus = 'loading';
   }
   
-  const ordersCount = integrationStatus?.ordersCount || 0;
-  const productOffersCount = integrationStatus?.productOffersCount || 0;
+  // Use actual counts from database if available, otherwise use stored counts
+  const ordersCount = actualOrdersCount ?? integrationStatus?.ordersCount ?? 0;
+  const productOffersCount = actualProductOffersCount ?? integrationStatus?.productOffersCount ?? 0;
+  const isLoadingCounts = isLoadingOrdersCount || isLoadingProductOffersCount;
   const ordersFetched = !!integrationStatus?.lastOrdersImport;
   const productOffersFetched = !!integrationStatus?.lastProductOffersImport;
   
@@ -317,7 +355,7 @@ const IntegrationsTableRow = memo(({
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography sx={{ fontWeight: 500 }}>
-                {integrationStatus.productOffersCount !== undefined ? integrationStatus.productOffersCount : 'N/A'}
+                {isLoadingCounts ? <CircularProgress size={16} /> : productOffersCount}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
                 {formatImportDate(integrationStatus.lastProductOffersImport, t)?.relativeTime}
@@ -326,7 +364,7 @@ const IntegrationsTableRow = memo(({
           </Tooltip>
         ) : (
           <Typography sx={{ fontWeight: 500 }}>
-            {integrationStatus?.productOffersCount !== undefined ? integrationStatus.productOffersCount : 'N/A'}
+            {isLoadingCounts ? <CircularProgress size={16} /> : productOffersCount}
           </Typography>
         )}
       </TableCell>
@@ -339,7 +377,7 @@ const IntegrationsTableRow = memo(({
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography sx={{ fontWeight: 500 }}>
-                {integrationStatus?.ordersCount !== undefined ? integrationStatus.ordersCount : 'N/A'}
+                {isLoadingCounts ? <CircularProgress size={16} /> : ordersCount}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
                 {formatImportDate(integrationStatus.lastOrdersImport, t)?.relativeTime}
@@ -348,7 +386,7 @@ const IntegrationsTableRow = memo(({
           </Tooltip>
         ) : (
           <Typography sx={{ fontWeight: 500 }}>
-            {integrationStatus?.ordersCount !== undefined ? integrationStatus.ordersCount : 'N/A'}
+            {isLoadingCounts ? <CircularProgress size={16} /> : ordersCount}
           </Typography>
         )}
       </TableCell>
