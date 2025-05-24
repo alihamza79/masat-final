@@ -31,6 +31,7 @@ import ProductPerformanceChart from "@/app/components/dashboards/custom/ProductP
 import ProductTable from "@/app/components/dashboards/custom/ProductTable";
 import RevenueChart from "@/app/components/dashboards/custom/RevenueChart";
 import SimplifiedStatsCard from "@/app/components/dashboards/custom/SimplifiedStatsCard";
+import VatToggle from "@/app/components/dashboards/custom/VatToggle";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 
 // Services and utilities
@@ -252,6 +253,7 @@ export default function Dashboard() {
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [selectedIntegrationIds, setSelectedIntegrationIds] = useState<string[]>([]);
+  const [vatEnabled, setVatEnabled] = useState<boolean>(true);
   
   // Fetch user integrations
   const { integrations, isLoading: isLoadingIntegrations } = useIntegrations();
@@ -273,7 +275,7 @@ export default function Dashboard() {
     data: dashboardResponse, 
     isLoading,
   } = useQuery({
-    queryKey: [...DASHBOARD_QUERY_KEY, startDateStr, endDateStr, selectedIntegrationIds],
+    queryKey: [...DASHBOARD_QUERY_KEY, startDateStr, endDateStr, selectedIntegrationIds, vatEnabled],
     queryFn: async () => {
       // If no integrations are selected, don't fetch data
       if (selectedIntegrationIds.length === 0) {
@@ -287,11 +289,12 @@ export default function Dashboard() {
         console.log(`Fetching dashboard data for period: ${selectedPeriod}`, {
           startDate: startDateStr,
           endDate: endDateStr,
-          integrationIds: selectedIntegrationIds
+          integrationIds: selectedIntegrationIds,
+          vatEnabled: vatEnabled
         });
         
-        // Call the dashboard API with date range and integration IDs
-        return await dashboardService.getDashboardData(startDateStr, endDateStr, selectedIntegrationIds);
+        // Call the dashboard API with date range, integration IDs, and VAT setting
+        return await dashboardService.getDashboardData(startDateStr, endDateStr, selectedIntegrationIds, vatEnabled);
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
         setError(err.message || 'An error occurred while fetching dashboard data');
@@ -320,6 +323,11 @@ export default function Dashboard() {
   // Handle integration filter change
   const handleIntegrationFilterChange = (ids: string[]) => {
     setSelectedIntegrationIds(ids);
+  };
+  
+  // Handle VAT toggle change
+  const handleVatToggle = (enabled: boolean) => {
+    setVatEnabled(enabled);
   };
   
   // Format currency for display
@@ -403,18 +411,24 @@ export default function Dashboard() {
                 sx={{ 
                   fontSize: { xs: '1.5rem', md: 'h2.fontSize' },
                   textAlign: { xs: 'center', sm: 'left' },
-                  width: '100%'
+                  width: { xs: '100%', sm: 'auto' }
                 }}
               >
                 {t('dashboard.title')}
               </Typography>
               <Box sx={{ 
                 display: 'flex', 
-                gap: 2, 
-                flexWrap: 'nowrap', 
+                gap: { xs: 1, sm: 2 }, 
+                flexWrap: { xs: 'wrap', sm: 'nowrap' }, 
                 alignItems: 'center',
+                justifyContent: { xs: 'center', sm: 'flex-end' },
+                width: { xs: '100%', sm: 'auto' },
                 flexShrink: 0
               }}>
+                <VatToggle
+                  vatEnabled={vatEnabled}
+                  onVatToggle={handleVatToggle}
+                />
                 <PeriodSelector
                   selectedPeriod={selectedPeriod}
                   customStartDate={customStartDate}

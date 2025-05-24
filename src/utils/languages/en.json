@@ -91,6 +91,11 @@
             "apply": "Apply",
             "customPeriod": "Custom period..."
         },
+        "vat": {
+            "toggle": "VAT",
+            "enabled": "VAT included using actual product rates",
+            "disabled": "VAT not included in calculations"
+        },
         "integrations": {
             "allIntegrations": "All Integrations",
             "oneIntegration": "1 Integration",

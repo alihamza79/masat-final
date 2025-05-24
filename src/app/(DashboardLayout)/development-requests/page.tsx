@@ -411,12 +411,12 @@ const DevelopmentRequestsPage = () => {
               </Typography>
               <Box 
                 display="flex" 
-                gap={2}
-                flexDirection="row"
+                gap={{ xs: 1, sm: 2 }}
+                flexDirection={{ xs: 'column', sm: 'row' }}
                 width="100%"
                 justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
-                alignItems="center"
-                flexWrap="nowrap"
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+                flexWrap={{ xs: 'wrap', sm: 'nowrap' }}
               >
                 {/* Search Bar */}
                 <TextField
@@ -435,127 +435,160 @@ const DevelopmentRequestsPage = () => {
                     width: { xs: '100%', sm: '280px', md: '320px' },
                     '& .MuiOutlinedInput-root': {
                       height: '36px',
-                      fontSize: '0.875rem'
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }
                   }}
                 />
 
-                {/* Filter Button with Badge */}
-                <Badge
-                  color="primary"
-                  variant="dot"
-                  invisible={filterType === 'all'}
-                  sx={{ '& .MuiBadge-badge': { right: 2, top: 3 } }}
+                {/* Controls Row for Mobile */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: { xs: 1, sm: 2 },
+                    width: { xs: '100%', sm: 'auto' },
+                    justifyContent: { xs: 'space-between', sm: 'flex-end' },
+                    alignItems: 'center'
+                  }}
                 >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="inherit"
-                    onClick={handleFilterClick}
-                    startIcon={filterType === 'all' ? <IconUsers size={18} /> : <IconUser size={18} />}
-                    aria-haspopup="true"
-                    aria-expanded={Boolean(filterAnchorEl) ? 'true' : undefined}
-                    aria-controls="filter-menu"
-                    sx={{
-                      minHeight: '36px',
-                      minWidth: '36px',
-                      maxWidth: { xs: '200px', sm: '240px', md: 'none' },
-                      textTransform: 'none',
-                      color: theme.palette.text.secondary,
-                      borderColor: theme.palette.divider,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      '& .MuiButton-startIcon': {
-                        mr: 1
-                      },
-                      '&:hover': {
+                  {/* Filter Button with Badge */}
+                  <Badge
+                    color="primary"
+                    variant="dot"
+                    invisible={filterType === 'all'}
+                    sx={{ '& .MuiBadge-badge': { right: 2, top: 3 } }}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="inherit"
+                      onClick={handleFilterClick}
+                      startIcon={filterType === 'all' ? <IconUsers size={18} /> : <IconUser size={18} />}
+                      aria-haspopup="true"
+                      aria-expanded={Boolean(filterAnchorEl) ? 'true' : undefined}
+                      aria-controls="filter-menu"
+                      sx={{
+                        minHeight: '36px',
+                        minWidth: { xs: '36px', sm: '120px' },
+                        maxWidth: { xs: '140px', sm: '240px', md: 'none' },
+                        textTransform: 'none',
+                        color: theme.palette.text.secondary,
                         borderColor: theme.palette.divider,
-                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        px: { xs: 1, sm: 1.5 },
+                        '& .MuiButton-startIcon': {
+                          mr: { xs: 0.5, sm: 1 },
+                          '& svg': {
+                            fontSize: { xs: 16, sm: 18 }
+                          }
+                        },
+                        '&:hover': {
+                          borderColor: theme.palette.divider,
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
+                        }
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: { xs: '60px', sm: 'none' }
+                        }}
+                      >
+                        {getFilterButtonText()}
+                      </Box>
+                    </Button>
+                  </Badge>
+
+                  {/* Add Button */}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<IconPlus size={20} />}
+                    onClick={() => handleOpenFormDialog()}
+                    disabled={isSubmitting}
+                    size="small"
+                    sx={{
+                      minHeight: { xs: '36px' },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      px: { xs: 1.5, sm: 2 },
+                      '& .MuiButton-startIcon': {
+                        mr: { xs: 0.5, sm: 1 },
+                        '& svg': {
+                          fontSize: { xs: 18, sm: 20 }
+                        }
                       }
                     }}
                   >
-                    {getFilterButtonText()}
+                    {t('features.addButton')}
                   </Button>
-                </Badge>
-
-                {/* Filter Menu */}
-                <Menu
-                  id="filter-menu"
-                  anchorEl={filterAnchorEl}
-                  open={Boolean(filterAnchorEl)}
-                  onClose={handleFilterMenuClose}
-                  MenuListProps={{
-                    'aria-labelledby': 'filter-button',
-                  }}
-                  PaperProps={{
-                    elevation: 2,
-                    sx: { width: 280, maxWidth: '100%', mt: 1.5 }
-                  }}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                >
-                  <MenuItem 
-                    onClick={() => handleFilterChange('all')}
-                    selected={filterType === 'all'}
-                    sx={{ py: 1.5 }}
-                  >
-                    <ListItemIcon>
-                      <IconUsers size={18} />
-                    </ListItemIcon>
-                    <ListItemText>{t('features.filter.all')}</ListItemText>
-                  </MenuItem>
-
-                  <MenuItem 
-                    onClick={() => handleFilterChange('my')}
-                    selected={filterType === 'my'}
-                    sx={{ py: 1.5 }}
-                  >
-                    <ListItemIcon>
-                      <IconUser size={18} />
-                    </ListItemIcon>
-                    <ListItemText>
-                      {t('features.filter.myRequests')}
-                      {myFeaturesCount > 0 && (
-                        <Typography 
-                          component="span" 
-                          sx={{ 
-                            ml: 1, 
-                            fontSize: '0.75rem', 
-                            color: theme.palette.primary.main,
-                            fontWeight: 600, 
-                            p: 0.5,
-                            borderRadius: '10px',
-                            backgroundColor: theme.palette.primary.light,
-                            opacity: 0.8
-                          }}
-                        >
-                          {myFeaturesCount}
-                        </Typography>
-                      )}
-                    </ListItemText>
-                  </MenuItem>
-                </Menu>
-
-                {/* Add Button */}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<IconPlus size={20} />}
-                  onClick={() => handleOpenFormDialog()}
-                  disabled={isSubmitting}
-                  size="small"
-                  sx={{
-                    minHeight: { xs: '36px' },
-                    fontSize: { xs: '0.813rem', sm: '0.875rem' },
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0
-                  }}
-                >
-                  {t('features.addButton')}
-                </Button>
+                </Box>
               </Box>
             </Box>
+            
+            {/* Filter Menu */}
+            <Menu
+              id="filter-menu"
+              anchorEl={filterAnchorEl}
+              open={Boolean(filterAnchorEl)}
+              onClose={handleFilterMenuClose}
+              MenuListProps={{
+                'aria-labelledby': 'filter-button',
+              }}
+              PaperProps={{
+                elevation: 2,
+                sx: { width: 280, maxWidth: '100%', mt: 1.5 }
+              }}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+              <MenuItem 
+                onClick={() => handleFilterChange('all')}
+                selected={filterType === 'all'}
+                sx={{ py: 1.5 }}
+              >
+                <ListItemIcon>
+                  <IconUsers size={18} />
+                </ListItemIcon>
+                <ListItemText>{t('features.filter.all')}</ListItemText>
+              </MenuItem>
+
+              <MenuItem 
+                onClick={() => handleFilterChange('my')}
+                selected={filterType === 'my'}
+                sx={{ py: 1.5 }}
+              >
+                <ListItemIcon>
+                  <IconUser size={18} />
+                </ListItemIcon>
+                <ListItemText>
+                  {t('features.filter.myRequests')}
+                  {myFeaturesCount > 0 && (
+                    <Typography 
+                      component="span" 
+                      sx={{ 
+                        ml: 1, 
+                        fontSize: '0.75rem', 
+                        color: theme.palette.primary.main,
+                        fontWeight: 600, 
+                        p: 0.5,
+                        borderRadius: '10px',
+                        backgroundColor: theme.palette.primary.light,
+                        opacity: 0.8
+                      }}
+                    >
+                      {myFeaturesCount}
+                    </Typography>
+                  )}
+                </ListItemText>
+              </MenuItem>
+            </Menu>
             
             <FeaturesTable 
               features={filteredFeatures}

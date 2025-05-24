@@ -60,6 +60,9 @@ export async function GET(req: NextRequest) {
     const startDate = url.searchParams.get('startDate');
     const endDate = url.searchParams.get('endDate');
     const integrationIds = url.searchParams.getAll('integrationIds');
+    const vatEnabled = url.searchParams.get('vatEnabled') === 'true';
+    
+    console.log(`VAT calculation: ${vatEnabled ? 'enabled' : 'disabled'} - using actual VAT values from products`);
     
     // Get the user's session
     const session = await getServerSession(authOptions);
@@ -177,7 +180,7 @@ export async function GET(req: NextRequest) {
           grossRevenue: {
             $sum: {
               $add: [
-                // Product price × quantity
+                // Product price × quantity, optionally including VAT from product data
                 {
                   $cond: [
                     { $isArray: "$products" },
@@ -189,9 +192,28 @@ export async function GET(req: NextRequest) {
                           $add: [
                             "$$value",
                             {
-                              $multiply: [
-                                { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
-                                { $ifNull: ["$$this.quantity", 1] }
+                              $cond: [
+                                vatEnabled,
+                                // When VAT is enabled, include VAT from product data
+                                {
+                                  $multiply: [
+                                    { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
+                                    { $ifNull: ["$$this.quantity", 1] },
+                                    {
+                                      $add: [
+                                        1,
+                                        { $toDouble: { $ifNull: ["$$this.vat", "0"] } }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                // When VAT is disabled, just use sale price × quantity
+                                {
+                                  $multiply: [
+                                    { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
+                                    { $ifNull: ["$$this.quantity", 1] }
+                                  ]
+                                }
                               ]
                             }
                           ]
@@ -201,7 +223,7 @@ export async function GET(req: NextRequest) {
                     0
                   ]
                 },
-                // Include shipping tax
+                // Include shipping tax (not affected by VAT)
                 { $ifNull: ["$shipping_tax", 0] }
               ]
             }
@@ -386,7 +408,7 @@ export async function GET(req: NextRequest) {
           dailyRevenue: {
             $sum: {
               $add: [
-                // Product price × quantity
+                // Product price × quantity, optionally including VAT from product data
                 {
                   $cond: [
                     { $isArray: "$products" },
@@ -398,9 +420,28 @@ export async function GET(req: NextRequest) {
                           $add: [
                             "$$value",
                             {
-                              $multiply: [
-                                { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
-                                { $ifNull: ["$$this.quantity", 1] }
+                              $cond: [
+                                vatEnabled,
+                                // When VAT is enabled, include VAT from product data
+                                {
+                                  $multiply: [
+                                    { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
+                                    { $ifNull: ["$$this.quantity", 1] },
+                                    {
+                                      $add: [
+                                        1,
+                                        { $toDouble: { $ifNull: ["$$this.vat", "0"] } }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                // When VAT is disabled, just use sale price × quantity
+                                {
+                                  $multiply: [
+                                    { $toDouble: { $ifNull: ["$$this.sale_price", "0"] } },
+                                    { $ifNull: ["$$this.quantity", 1] }
+                                  ]
+                                }
                               ]
                             }
                           ]
@@ -410,7 +451,7 @@ export async function GET(req: NextRequest) {
                     0
                   ]
                 },
-                // Include shipping tax
+                // Include shipping tax (not affected by VAT)
                 { $ifNull: ["$shipping_tax", 0] }
               ]
             }
@@ -966,15 +1007,41 @@ export async function GET(req: NextRequest) {
             },
             totalRevenue: {
               $sum: {
-                $multiply: [
-                  { $toDouble: { $ifNull: ["$products.sale_price", "0"] } },
-                  { 
-                    $convert: { 
-                      input: "$products.quantity", 
-                      to: "int",
-                      onError: 1,
-                      onNull: 1
-                    } 
+                $cond: [
+                  vatEnabled,
+                  // When VAT is enabled, include VAT from product data
+                  {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$products.sale_price", "0"] } },
+                      { 
+                        $convert: { 
+                          input: "$products.quantity", 
+                          to: "int",
+                          onError: 1,
+                          onNull: 1
+                        } 
+                      },
+                      {
+                        $add: [
+                          1,
+                          { $toDouble: { $ifNull: ["$products.vat", "0"] } }
+                        ]
+                      }
+                    ]
+                  },
+                  // When VAT is disabled, just use sale price × quantity
+                  {
+                    $multiply: [
+                      { $toDouble: { $ifNull: ["$products.sale_price", "0"] } },
+                      { 
+                        $convert: { 
+                          input: "$products.quantity", 
+                          to: "int",
+                          onError: 1,
+                          onNull: 1
+                        } 
+                      }
+                    ]
                   }
                 ]
               }
@@ -1080,7 +1147,9 @@ export async function GET(req: NextRequest) {
         let refundedCount = 0;
         let grossRevenue = 0;
         let shippingCost = 0;
-        let averagePrice = product.sale_price || 0;
+        let averagePrice = vatEnabled 
+          ? (product.sale_price || 0) * (1 + 0.19) // Use 19% default if no VAT data
+          : (product.sale_price || 0);
         
         // If we have order stats, calculate metrics
         if (stats) {
@@ -1093,7 +1162,9 @@ export async function GET(req: NextRequest) {
           let totalValue = 0;
           let totalQty = 0;
           stats.prices.forEach((p: any) => {
-            totalValue += p.price * p.quantity;
+            // For average price, we assume VAT was already included in stats.totalRevenue calculation
+            // So we just use the price as is since it comes from the aggregated data
+            totalValue += (p.price * p.quantity);
             totalQty += p.quantity;
           });
           

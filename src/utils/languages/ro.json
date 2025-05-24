@@ -153,6 +153,11 @@
                 "profit": "Profit",
                 "grossRevenue": "Venit Brut"
             }
+        },
+        "vat": {
+            "toggle": "TVA",
+            "enabled": "TVA inclusă folosind cotele din datele produsului",
+            "disabled": "TVA nu este inclusă în calcule"
         }
     },
     "calculator": {

@@ -118,9 +118,20 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
           sx={{ 
             bgcolor: 'background.paper', 
             borderColor: 'divider',
-            minWidth: '160px',
+            minWidth: { xs: 'auto', sm: '160px' },
+            maxWidth: { xs: '140px', sm: 'none' },
             justifyContent: 'flex-start',
+            px: { xs: 1.5, sm: 2 },
+            py: 1,
+            height: '36.5px',
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
             transition: 'all 0.2s ease-in-out',
+            '& .MuiButton-startIcon': {
+              marginRight: { xs: 0.5, sm: 1 },
+              '& svg': {
+                fontSize: { xs: 16, sm: 18 }
+              }
+            },
             '&:hover': {
               borderColor: 'primary.main',
               bgcolor: alpha(theme.palette.primary.main, 0.08),
@@ -128,7 +139,17 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
             }
           }}
         >
-          {getFilterText()}
+          <Box
+            component="span"
+            sx={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: { xs: '80px', sm: 'none' }
+            }}
+          >
+            {getFilterText()}
+          </Box>
         </Button>
       </Badge>
       
@@ -149,7 +170,8 @@ const IntegrationFilter: React.FC<IntegrationFilterProps> = ({
           sx: { 
             mt: 0.5, 
             p: 2,
-            width: 260,
+            width: { xs: 280, sm: 260 },
+            maxWidth: '90vw',
             borderRadius: 1,
             '&:before': {
               content: '""',

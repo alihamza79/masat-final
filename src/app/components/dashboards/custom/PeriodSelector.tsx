@@ -366,19 +366,44 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
         size="medium"
         sx={{
           py: 1,
-          px: 2,
+          px: { xs: 1.5, sm: 2 },
           borderRadius: 1,
           textTransform: 'none',
           fontWeight: 500,
           color: theme.palette.text.primary,
           borderColor: theme.palette.divider,
           height: '36.5px',
+          minWidth: { xs: 'auto', sm: '160px' },
+          maxWidth: { xs: '180px', sm: 'none' },
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+          '& .MuiButton-startIcon': {
+            marginRight: { xs: 0.5, sm: 1 },
+            '& svg': {
+              fontSize: { xs: 16, sm: 18 }
+            }
+          },
+          '& .MuiButton-endIcon': {
+            marginLeft: { xs: 0.5, sm: 1 },
+            '& svg': {
+              fontSize: { xs: 14, sm: 16 }
+            }
+          },
           '&:hover': {
             borderColor: theme.palette.text.primary
           }
         }}
       >
-        {getSelectedPeriodText()}
+        <Box
+          component="span"
+          sx={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: { xs: '120px', sm: 'none' }
+          }}
+        >
+          {getSelectedPeriodText()}
+        </Box>
       </Button>
       
       <Menu

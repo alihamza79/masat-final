@@ -102,11 +102,13 @@ export const invalidateDashboardData = (queryClient: QueryClient) => {
  * @param startDate Start date in YYYY-MM-DD format
  * @param endDate End date in YYYY-MM-DD format
  * @param integrationIds Optional array of integration IDs to filter by
+ * @param vatEnabled Whether to include VAT in revenue calculations
  */
 export async function getDashboardData(
   startDate: string, 
   endDate: string,
-  integrationIds?: string[]
+  integrationIds?: string[],
+  vatEnabled?: boolean
 ): Promise<{
   success: boolean;
   data?: DashboardData;
@@ -121,6 +123,11 @@ export async function getDashboardData(
     // Add integration IDs if provided
     if (integrationIds && integrationIds.length > 0) {
       integrationIds.forEach(id => params.append('integrationIds', id));
+    }
+    
+    // Add VAT parameter if provided
+    if (vatEnabled !== undefined) {
+      params.append('vatEnabled', vatEnabled.toString());
     }
     
     const response = await axios.get(`/api/dashboard?${params.toString()}`);

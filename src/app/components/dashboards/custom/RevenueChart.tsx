@@ -743,7 +743,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               </Box>
         ) : dates.length === 0 ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-            <Typography variant="body2">{t('dashboard.charts.noData')}</Typography>
+            <Typography variant="body2">{t('dashboard.charts.revenueProfit.noData')}</Typography>
           </Box>
         ) : (
           <>

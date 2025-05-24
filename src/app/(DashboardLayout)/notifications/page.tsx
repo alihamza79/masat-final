@@ -400,12 +400,12 @@ const NotificationsPage = () => {
               </Typography>
               <Box 
                 display="flex" 
-                gap={2}
-                flexDirection="row"
+                gap={{ xs: 1, sm: 2 }}
+                flexDirection={{ xs: 'column', sm: 'row' }}
                 width="100%"
                 justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
-                alignItems="center"
-                flexWrap="nowrap"
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+                flexWrap={{ xs: 'wrap', sm: 'nowrap' }}
               >
                 {/* Search Bar */}
                 <TextField
@@ -424,129 +424,185 @@ const NotificationsPage = () => {
                     width: { xs: '100%', sm: '280px', md: '320px' },
                     '& .MuiOutlinedInput-root': {
                       height: '36px',
-                      fontSize: '0.875rem'
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }
                   }}
                 />
 
-                {/* Read/Unread Filter Button */}
-                <Badge
-                  color="primary"
-                  variant="dot"
-                  invisible={readFilter === 'all'}
-                  sx={{ '& .MuiBadge-badge': { right: 2, top: 3 } }}
+                {/* Controls Row for Mobile */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: { xs: 0.5, sm: 2 },
+                    width: { xs: '100%', sm: 'auto' },
+                    justifyContent: { xs: 'space-between', sm: 'flex-end' },
+                    alignItems: 'center',
+                    flexWrap: 'nowrap' // Prevent wrapping
+                  }}
                 >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="inherit"
-                    onClick={handleFilterClick}
-                    startIcon={readFilter === 'unread' ? <IconBellOff size={18} /> : <IconBell size={18} />}
-                    aria-haspopup="true"
-                    aria-expanded={Boolean(filterAnchorEl) ? 'true' : undefined}
-                    aria-controls="filter-menu"
-                    sx={{
-                      minHeight: '36px',
-                      minWidth: '36px',
-                      maxWidth: { xs: '200px', sm: '240px', md: 'none' },
-                      textTransform: 'none',
-                      color: theme.palette.text.secondary,
-                      borderColor: theme.palette.divider,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      '& .MuiButton-startIcon': {
-                        mr: 1
-                      },
-                      '&:hover': {
-                        borderColor: theme.palette.divider,
-                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
-                      }
-                    }}
-                  >
-                    {getFilterButtonText()}
-                  </Button>
-                </Badge>
-
-                {/* Time Filter Button */}
-                <Badge
-                  color="primary"
-                  variant="dot"
-                  invisible={timeFilter === ''}
-                  sx={{ '& .MuiBadge-badge': { right: 2, top: 3 } }}
-                >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="inherit"
-                    onClick={handleTimeFilterClick}
-                    startIcon={<IconCalendarTime size={18} />}
-                    aria-haspopup="true"
-                    aria-expanded={Boolean(timeFilterAnchorEl) ? 'true' : undefined}
-                    aria-controls="time-filter-menu"
-                    sx={{
-                      minHeight: '36px',
-                      minWidth: '36px',
-                      maxWidth: { xs: '200px', sm: '240px', md: 'none' },
-                      textTransform: 'none',
-                      color: theme.palette.text.secondary,
-                      borderColor: theme.palette.divider,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      '& .MuiButton-startIcon': {
-                        mr: 1
-                      },
-                      '&:hover': {
-                        borderColor: theme.palette.divider,
-                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
-                      }
-                    }}
-                  >
-                    {getTimeFilterButtonText()}
-                  </Button>
-                </Badge>
-
-                {/* Mark All as Read Button */}
-                {unreadCount > 0 && (
-                  <Button
-                    variant="outlined"
+                  {/* Read/Unread Filter Button */}
+                  <Badge
                     color="primary"
-                    startIcon={<IconCheck size={18} />}
-                    onClick={markAllAsRead}
-                    disabled={isMarkingAsRead}
-                    size="small"
-                    sx={{
-                      minHeight: { xs: '36px' },
-                      fontSize: { xs: '0.813rem', sm: '0.875rem' },
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
+                    variant="dot"
+                    invisible={readFilter === 'all'}
+                    sx={{ '& .MuiBadge-badge': { right: 1, top: 2 } }}
                   >
-                    {t('notifications.markAllRead')}
-                  </Button>
-                )}
-
-                
-
-                {/* Delete All Button */}
-                {filteredNotifications.length > 0 && (
-                  <Tooltip title={t('notifications.deleteAll') || "Delete All"}>
-                    <IconButton
-                      color="error"
-                      onClick={handleDeleteAllClick}
-                      disabled={isDeleting}
+                    <Button
+                      variant="outlined"
                       size="small"
-                      sx={{ 
-                        height: '36px', 
-                        width: '36px',
-                        border: `1px solid ${theme.palette.divider}` 
+                      color="inherit"
+                      onClick={handleFilterClick}
+                      startIcon={readFilter === 'unread' ? <IconBellOff size={16} /> : <IconBell size={16} />}
+                      aria-haspopup="true"
+                      aria-expanded={Boolean(filterAnchorEl) ? 'true' : undefined}
+                      aria-controls="filter-menu"
+                      sx={{
+                        minHeight: '36px',
+                        minWidth: { xs: '32px', sm: '100px' },
+                        maxWidth: { xs: '70px', sm: '240px', md: 'none' },
+                        textTransform: 'none',
+                        color: theme.palette.text.secondary,
+                        borderColor: theme.palette.divider,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                        px: { xs: 0.5, sm: 1.5 },
+                        '& .MuiButton-startIcon': {
+                          mr: { xs: 0, sm: 1 },
+                          '& svg': {
+                            fontSize: { xs: 14, sm: 16 }
+                          }
+                        },
+                        '&:hover': {
+                          borderColor: theme.palette.divider,
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
+                        }
                       }}
                     >
-                      <IconTrash size={18} />
-                    </IconButton>
-                  </Tooltip>
-                )}
+                      <Box
+                        component="span"
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: { xs: 'none', sm: 'inline' }
+                        }}
+                      >
+                        {getFilterButtonText()}
+                      </Box>
+                    </Button>
+                  </Badge>
+
+                  {/* Time Filter Button */}
+                  <Badge
+                    color="primary"
+                    variant="dot"
+                    invisible={timeFilter === ''}
+                    sx={{ '& .MuiBadge-badge': { right: 1, top: 2 } }}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="inherit"
+                      onClick={handleTimeFilterClick}
+                      startIcon={<IconCalendarTime size={16} />}
+                      aria-haspopup="true"
+                      aria-expanded={Boolean(timeFilterAnchorEl) ? 'true' : undefined}
+                      aria-controls="time-filter-menu"
+                      sx={{
+                        minHeight: '36px',
+                        minWidth: { xs: '32px', sm: '100px' },
+                        maxWidth: { xs: '70px', sm: '240px', md: 'none' },
+                        textTransform: 'none',
+                        color: theme.palette.text.secondary,
+                        borderColor: theme.palette.divider,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                        px: { xs: 0.5, sm: 1.5 },
+                        '& .MuiButton-startIcon': {
+                          mr: { xs: 0, sm: 1 },
+                          '& svg': {
+                            fontSize: { xs: 14, sm: 16 }
+                          }
+                        },
+                        '&:hover': {
+                          borderColor: theme.palette.divider,
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
+                        }
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: { xs: 'none', sm: 'inline' }
+                        }}
+                      >
+                        {getTimeFilterButtonText()}
+                      </Box>
+                    </Button>
+                  </Badge>
+
+                  {/* Mark All as Read Button - Compact on mobile */}
+                  {unreadCount > 0 && (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<IconCheck size={16} />}
+                      onClick={markAllAsRead}
+                      disabled={isMarkingAsRead}
+                      size="small"
+                      sx={{
+                        minHeight: '36px',
+                        minWidth: { xs: '32px', sm: '120px' },
+                        fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        px: { xs: 0.5, sm: 2 },
+                        '& .MuiButton-startIcon': {
+                          mr: { xs: 0, sm: 1 },
+                          '& svg': {
+                            fontSize: { xs: 14, sm: 16 }
+                          }
+                        }
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          display: { xs: 'none', sm: 'inline' }
+                        }}
+                      >
+                        {t('notifications.markAllRead')}
+                      </Box>
+                    </Button>
+                  )}
+
+                  {/* Delete All Button */}
+                  {filteredNotifications.length > 0 && (
+                    <Tooltip title={t('notifications.deleteAll') || "Delete All"}>
+                      <IconButton
+                        color="error"
+                        onClick={handleDeleteAllClick}
+                        disabled={isDeleting}
+                        size="small"
+                        sx={{ 
+                          height: '36px', 
+                          width: '36px',
+                          border: `1px solid ${theme.palette.divider}`,
+                          flexShrink: 0
+                        }}
+                      >
+                        <IconTrash size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
               </Box>
             </Box>
           </Grid>
