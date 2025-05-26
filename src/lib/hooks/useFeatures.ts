@@ -75,7 +75,7 @@ export const useFeatures = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  // Query for fetching all features with frequent polling
+  // Query for fetching all features - NO MORE POLLING!
   const { 
     data: features = [], 
     isLoading, 
@@ -84,10 +84,12 @@ export const useFeatures = () => {
   } = useQuery({
     queryKey: FEATURES_QUERY_KEY,
     queryFn: () => fetchFeatures(t),
-    // Use a shorter stale time to refresh more frequently
-    staleTime: 10000, // 10 seconds
-    // Refresh data in the background at regular intervals
-    refetchInterval: 10000, // 10 seconds
+    // Remove polling - real-time updates will handle this
+    refetchInterval: false,
+    // Increase stale time since we have real-time updates
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    // Keep data fresh in background when window regains focus
+    refetchOnWindowFocus: true,
   });
 
   // Query for fetching a single feature by ID
@@ -95,8 +97,9 @@ export const useFeatures = () => {
     return useQuery({
       queryKey: [...FEATURES_QUERY_KEY, id],
       queryFn: () => getFeature(id, t),
-      staleTime: 10000, // 10 seconds
-      refetchInterval: 10000, // 10 seconds
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchInterval: false, // Remove polling
+      refetchOnWindowFocus: true,
       enabled: !!id, // Only run if ID is provided
     });
   };

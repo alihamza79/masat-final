@@ -5,6 +5,58 @@ import { authOptions } from '@/app/lib/auth';
 import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
 
+// Create a new notification (for testing real-time updates)
+export async function POST(req: NextRequest) {
+  try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Authentication required' 
+      }, { status: 401 });
+    }
+    const userId = session.user.id;
+
+    // Parse request body
+    const body = await req.json();
+    const { title, message, type = 'system' } = body;
+
+    if (!title || !message) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Title and message are required' 
+      }, { status: 400 });
+    }
+
+    // Connect to database
+    await connectToDatabase();
+
+    // Create notification
+    const notification = new Notification({
+      userId,
+      title,
+      message,
+      type,
+      read: false
+    });
+
+    await notification.save();
+
+    return NextResponse.json({ 
+      success: true,
+      data: { notification },
+      message: 'Notification created successfully'
+    });
+  } catch (error: any) {
+    console.error('Error creating notification:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Failed to create notification' 
+    }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     // Get authenticated user

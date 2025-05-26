@@ -1,23 +1,23 @@
+import {
+  setDarkMode,
+  toggleMobileSidebar,
+  toggleSidebar
+} from "@/store/customizer/CustomizerSlice";
+import { useDispatch, useSelector } from "@/store/hooks";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
+import { styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { styled } from "@mui/material/styles";
-import { useSelector, useDispatch } from "@/store/hooks";
-import {
-  toggleSidebar,
-  toggleMobileSidebar, setDarkMode
-} from "@/store/customizer/CustomizerSlice";
 import { IconMenu2, IconMoon, IconSun } from "@tabler/icons-react";
 import Notifications from "./Notification";
 import Profile from "./Profile";
 // import Cart from "./Cart";
-import Search from "./Search";
-import Language from "./Language";
 import { AppState } from "@/store/store";
-import Navigation from "./Navigation";
+import Language from "./Language";
+import Search from "./Search";
 // import MobileRightSidebar from "./MobileRightSidebar";
 
 const Header = () => {
@@ -73,6 +73,8 @@ const Header = () => {
         <Box flexGrow={1} />
         <Stack spacing={1} direction="row" alignItems="center">
           <Language />
+          {/* ------------------------------------------- */}
+        
           {/* ------------------------------------------- */}
           {/* Ecommerce Dropdown */}
           {/* ------------------------------------------- */}

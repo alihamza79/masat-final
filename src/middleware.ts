@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 // Public paths that don't require authentication
@@ -21,8 +20,6 @@ export async function middleware(request: NextRequest) {
   if (pathname === '/health') {
     return new NextResponse('OK', { status: 200 });
   }
-  
-  
   
   // Check if the path is a public path
   if (publicPaths.some(path => pathname.startsWith(path))) {
@@ -79,6 +76,13 @@ export async function middleware(request: NextRequest) {
 // Make sure to exclude NextAuth API routes and debug endpoints
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|images|api/auth).*)' 
-  ]
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+  ],
 }; 

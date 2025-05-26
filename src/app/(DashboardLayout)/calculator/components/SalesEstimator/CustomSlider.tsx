@@ -124,11 +124,11 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
       if (!isTwoVisibleCalculators) return value;
       
       // For two calculators, we need to determine which value to use
-      if (sortedVisibleTypes[0] === 'FBM-NonGenius') {
-        // For NonGenius + anything, use value[0]
-        return value[0];
+      if (sortedVisibleTypes.includes('FBM-NonGenius')) {
+        // When NonGenius is visible with another calculator, use inverted value to match visual layout
+        return 100 - value[0];
       } else if (sortedVisibleTypes[0] === 'FBM-Genius' && sortedVisibleTypes[1] === 'FBE') {
-        // For Genius + FBE, use value[1]
+        // For Genius + FBE, return Genius percentage to position thumb at right boundary
         return value[1];
       }
       
@@ -144,11 +144,11 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
         // Convert single value to the appropriate format for the parent component
         let updatedValue: number[];
         
-        if (sortedVisibleTypes[0] === 'FBM-NonGenius') {
-          // If FBM-NonGenius is visible (first position), use first value
-          updatedValue = [newValue as number, 100];
+        if (sortedVisibleTypes.includes('FBM-NonGenius')) {
+          // When NonGenius is visible with another calculator, invert the slider value back
+          updatedValue = [100 - (newValue as number), 100];
         } else if (sortedVisibleTypes[0] === 'FBM-Genius' && sortedVisibleTypes[1] === 'FBE') {
-          // If FBM-Genius and FBE are visible, use second value
+          // For Genius + FBE, slider value is Genius percentage directly
           updatedValue = [0, newValue as number];
         } else {
           // Fallback for any other combination
@@ -222,27 +222,31 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
       
       if (!rail || !track) return;
       
-      // Get the two visible calculator types in sorted order
-      const [firstType, secondType] = sortedVisibleTypes as [ColorMapKey, ColorMapKey];
-      
-      // Determine the slider point based on which calculators are visible
+      // Determine the actual calculators and their colors (maintaining original colors)
+      let leftCalculatorType: ColorMapKey;
+      let rightCalculatorType: ColorMapKey;
       let sliderPoint: number;
       
-      if (firstType === 'FBM-NonGenius') {
-        // If NonGenius is visible as first type, use value[0]
-        sliderPoint = value[0];
-      } else if (firstType === 'FBM-Genius' && secondType === 'FBE') {
-        // For Genius and FBE, use value[1] but map it correctly
-        // Convert from 0-100 based on value[1] 
-        sliderPoint = value[1];
+      if (sortedVisibleTypes.includes('FBM-NonGenius')) {
+        // NonGenius + another calculator
+        leftCalculatorType = 'FBM-NonGenius';
+        rightCalculatorType = sortedVisibleTypes.find(type => type !== 'FBM-NonGenius') as ColorMapKey;
+        sliderPoint = 100 - value[0]; // Use the other calculator's percentage for correct visual display
+      } else if (sortedVisibleTypes[0] === 'FBM-Genius' && sortedVisibleTypes[1] === 'FBE') {
+        // Genius + FBE case - put Genius first on left, exactly like NonGenius
+        leftCalculatorType = 'FBM-Genius'; // Blue on left  
+        rightCalculatorType = 'FBE'; // Green on right
+        sliderPoint = 100 - value[1]; // Keep visual sections correct: FBE% on left, Genius% on right
       } else {
         // Fallback
+        leftCalculatorType = sortedVisibleTypes[0];
+        rightCalculatorType = sortedVisibleTypes[1];
         sliderPoint = value[0];
       }
       
-      // Get the colors for the two visible calculator types
-      const firstColor = COLOR_MAP[firstType];
-      const secondColor = COLOR_MAP[secondType];
+      // Get the colors maintaining original mapping
+      const leftColor = COLOR_MAP[leftCalculatorType];
+      const rightColor = COLOR_MAP[rightCalculatorType];
       
       // Remove any previous custom elements
       removeCustomElements();
@@ -266,19 +270,19 @@ const CustomSlider = React.forwardRef<HTMLSpanElement, CustomSliderProps>(
         zIndex: 1
       };
       
-      // Style the left section with the first color
+      // Style the left section with the left calculator's color
       Object.assign(leftSection.style, baseStyles, {
         left: '0',
         width: `${sliderPoint}%`,
-        backgroundColor: firstColor,
+        backgroundColor: leftColor,
         borderRadius: '4px 0 0 4px'
       });
       
-      // Style the right section with the second color
+      // Style the right section with the right calculator's color
       Object.assign(rightSection.style, baseStyles, {
         left: `${sliderPoint}%`,
         width: `${100 - sliderPoint}%`,
-        backgroundColor: secondColor,
+        backgroundColor: rightColor,
         borderRadius: '0 4px 4px 0'
       });
       

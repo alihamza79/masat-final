@@ -6,9 +6,6 @@ import { useTranslation } from 'react-i18next';
 
 export const NOTIFICATIONS_QUERY_KEY = 'notifications';
 
-// Polling interval for notifications (5 seconds)
-const NOTIFICATION_REFRESH_INTERVAL = 5000;
-
 export interface Notification {
   _id: string;
   userId: string;
@@ -79,7 +76,7 @@ const useNotifications = (options: NotificationsFilter = {}) => {
     return params.toString();
   }, [limit, page, unreadOnly, search, type, timeRange, startDate, endDate]);
 
-  // Fetch notifications
+  // Fetch notifications - NO MORE POLLING!
   const { 
     data,
     isLoading,
@@ -95,10 +92,12 @@ const useNotifications = (options: NotificationsFilter = {}) => {
       }
       return response.data.data;
     },
-    // Use short polling interval (5 seconds)
-    refetchInterval: NOTIFICATION_REFRESH_INTERVAL,
-    // Very short stale time to ensure frequent background refreshes
-    staleTime: 1000, // 1 second
+    // Remove polling - real-time updates will handle this
+    refetchInterval: false,
+    // Increase stale time since we have real-time updates
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    // Keep data fresh in background when window regains focus
+    refetchOnWindowFocus: true,
   });
 
   const notifications = data?.notifications || [];

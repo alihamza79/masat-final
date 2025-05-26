@@ -48,7 +48,7 @@ if (!global.mongooseCache) {
 }
 
 // Connection idle timeout - reconnect if 30 minutes have passed
-const IDLE_CONNECTION_TIMEOUT = 30 * 60 * 1000; 
+const IDLE_CONNECTION_TIMEOUT = 30 * 60 * 1000;
 
 /**
  * Connect to MongoDB using Mongoose
@@ -68,6 +68,22 @@ export async function connectToDatabase() {
     console.log('Creating new MongoDB connection');
     globalCache.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       console.log('MongoDB connected successfully');
+      
+      // Add connection event listeners for monitoring - only in development
+      if (process.env.NODE_ENV === 'development' && mongoose.connection) {
+        mongoose.connection.on('connected', () => {
+          console.log('Mongoose connected to MongoDB');
+        });
+
+        mongoose.connection.on('error', (err) => {
+          console.error('Mongoose connection error:', err);
+        });
+
+        mongoose.connection.on('disconnected', () => {
+          console.log('Mongoose disconnected from MongoDB');
+        });
+      }
+      
       return mongoose;
     });
   }
@@ -105,27 +121,6 @@ export async function closeConnection(): Promise<void> {
     }
   }
 }
-
-// Add connection event listeners for monitoring - only in development
-if (process.env.NODE_ENV === 'development') {
-  mongoose.connection.on('connected', () => {
-    console.log('Mongoose connected to MongoDB');
-  });
-
-  mongoose.connection.on('error', (err) => {
-    console.error('Mongoose connection error:', err);
-  });
-
-  mongoose.connection.on('disconnected', () => {
-    console.log('Mongoose disconnected from MongoDB');
-  });
-}
-
-// Handle process termination
-process.on('SIGINT', async () => {
-  await closeConnection();
-  process.exit(0);
-});
 
 // Export connection utilities
 export default { connectToDatabase, closeConnection }; 

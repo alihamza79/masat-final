@@ -45,8 +45,15 @@ const NotificationSchema: Schema = new Schema({
 // Add index for faster queries
 NotificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
 
-// Use existing model if it exists or create a new one
-const Notification = mongoose.models.Notification || 
-  mongoose.model<INotification>('Notification', NotificationSchema);
+// Safe model creation - check if models object exists
+let Notification: mongoose.Model<INotification>;
+
+try {
+  // Try to get existing model
+  Notification = mongoose.model<INotification>('Notification');
+} catch (error) {
+  // Model doesn't exist, create it
+  Notification = mongoose.model<INotification>('Notification', NotificationSchema);
+}
 
 export default Notification; 

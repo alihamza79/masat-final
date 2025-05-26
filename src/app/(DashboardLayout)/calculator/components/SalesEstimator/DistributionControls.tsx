@@ -166,10 +166,36 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                 {/* Only show headers for visible calculators */}
                 {visibleTypes.length === 2 ? (
                   // When exactly two calculators are visible, show them at the left and right of the slider
-                  <>
-                    <Typography>{t(`calculator.cards.${visibleTypes[0]}`)}</Typography>
-                    <Typography>{t(`calculator.cards.${visibleTypes[1]}`)}</Typography>
-                  </>
+                  // The order should match the visual layout of the slider
+                  (() => {
+                    const sortedTypes = [...visibleTypes].sort();
+                    if (sortedTypes.includes('FBM-NonGenius')) {
+                      // NonGenius + another calculator: NonGenius on left, other on right
+                      const otherType = sortedTypes.find(type => type !== 'FBM-NonGenius');
+                      return (
+                        <>
+                          <Typography>{t('calculator.cards.FBM-NonGenius')}</Typography>
+                          <Typography>{t(`calculator.cards.${otherType}`)}</Typography>
+                        </>
+                      );
+                    } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
+                      // Genius + FBE: Genius on left, FBE on right to match NonGenius pattern
+                      return (
+                        <>
+                          <Typography>{t('calculator.cards.FBM-Genius')}</Typography>
+                          <Typography>{t('calculator.cards.FBE')}</Typography>
+                        </>
+                      );
+                    } else {
+                      // Fallback: use sorted order
+                      return (
+                        <>
+                          <Typography>{t(`calculator.cards.${sortedTypes[0]}`)}</Typography>
+                          <Typography>{t(`calculator.cards.${sortedTypes[1]}`)}</Typography>
+                        </>
+                      );
+                    }
+                  })()
                 ) : (
                   // When all three are visible, show them with default spacing
                   <>
@@ -190,11 +216,12 @@ const DistributionControls: React.FC<DistributionControlsProps> = ({
                       // When there are only two visible calculators, we get a single number
                       // We need to convert it to the right format based on which calculators are visible
                       const sortedTypes = [...visibleTypes].sort();
-                      if (sortedTypes[0] === 'FBM-NonGenius' && (sortedTypes[1] === 'FBM-Genius' || sortedTypes[1] === 'FBE')) {
-                        // First calculator is NonGenius (combined with either Genius or FBE)
+                      if (sortedTypes.includes('FBM-NonGenius')) {
+                        // NonGenius is visible with another calculator
                         handleSliderChange([newValue, 100]);
                       } else if (sortedTypes[0] === 'FBM-Genius' && sortedTypes[1] === 'FBE') {
-                        // Genius and FBE are visible
+                        // Genius and FBE are visible - treat like NonGenius case
+                        // Slider value represents Genius percentage directly
                         handleSliderChange([0, newValue]);
                       }
                     }

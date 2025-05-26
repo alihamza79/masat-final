@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google';
 import { Providers } from '@/providers/Providers';
 import { Toaster } from 'react-hot-toast';
 import { ReactQueryProvider } from '@/providers/ReactQueryProvider';
+import { RealtimeProvider } from '@/providers/RealtimeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,7 +26,9 @@ export default function RootLayout({
         <ReduxProviders>
           <Providers>
             <ReactQueryProvider>
-              <MyApp>{children}</MyApp>
+              <RealtimeProvider>
+                <MyApp>{children}</MyApp>
+              </RealtimeProvider>
             </ReactQueryProvider>
             <Toaster position="top-right" />
           </Providers>

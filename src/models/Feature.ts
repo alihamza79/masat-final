@@ -37,7 +37,15 @@ FeatureSchema.pre('save', function(next) {
   next();
 });
 
-// Use existing model if it exists or create a new one
-const Feature = mongoose.models.Feature || mongoose.model<IFeature>('Feature', FeatureSchema);
+// Safe model creation - check if models object exists
+let Feature: mongoose.Model<IFeature>;
+
+try {
+  // Try to get existing model
+  Feature = mongoose.model<IFeature>('Feature');
+} catch (error) {
+  // Model doesn't exist, create it
+  Feature = mongoose.model<IFeature>('Feature', FeatureSchema);
+}
 
 export default Feature; 
