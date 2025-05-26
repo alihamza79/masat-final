@@ -7,6 +7,9 @@ import Header from "./layout/vertical/header/Header";
 import Sidebar from "./layout/vertical/sidebar/Sidebar";
 import { useSelector } from "@/store/hooks";
 import { AppState } from "@/store/store";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { CircularProgress, Typography } from "@mui/material";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -37,6 +40,19 @@ export default function RootLayout({
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const customizer = useSelector((state: AppState) => state.customizer);
   const theme = useTheme();
+  const session = useSession();
+  const router = useRouter();
+
+  // Only redirect if explicitly unauthenticated, don't show loading UI
+  if (session.status === "unauthenticated") {
+    router.push('/auth/auth1/login');
+    return null;
+  }
+
+  // Don't render anything while session is loading to avoid interfering with auth flow
+  if (session.status === "loading") {
+    return null;
+  }
 
   return (
     <MainWrapper className={customizer.activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>

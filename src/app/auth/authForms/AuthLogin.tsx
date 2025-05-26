@@ -21,7 +21,7 @@ import CustomTextField from "@/app/components/forms/theme-elements/CustomTextFie
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
 import AuthSocialButtons from "./AuthSocialButtons";
 import { useState, FormEvent, useEffect, ChangeEvent } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import SetPasswordModal from "@/app/components/auth/SetPasswordModal";
 
@@ -42,7 +42,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     credentialsLinked: boolean;
   }>({ googleLinked: false, credentialsLinked: false });
 
-  const [signingIn, setSigningIn] = useState(false);
   const [loadingText, setLoadingText] = useState("Signing in...");
 
   // Check if email already exists with delay after typing
@@ -71,7 +70,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const checkEmailExists = async (email: string) => {
     try {
       setCheckingEmail(true);
-      console.log("🌐 [CLIENT] Checking if email exists:", email);
       const response = await fetch('/api/auth/check-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,15 +78,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       
       const data = await response.json();
       
-      // Log debugging information
-      console.log('🌐 [CLIENT] Email check response:', data);
-      
       if (data.success && data.exists) {
-        // Force boolean values and log what we're setting
         const googleLinked = !!data.googleLinked;
         const credentialsLinked = !!data.credentialsLinked;
-        
-        console.log(`🌐 [CLIENT] Setting auth methods - googleLinked: ${googleLinked}, credentialsLinked: ${credentialsLinked}`);
         
         setExistingAuthMethods({
           googleLinked,
@@ -96,14 +88,13 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         });
       }
     } catch (err) {
-      console.error('🌐 [CLIENT] Error checking email:', err);
+      console.error('Error checking email:', err);
     } finally {
       setCheckingEmail(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    console.log("🌐 [CLIENT] Initiating Google sign in");
     await signIn('google', { callbackUrl: '/' });
   };
 
@@ -119,100 +110,32 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     
     // Only show dialog if this is a Google-only account without credentials
     if (existingAuthMethods.googleLinked && !existingAuthMethods.credentialsLinked) {
-      console.log("🌐 [CLIENT] Showing Google account dialog for:", email);
       setShowGoogleAccountDialog(true);
       return;
     }
     
-    // Continue with normal login
     try {
-      console.log("🌐 [CLIENT] Attempting login for email:", email);
       setError("");
       setLoading(true);
-      setSigningIn(true);
-      setLoadingText("Authenticating...");
+      setLoadingText("Signing in...");
       
-      // Attempt sign in - pass remember device preference and set redirect to false
       const result = await signIn("credentials", {
         redirect: false,
-        email,
-        password,
-        remember: rememberDevice
+        email: email.trim(),
+        password: password,
       });
       
-      console.log("🌐 [CLIENT] Login result:", result);
-      
-      if (result?.error) {
-        console.error("🌐 [CLIENT] Login failed:", result.error);
-        setError(result.error);
-        setLoading(false);
-        setSigningIn(false);
-      } else if (result?.ok) {
-        // Use router.replace instead of push for a cleaner redirect
-        console.log("🌐 [CLIENT] Login successful, redirecting...");
-        setLoadingText("Redirecting to dashboard...");
-        
-        try {
-          // Get the callbackUrl from the query parameters if it exists
-          const urlParams = new URLSearchParams(window.location.search);
-          const callbackUrl = urlParams.get('callbackUrl') || '/dashboard';
-          
-          // SECURITY: Validate callback URL to prevent open redirect vulnerabilities
-          // Only allow relative URLs or URLs to your own domain
-          const isValidRedirect = (url: string) => {
-            // Allow relative URLs
-            if (url.startsWith('/')) return true;
-            
-            try {
-              // For absolute URLs, check if they point to your domain
-              const urlObj = new URL(url);
-              return urlObj.hostname === window.location.hostname;
-            } catch {
-              return false;
-            }
-          };
-          
-          const safeCallbackUrl = isValidRedirect(decodeURIComponent(callbackUrl)) 
-            ? decodeURIComponent(callbackUrl) 
-            : '/dashboard';
-          
-          console.log("🌐 [CLIENT] Redirecting to:", safeCallbackUrl);
-          
-          // Wait briefly before redirecting
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          // Force reload window location - this is more reliable for auth redirects
-          window.location.href = safeCallbackUrl;
-          
-        } catch (navError) {
-          console.error("🌐 [CLIENT] Navigation error:", navError);
-          // Fallback to direct location change if router navigation fails
-          window.location.href = '/dashboard';
-          
-          // Make sure to rethrow the error as recommended in the GitHub issue
-          throw navError;
-        }
+      if (result?.ok) {
+        setLoadingText("Redirecting...");
+        window.location.href = '/dashboard';
+      } else {
+        setError(result?.error || 'Invalid email or password');
       }
     } catch (error) {
-      console.error("🌐 [CLIENT] Sign in error:", error);
-      
-      // Specific handling for common error types
-      if (error instanceof TypeError && error.message.includes('URL')) {
-        // Handle URL construction errors, which often happen with invalid server responses
-        setError('Invalid email or password');
-      } else {
-        // Try to extract a meaningful error message if available
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : "An unexpected error occurred. Please try again.";
-        setError(errorMessage);
-      }
-      
+      console.error("Sign in error:", error);
+      setError('An error occurred during sign in');
+    } finally {
       setLoading(false);
-      setSigningIn(false);
-      
-      // Make sure to rethrow the error as recommended in the GitHub issue
-      throw error;
     }
   };
 
@@ -341,28 +264,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         onClose={() => setShowGoogleAccountDialog(false)}
         email={email}
       />
-
-      {signingIn && !error && (
-        <Box 
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: 'rgba(255,255,255,0.7)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            backdropFilter: 'blur(2px)',
-          }}
-        >
-          <CircularProgress size={40} sx={{ mb: 2 }} />
-          <Typography variant="h6">Authenticating...</Typography>
-        </Box>
-      )}
     </>
   );
 };

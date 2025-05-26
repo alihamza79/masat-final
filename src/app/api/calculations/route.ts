@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import SavedCalculation from '@/app/models/SavedCalculation';
 import { uploadFileToS3, generatePresignedUrl } from '@/utils/s3';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 
 // Set export configuration for Next.js
 export const dynamic = 'force-dynamic';

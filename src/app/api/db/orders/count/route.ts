@@ -6,7 +6,7 @@ import Order from '@/models/Order';
 import Integration from '@/models/Integration';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 
 /**
  * GET endpoint to count orders for a specific integration

@@ -17,7 +17,10 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
-      await signIn('google', { callbackUrl: '/', remember: rememberDevice });
+      await signIn('google', { 
+        callbackUrl: '/dashboard', 
+        remember: rememberDevice 
+      });
     } catch (error) {
       console.error('Google sign in error:', error);
       setGoogleLoading(false);
@@ -28,7 +31,10 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
   const handleFacebookSignIn = async () => {
     try {
       setFacebookLoading(true);
-      await signIn('facebook', { callbackUrl: '/', remember: rememberDevice });
+      await signIn('facebook', { 
+        callbackUrl: '/dashboard', 
+        remember: rememberDevice 
+      });
     } catch (error) {
       console.error('Facebook sign in error:', error);
       setFacebookLoading(false);

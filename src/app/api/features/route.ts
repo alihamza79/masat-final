@@ -4,7 +4,7 @@ import Feature from '@/models/Feature';
 import FeatureSubscription from '@/models/FeatureSubscription';
 import Notification from '@/models/Notification';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 import mongoose from 'mongoose';
 
 // Set export configuration for Next.js

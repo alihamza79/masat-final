@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signIn } from 'next-auth/react';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import User, { IUser } from '@/models/User';
 import bcrypt from 'bcryptjs';

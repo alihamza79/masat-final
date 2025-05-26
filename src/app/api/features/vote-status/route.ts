@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import connectDB from '@/app/lib/mongodb';
 import FeatureVote from '@/models/FeatureVote';
 import mongoose from 'mongoose';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 
 // GET endpoint to check if user has voted for a feature
 export async function GET(request: NextRequest) {

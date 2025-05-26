@@ -6,7 +6,7 @@ import ProductOffer from '@/models/ProductOffer';
 import Integration from '@/models/Integration';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {

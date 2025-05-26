@@ -7,103 +7,58 @@ const publicPaths = [
   '/auth/auth1/register',
   '/auth/auth1/forgot-password',
   '/auth/auth1/error',
-  
+  '/test-session',
 ];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Debug log
-  const debugMsg = `[Middleware] Processing: ${pathname}`;
-  console.log(debugMsg);
+  // Skip middleware for API routes and static files
+  if (
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/images') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
 
-  if (pathname === '/health') {
-    return new NextResponse('OK', { status: 200 });
-  }
-  
-  // Skip authentication for static assets
-  // if (
-  //   pathname.startsWith('/images/') ||
-  //   pathname.startsWith('/icons/') ||
-  //   pathname.startsWith('/static/') ||
-  //   pathname.startsWith('/uploads/') ||
-  //   pathname.startsWith('/products/') ||
-  //   pathname.endsWith('.svg') ||
-  //   pathname.endsWith('.png') ||
-  //   pathname.endsWith('.jpg') ||
-  //   pathname.endsWith('.jpeg') ||
-  //   pathname.endsWith('.gif') ||
-  //   pathname.endsWith('.ico') ||
-  //   pathname.endsWith('.css') ||
-  //   pathname.endsWith('.js') ||
-  //   pathname.endsWith('.map')
-  // ) {
-  //   console.log(`[Middleware] Static asset, skipping auth check: ${pathname}`);
-  //   return NextResponse.next();
-  // }
-  
-  // Check if the path is a public path
-  if (publicPaths.some(path => pathname.startsWith(path))) {
-    // Check if user is already authenticated
-    const token = await getToken({ 
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET
-    });
-    
-    console.log(`[Middleware] Public path: ${pathname}, Token:`, token ? 'exists' : 'null');
-    
-    // If authenticated and trying to access auth pages, redirect to dashboard
-    if (token) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    
-    // Allow access to public paths for unauthenticated users
-    return NextResponse.next();
-  }
-  
-  // Check if the path is an API route or NextAuth route
-  if (pathname.startsWith('/api') || pathname.includes('/api/auth')) {
-    // Allow access to API routes - Authentication for API routes is handled 
-    // in the API handlers themselves
-    console.log(`[Middleware] API route, skipping auth check: ${pathname}`);
-    return NextResponse.next();
-  }
-  
-  // Check if user is authenticated
+  // Check if the path is public
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+
+  // Get the token
   const token = await getToken({ 
     req: request,
     secret: process.env.NEXTAUTH_SECRET
   });
-  
-  console.log(`[Middleware] Protected path: ${pathname}, Token:`, token ? 'exists' : 'null');
-  
-  // If not authenticated and not accessing public paths, redirect to login
-  if (!token) {
-    console.log(`[Middleware] No token, redirecting to login`);
+
+  // Handle root path
+  if (pathname === '/') {
+    if (token) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/auth/auth1/login', request.url));
+    }
+  }
+
+  // If user is authenticated and trying to access auth pages, redirect to dashboard
+  if (token && isPublicPath && !pathname.startsWith('/test-session')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // If user is not authenticated and trying to access protected pages, redirect to login
+  if (!token && !isPublicPath) {
     const url = new URL('/auth/auth1/login', request.url);
-    // Set the return URL so we can redirect after login
-    const baseUrl = process.env.NEXTAUTH_URL || request.url;
-    const pathWithSearch = request.nextUrl.pathname + request.nextUrl.search;
-    url.searchParams.set('callbackUrl', encodeURI(new URL(pathWithSearch, baseUrl).toString()));
+    url.searchParams.set('callbackUrl', request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
-  
-  // Allow access to protected routes for authenticated users
-  console.log(`[Middleware] User authenticated, proceeding to: ${pathname}`);
+
   return NextResponse.next();
 }
 
-// Configure matcher to run middleware only on specific paths
-// Make sure to exclude NextAuth API routes and debug endpoints
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - Static assets (images, css, js, etc.)
-     */
-    // '/((?!_next/static|_next/image|favicon.ico|.*\\.(svg|png|jpg|jpeg|gif|ico|css|js|map)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)',
   ],
 }; 

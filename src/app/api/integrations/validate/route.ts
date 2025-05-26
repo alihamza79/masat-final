@@ -7,7 +7,7 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { decrypt } from '@/lib/utils/encryption';
 import Integration from '@/models/Integration';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {

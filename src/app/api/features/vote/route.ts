@@ -4,7 +4,7 @@ import connectDB from '@/app/lib/mongodb';
 import Feature from '@/models/Feature';
 import FeatureVote from '@/models/FeatureVote';
 import mongoose from 'mongoose';
-import { authOptions } from '@/app/lib/auth';
+import { authOptions } from '@/lib/auth';
 
 // POST endpoint to vote for a feature
 export async function POST(request: NextRequest) {
