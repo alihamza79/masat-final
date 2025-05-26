@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 const activeConnections = new Map<string, ReadableStreamDefaultController>();
 const connectionsByUserId = new Map<string, Set<string>>(); // Track connections per user
 
-// Security constants
-const MAX_CONNECTIONS_PER_USER = 5; // Prevent connection spam
+// Security constants - Connection limit removed
+// const MAX_CONNECTIONS_PER_USER = 5; // Prevent connection spam - REMOVED
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,17 +74,18 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Authentication failed', { status: 401 });
     }
     
-    // Check connection limits per user
-    const userConnections = connectionsByUserId.get(userId) || new Set();
-    if (userConnections.size >= MAX_CONNECTIONS_PER_USER) {
-      console.warn(`🚫 Connection limit exceeded for user: ${userId}`);
-      return new NextResponse('Too many connections', { status: 429 });
-    }
+    // Connection limit check removed - allow unlimited connections per user
+    // const userConnections = connectionsByUserId.get(userId) || new Set();
+    // if (userConnections.size >= MAX_CONNECTIONS_PER_USER) {
+    //   console.warn(`🚫 Connection limit exceeded for user: ${userId}`);
+    //   return new NextResponse('Too many connections', { status: 429 });
+    // }
     
     // Generate unique client ID
     const clientId = uuidv4();
     
-    // Track this connection for the user
+    // Track this connection for the user (keeping for cleanup purposes)
+    const userConnections = connectionsByUserId.get(userId) || new Set();
     userConnections.add(clientId);
     connectionsByUserId.set(userId, userConnections);
     

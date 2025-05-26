@@ -21,6 +21,27 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('OK', { status: 200 });
   }
   
+  // Skip authentication for static assets
+  // if (
+  //   pathname.startsWith('/images/') ||
+  //   pathname.startsWith('/icons/') ||
+  //   pathname.startsWith('/static/') ||
+  //   pathname.startsWith('/uploads/') ||
+  //   pathname.startsWith('/products/') ||
+  //   pathname.endsWith('.svg') ||
+  //   pathname.endsWith('.png') ||
+  //   pathname.endsWith('.jpg') ||
+  //   pathname.endsWith('.jpeg') ||
+  //   pathname.endsWith('.gif') ||
+  //   pathname.endsWith('.ico') ||
+  //   pathname.endsWith('.css') ||
+  //   pathname.endsWith('.js') ||
+  //   pathname.endsWith('.map')
+  // ) {
+  //   console.log(`[Middleware] Static asset, skipping auth check: ${pathname}`);
+  //   return NextResponse.next();
+  // }
+  
   // Check if the path is a public path
   if (publicPaths.some(path => pathname.startsWith(path))) {
     // Check if user is already authenticated
@@ -81,8 +102,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - Static assets (images, css, js, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    // '/((?!_next/static|_next/image|favicon.ico|.*\\.(svg|png|jpg|jpeg|gif|ico|css|js|map)$).*)',
   ],
 }; 

@@ -93,10 +93,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       console.error('Real-time connection error:', error);
       // Only show error toast for persistent errors (after multiple attempts)
       if (reconnectAttempts >= 2) {
-        toast.error('❌ Real-time connection error', {
-          duration: 4000,
-          position: 'bottom-right',
-        });
+        console.log('❌ Real-time connection error');
       }
     }
   });

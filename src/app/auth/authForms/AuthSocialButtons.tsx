@@ -44,8 +44,8 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
             <CircularProgress size={24} sx={{ mr: 1 }} />
           ) : (
             <Avatar
-              src={"/images/svgs/google-icon.svg"}
-              alt={"icon1"}
+              src="/images/svgs/google-icon.svg"
+              alt="Google"
               sx={{
                 width: 16,
                 height: 16,
@@ -70,8 +70,8 @@ const AuthSocialButtons = ({ title, rememberDevice = true }: Props) => {
             <CircularProgress size={24} sx={{ mr: 1 }} />
           ) : (
             <Avatar
-              src={"/images/svgs/facebook-icon.svg"}
-              alt={"icon2"}
+              src="/images/svgs/facebook-icon.svg"
+              alt="Facebook"
               sx={{
                 width: 25,
                 height: 25,

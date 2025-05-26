@@ -1,7 +1,6 @@
 import React from "react";
 import { Providers as ReduxProviders } from "@/store/providers";
 import MyApp from "./app";
-import "./global.css";
 import { Inter } from 'next/font/google';
 import { Providers } from '@/providers/Providers';
 import { Toaster } from 'react-hot-toast';
