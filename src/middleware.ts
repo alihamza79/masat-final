@@ -8,10 +8,16 @@ const publicPaths = [
   '/auth/auth1/forgot-password',
   '/auth/auth1/error',
   '/test-session',
+  '/health',
 ];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === '/health') {
+    return new NextResponse('OK', { status: 200 });
+  }
+  
 
   // Skip middleware for API routes and static files
   if (
