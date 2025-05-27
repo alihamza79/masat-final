@@ -38,6 +38,24 @@ export default function Login() {
           <Box position="relative">
             <Box px={3}>
               <Logo/>
+              {/* Version indicator for production verification */}
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  position: 'absolute', 
+                  top: 8, 
+                  right: 16, 
+                  bgcolor: 'primary.main', 
+                  color: 'white', 
+                  px: 1, 
+                  py: 0.5, 
+                  borderRadius: 1,
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                Auth Fix v2.1 🔐
+              </Typography>
             </Box>
             <Box
               alignItems="center"
@@ -78,9 +96,25 @@ export default function Login() {
             <AuthLogin
               title="Welcome to Masat"
               subtext={
-                <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                  Admin Dashboard
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                  <Typography variant="subtitle1" color="textSecondary">
+                    Admin Dashboard
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      bgcolor: 'success.light', 
+                      color: 'success.dark', 
+                      px: 0.8, 
+                      py: 0.2, 
+                      borderRadius: 0.5,
+                      fontSize: '0.65rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    UPDATED ✓
+                  </Typography>
+                </Stack>
               }
               subtitle={
                 <Stack direction="row" spacing={1} mt={3}>
