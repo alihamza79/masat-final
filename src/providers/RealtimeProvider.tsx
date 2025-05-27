@@ -113,13 +113,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   // Show persistent error notification for connection issues
   useEffect(() => {
     if (connectionError && reconnectAttempts >= 3) {
-      toast.error(
-        `❌ Connection issues detected. ${connectionError}`,
-        {
-          duration: 6000,
-          position: 'bottom-right',
-        }
-      );
+      console.log('❌ Connection issues detected. ', connectionError);
     }
   }, [connectionError, reconnectAttempts]);
 

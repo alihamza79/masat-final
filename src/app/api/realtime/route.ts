@@ -9,13 +9,53 @@ export const dynamic = 'force-dynamic';
 const activeConnections = new Map<string, ReadableStreamDefaultController>();
 const connectionsByUserId = new Map<string, Set<string>>(); // Track connections per user
 
-// Security constants - Connection limit removed
-// const MAX_CONNECTIONS_PER_USER = 5; // Prevent connection spam - REMOVED
+// ADDED: Rate limiting to prevent abuse
+const connectionAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_CONNECTIONS_PER_USER = 3; // Restored connection limit
+const MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+
+// ADDED: Function to check rate limiting
+const checkRateLimit = (identifier: string): boolean => {
+  const now = Date.now();
+  const attempts = connectionAttempts.get(identifier);
+  
+  if (!attempts || now - attempts.lastAttempt > RATE_LIMIT_WINDOW) {
+    // Reset or initialize
+    connectionAttempts.set(identifier, { count: 1, lastAttempt: now });
+    return true;
+  }
+  
+  if (attempts.count >= MAX_CONNECTION_ATTEMPTS_PER_MINUTE) {
+    return false;
+  }
+  
+  attempts.count++;
+  attempts.lastAttempt = now;
+  return true;
+};
+
+// ADDED: Cleanup old rate limit entries
+setInterval(() => {
+  const now = Date.now();
+  Array.from(connectionAttempts.entries()).forEach(([key, value]) => {
+    if (now - value.lastAttempt > RATE_LIMIT_WINDOW) {
+      connectionAttempts.delete(key);
+    }
+  });
+}, RATE_LIMIT_WINDOW);
 
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    
+    // ADDED: Rate limiting check
+    const rateLimitIdentifier = `${clientIP}`;
+    if (!checkRateLimit(rateLimitIdentifier)) {
+      console.warn(`🚫 Rate limit exceeded for IP: ${clientIP}`);
+      return new NextResponse('Too many connection attempts', { status: 429 });
+    }
     
     // Validate collections parameter
     const collectionsParam = url.searchParams.get('collections');
@@ -74,22 +114,21 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Authentication failed', { status: 401 });
     }
     
-    // Connection limit check removed - allow unlimited connections per user
-    // const userConnections = connectionsByUserId.get(userId) || new Set();
-    // if (userConnections.size >= MAX_CONNECTIONS_PER_USER) {
-    //   console.warn(`🚫 Connection limit exceeded for user: ${userId}`);
-    //   return new NextResponse('Too many connections', { status: 429 });
-    // }
+    // RESTORED: Connection limit check to prevent abuse
+    const userConnections = connectionsByUserId.get(userId) || new Set();
+    if (userConnections.size >= MAX_CONNECTIONS_PER_USER) {
+      console.warn(`🚫 Connection limit exceeded for user: ${userId} (${userConnections.size} active connections)`);
+      return new NextResponse('Too many connections for this user', { status: 429 });
+    }
     
     // Generate unique client ID
     const clientId = uuidv4();
     
-    // Track this connection for the user (keeping for cleanup purposes)
-    const userConnections = connectionsByUserId.get(userId) || new Set();
+    // Track this connection for the user
     userConnections.add(clientId);
     connectionsByUserId.set(userId, userConnections);
     
-    console.log(`🔐 Authenticated connection for user ${userId} from IP ${clientIP}`);
+    console.log(`🔐 Authenticated connection for user ${userId} from IP ${clientIP} (${userConnections.size}/${MAX_CONNECTIONS_PER_USER} connections)`);
     
     // Initialize change stream service only when needed
     let changeStreamService: any = null;
@@ -125,7 +164,7 @@ export async function GET(request: NextRequest) {
           console.error('Error sending initial message:', error);
         }
         
-        // Subscribe to change stream events only if service is available
+        // Subscribe to changes
         if (changeStreamService) {
           try {
             changeStreamService.subscribe(
@@ -281,7 +320,10 @@ export async function POST(request: NextRequest) {
         subscriptions: subscriptionCount,
         timestamp: new Date().toISOString(),
         // Don't expose sensitive connection details
-        userCount: connectionsByUserId.size
+        userCount: connectionsByUserId.size,
+        maxConnectionsPerUser: MAX_CONNECTIONS_PER_USER,
+        rateLimitWindow: RATE_LIMIT_WINDOW,
+        maxAttemptsPerWindow: MAX_CONNECTION_ATTEMPTS_PER_MINUTE
       }
     });
   } catch (error) {

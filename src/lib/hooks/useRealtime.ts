@@ -1,3 +1,4 @@
+'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { NOTIFICATIONS_QUERY_KEY } from './useNotifications';
@@ -21,6 +22,10 @@ export interface UseRealtimeOptions {
   onDisconnect?: () => void;
 }
 
+// ADDED: Global connection tracking to prevent multiple instances
+let globalConnectionRef: EventSource | null = null;
+let globalConnectionCount = 0;
+
 export const useRealtime = (options: UseRealtimeOptions = {}) => {
   const {
     collections = ['notifications', 'features'],
@@ -43,8 +48,10 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
   const isConnectingRef = useRef(false);
   const shouldConnectRef = useRef(enabled);
   const queryClient = useQueryClient();
+  const instanceIdRef = useRef(Math.random().toString(36).substr(2, 9)); // Unique instance ID
 
-  // Store options in refs to avoid dependency issues
+  // Store stable references to avoid dependency loops
+  const queryClientRef = useRef(queryClient);
   const optionsRef = useRef({
     collections,
     userId,
@@ -54,7 +61,11 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
     onDisconnect
   });
 
-  // Update options ref when they change
+  // Update refs when they change but don't trigger re-connections
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+  }, [queryClient]);
+
   useEffect(() => {
     optionsRef.current = {
       collections,
@@ -72,8 +83,9 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
   }, [enabled]);
 
   const maxReconnectAttempts = 5;
-  const baseReconnectDelay = 1000; // 1 second
+  const baseReconnectDelay = 1000;
 
+  // FIXED: Removed queryClient dependency to prevent loops
   const handleMessage = useCallback((message: RealtimeMessage) => {
     setLastMessage(message);
     
@@ -89,11 +101,15 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
         break;
         
       case 'change':
-        // Invalidate relevant queries based on collection
-        if (message.collection === 'notifications') {
-          queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_QUERY_KEY] });
-        } else if (message.collection === 'features') {
-          queryClient.invalidateQueries({ queryKey: FEATURES_QUERY_KEY });
+        // FIXED: Use ref to access queryClient without dependency
+        const currentQueryClient = queryClientRef.current;
+        if (currentQueryClient) {
+          // Invalidate relevant queries based on collection
+          if (message.collection === 'notifications') {
+            currentQueryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_QUERY_KEY] });
+          } else if (message.collection === 'features') {
+            currentQueryClient.invalidateQueries({ queryKey: FEATURES_QUERY_KEY });
+          }
         }
         break;
         
@@ -108,7 +124,7 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
     
     // Call custom message handler
     optionsRef.current.onMessage?.(message);
-  }, [queryClient]);
+  }, []); // FIXED: No dependencies to prevent loops
 
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
@@ -121,6 +137,12 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
       reconnectTimeoutRef.current = null;
     }
     
+    // ADDED: Clean up global tracking
+    if (globalConnectionRef === eventSourceRef.current) {
+      globalConnectionRef = null;
+    }
+    globalConnectionCount = Math.max(0, globalConnectionCount - 1);
+    
     isConnectingRef.current = false;
     setIsConnected(false);
   }, []);
@@ -130,14 +152,27 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
     optionsRef.current.onDisconnect?.();
   }, [cleanup]);
 
-  // Main connection function - no dependencies to avoid cycles
+  // FIXED: Stable connection function with NO dependencies
   const connectToServer = useCallback(() => {
+    // ADDED: Prevent multiple global connections
+    if (globalConnectionRef && globalConnectionRef.readyState !== EventSource.CLOSED) {
+      console.warn(`🚫 Global connection already exists, skipping new connection for instance ${instanceIdRef.current}`);
+      return;
+    }
+    
+    // ADDED: Limit total connections per browser
+    if (globalConnectionCount >= 2) {
+      console.warn(`🚫 Too many global connections (${globalConnectionCount}), skipping for instance ${instanceIdRef.current}`);
+      return;
+    }
+    
     // Prevent multiple simultaneous connection attempts
     if (isConnectingRef.current || eventSourceRef.current || !shouldConnectRef.current) {
       return;
     }
 
     isConnectingRef.current = true;
+    globalConnectionCount++;
 
     try {
       const { collections: currentCollections, userId: currentUserId } = optionsRef.current;
@@ -149,11 +184,15 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
         url += `&userId=${encodeURIComponent(currentUserId)}`;
       }
       
+      console.log(`🔌 Creating connection for instance ${instanceIdRef.current}`);
+      
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
+      globalConnectionRef = eventSource; // Track globally
 
       eventSource.onopen = () => {
         setConnectionError(null);
+        console.log(`✅ Connection opened for instance ${instanceIdRef.current}`);
       };
 
       eventSource.onmessage = (event) => {
@@ -166,7 +205,7 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
       };
 
       eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
+        console.error(`❌ SSE connection error for instance ${instanceIdRef.current}:`, error);
         setIsConnected(false);
         isConnectingRef.current = false;
         
@@ -185,6 +224,11 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
         if (eventSourceRef.current === eventSource) {
           eventSourceRef.current = null;
         }
+        
+        if (globalConnectionRef === eventSource) {
+          globalConnectionRef = null;
+        }
+        globalConnectionCount = Math.max(0, globalConnectionCount - 1);
         
         // Schedule reconnection if we haven't exceeded max attempts and still enabled
         if (shouldConnectRef.current && reconnectAttemptsRef.current < maxReconnectAttempts) {
@@ -206,9 +250,11 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
       console.error('Error creating SSE connection:', error);
       setConnectionError('Failed to create connection');
       isConnectingRef.current = false;
+      globalConnectionCount = Math.max(0, globalConnectionCount - 1);
     }
-  }, [handleMessage]); // Only depend on handleMessage
+  }, []); // FIXED: NO dependencies at all!
 
+  // FIXED: Remove ALL dependencies to prevent loops
   const forceReconnect = useCallback(() => {
     setReconnectAttempts(0);
     reconnectAttemptsRef.current = 0;
@@ -220,7 +266,14 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
       reconnectTimeoutRef.current = null;
     }
     
-    cleanup();
+    // Use refs to avoid dependencies
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    
+    isConnectingRef.current = false;
+    setIsConnected(false);
     
     // Wait a bit before reconnecting
     setTimeout(() => {
@@ -228,9 +281,9 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
         connectToServer();
       }
     }, 100);
-  }, [cleanup, connectToServer]);
+  }, []); // FIXED: NO dependencies!
 
-  // Initialize connection when enabled changes
+  // FIXED: Simplified useEffect with stable dependencies
   useEffect(() => {
     if (enabled && !eventSourceRef.current && !isConnectingRef.current) {
       connectToServer();
@@ -241,13 +294,35 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
     return () => {
       cleanup();
     };
-  }, [enabled, connectToServer, cleanup]);
+  }, [enabled]); // FIXED: Only enabled dependency to prevent loops
 
-  // Handle page visibility changes
+  // Handle page visibility changes - FIXED: No dependencies
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && enabled && !isConnected && !isConnectingRef.current) {
-        forceReconnect();
+      if (document.visibilityState === 'visible' && shouldConnectRef.current && !isConnected && !isConnectingRef.current) {
+        // Use refs to avoid dependencies
+        setReconnectAttempts(0);
+        reconnectAttemptsRef.current = 0;
+        setConnectionError(null);
+        
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+        
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+        
+        isConnectingRef.current = false;
+        setIsConnected(false);
+        
+        setTimeout(() => {
+          if (shouldConnectRef.current) {
+            connectToServer();
+          }
+        }, 100);
       }
     };
 
@@ -255,13 +330,35 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [enabled, isConnected, forceReconnect]);
+  }, []); // FIXED: No dependencies
 
-  // Handle online/offline events
+  // Handle online/offline events - FIXED: No dependencies
   useEffect(() => {
     const handleOnline = () => {
-      if (enabled && !isConnected && !isConnectingRef.current) {
-        forceReconnect();
+      if (shouldConnectRef.current && !isConnected && !isConnectingRef.current) {
+        // Use refs to avoid dependencies
+        setReconnectAttempts(0);
+        reconnectAttemptsRef.current = 0;
+        setConnectionError(null);
+        
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+        
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+        
+        isConnectingRef.current = false;
+        setIsConnected(false);
+        
+        setTimeout(() => {
+          if (shouldConnectRef.current) {
+            connectToServer();
+          }
+        }, 100);
       }
     };
 
@@ -276,7 +373,7 @@ export const useRealtime = (options: UseRealtimeOptions = {}) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [enabled, isConnected, forceReconnect]);
+  }, []); // FIXED: No dependencies
 
   return {
     isConnected,

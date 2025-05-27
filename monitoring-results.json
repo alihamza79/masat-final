@@ -1,0 +1,51 @@
+{
+  "startTime": "2025-05-27T22:59:08.402Z",
+  "endTime": "2025-05-27T23:00:09.013Z",
+  "durationMinutes": 1,
+  "checks": [
+    {
+      "timestamp": "2025-05-27T22:59:09.033Z",
+      "status": "error",
+      "statusCode": 401,
+      "error": "Authentication required"
+    },
+    {
+      "timestamp": "2025-05-27T22:59:19.020Z",
+      "status": "error",
+      "statusCode": 401,
+      "error": "Authentication required"
+    },
+    {
+      "timestamp": "2025-05-27T22:59:29.039Z",
+      "status": "error",
+      "statusCode": 401,
+      "error": "Authentication required"
+    },
+    {
+      "timestamp": "2025-05-27T22:59:39.024Z",
+      "status": "error",
+      "statusCode": 401,
+      "error": "Authentication required"
+    },
+    {
+      "timestamp": "2025-05-27T22:59:49.042Z",
+      "status": "error",
+      "statusCode": 401,
+      "error": "Authentication required"
+    },
+    {
+      "timestamp": "2025-05-27T22:59:59.054Z",
+      "status": "error",
+      "statusCode": 401,
+      "error": "Authentication required"
+    }
+  ],
+  "summary": {
+    "totalChecks": 6,
+    "averageConnections": 0,
+    "maxConnections": 0,
+    "minConnections": 0,
+    "errors": 0,
+    "rateLimitHits": 0
+  }
+}
