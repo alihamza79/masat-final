@@ -27,12 +27,29 @@ export async function middleware(request: NextRequest) {
   // Check if the path is public
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
 
-  // Get the token
-  const token = await getToken({ 
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET
-  });
-  console.log("Checking token:", token);
+  // Get the token with more robust configuration
+  let token = null;
+  try {
+    token = await getToken({ 
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+      // Let NextAuth auto-detect the cookie name
+      // Use raw mode for better compatibility
+      raw: false,
+    });
+    
+    // Log token status in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Middleware - Checking token for path:", pathname);
+      console.log("Token exists:", !!token);
+      console.log("Token ID:", token?.id || 'No ID');
+    }
+  } catch (error) {
+    console.error('Error getting token in middleware:', error);
+    // Continue without token if there's an error
+    token = null;
+  }
+
   // Handle root path
   if (pathname === '/') {
     if (token) {
@@ -59,6 +76,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }; 
