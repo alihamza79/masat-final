@@ -572,6 +572,86 @@
             "yesterday": "ieri"
         }
     },
+    "keywordTracker": {
+        "pageTitle": "Urmăritor Cuvinte Cheie",
+        "pageDescription": "Urmăriți clasamentul cuvintelor cheie pentru produsele dvs.",
+        "addButton": "Adaugă Produs",
+        "refreshButton": "Reîmprospătare",
+        "table": {
+            "position": "Poziție",
+            "product": "Produs",
+            "trackedKeywords": "Cuvinte Cheie Urmărite",
+            "organicTop10": "Organic Top 10",
+            "organicTop50": "Organic Top 50",
+            "sponsoredTop10": "Sponsorizat Top 10", 
+            "sponsoredTop50": "Sponsorizat Top 50",
+            "dateAdded": "Data Adăugării",
+            "actions": "Acțiuni",
+            "rowsPerPage": "Rânduri pe pagină",
+            "noProducts": "Nu sunt produse urmărite",
+            "addFirstProduct": "Adăugați primul produs pentru a începe urmărirea cuvintelor cheie"
+        },
+        "actions": {
+            "editKeywords": "Editează Cuvinte Cheie",
+            "delete": "Șterge"
+        },
+        "search": {
+            "placeholder": "Caută produse urmărite..."
+        },
+        "form": {
+            "selectProduct": "Selectează Produs",
+            "searchPlaceholder": "Caută după nume, SKU sau PNK",
+            "noProductsFound": "Nu s-au găsit produse",
+            "keywordsLabel": "Adaugă Cuvinte Cheie",
+            "keywordsPlaceholder": "Tastează un cuvânt cheie și apasă Enter...",
+            "keywordsHelp": "Apasă Enter pentru a adăuga fiecare cuvânt cheie",
+            "keywordsList": "Cuvinte cheie de urmărit",
+            "summary": "Rezumat",
+            "totalKeywords": "Total Cuvinte Cheie",
+            "addedKeywords": "Cuvinte Cheie Adăugate",
+            "totalTracked": "Total Cuvinte Cheie de Urmărit",
+            "cancel": "Anulează",
+            "save": "Salvează Produs",
+            "validation": {
+                "productRequired": "Vă rugăm să selectați un produs",
+                "keywordsRequired": "Este necesar cel puțin un cuvânt cheie"
+            }
+        },
+        "editDialog": {
+            "title": "Editează Cuvintele Cheie Urmărite",
+            "productSummary": "Rezumat Produs",
+            "keywordsLabel": "Adaugă Cuvinte Cheie",
+            "keywordsPlaceholder": "Tastează un cuvânt cheie și apasă Enter...",
+            "keywordsHelp": "Apasă Enter pentru a adăuga fiecare cuvânt cheie",
+            "currentKeywords": "Cuvinte Cheie Curente",
+            "changeSummary": "Rezumat Modificări",
+            "totalKeywords": "Total Cuvinte Cheie",
+            "addedKeywords": "Cuvinte Cheie Adăugate",
+            "deletedKeywords": "Cuvinte Cheie Șterse",
+            "noChanges": "Nu s-au făcut modificări",
+            "cancel": "Anulează",
+            "saveChanges": "Salvează Modificările",
+            "errors": {
+                "keywordsRequired": "Este necesar cel puțin un cuvânt cheie"
+            }
+        },
+        "delete": {
+            "title": "Elimină Urmărirea Produsului",
+            "confirmation": "Sigur doriți să opriți urmărirea cuvintelor cheie pentru \"{name}\"? Această acțiune nu poate fi anulată."
+        },
+        "deleteDialog": {
+            "title": "Elimină Urmărirea Produsului", 
+            "content": "Sigur doriți să opriți urmărirea cuvintelor cheie pentru acest produs? Această acțiune nu poate fi anulată."
+        },
+        "toast": {
+            "createSuccess": "Produs adăugat pentru urmărire cu succes",
+            "updateSuccess": "Cuvinte cheie actualizate cu succes",
+            "deleteSuccess": "Urmărirea produsului eliminată cu succes",
+            "createError": "Eroare la adăugarea produsului pentru urmărire",
+            "updateError": "Eroare la actualizarea cuvintelor cheie",
+            "deleteError": "Eroare la eliminarea urmăririi produsului"
+        }
+    },
     "accountSettings": {
         "title": "Setări Cont",
         "pageDescription": "acestea sunt Setările Contului",

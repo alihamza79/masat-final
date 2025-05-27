@@ -716,6 +716,86 @@
             "yesterday": "yesterday"
         }
     },
+    "keywordTracker": {
+        "pageTitle": "Keyword Tracker",
+        "pageDescription": "Track keyword rankings for your products",
+        "addButton": "Add Product",
+        "refreshButton": "Refresh",
+        "table": {
+            "position": "Position",
+            "product": "Product",
+            "trackedKeywords": "Tracked Keywords",
+            "organicTop10": "Organic Top 10",
+            "organicTop50": "Organic Top 50", 
+            "sponsoredTop10": "Sponsored Top 10",
+            "sponsoredTop50": "Sponsored Top 50",
+            "dateAdded": "Date Added",
+            "actions": "Actions",
+            "rowsPerPage": "Rows per page",
+            "noProducts": "No products being tracked",
+            "addFirstProduct": "Add your first product to start tracking keywords"
+        },
+        "actions": {
+            "editKeywords": "Edit Keywords",
+            "delete": "Delete"
+        },
+        "search": {
+            "placeholder": "Search tracked products..."
+        },
+        "form": {
+            "selectProduct": "Select Product",
+            "searchPlaceholder": "Search by name, SKU or PNK",
+            "noProductsFound": "No products found",
+            "keywordsLabel": "Add Keywords",
+            "keywordsPlaceholder": "Type a keyword and press Enter...",
+            "keywordsHelp": "Press Enter to add each keyword",
+            "keywordsList": "Keywords to track",
+            "summary": "Summary",
+            "totalKeywords": "Total Keywords",
+            "addedKeywords": "Added Keywords", 
+            "totalTracked": "Total Keywords to Track",
+            "cancel": "Cancel",
+            "save": "Save Product",
+            "validation": {
+                "productRequired": "Please select a product",
+                "keywordsRequired": "At least one keyword is required"
+            }
+        },
+        "editDialog": {
+            "title": "Edit Tracked Keywords",
+            "productSummary": "Product Summary",
+            "keywordsLabel": "Add Keywords",
+            "keywordsPlaceholder": "Type a keyword and press Enter...",
+            "keywordsHelp": "Press Enter to add each keyword",
+            "currentKeywords": "Current Keywords",
+            "changeSummary": "Change Summary",
+            "totalKeywords": "Total Keywords",
+            "addedKeywords": "Added Keywords",
+            "deletedKeywords": "Deleted Keywords",
+            "noChanges": "No changes made",
+            "cancel": "Cancel",
+            "saveChanges": "Save Changes",
+            "errors": {
+                "keywordsRequired": "At least one keyword is required"
+            }
+        },
+        "delete": {
+            "title": "Remove Product Tracking",
+            "confirmation": "Are you sure you want to stop tracking keywords for \"{name}\"? This action cannot be undone."
+        },
+        "deleteDialog": {
+            "title": "Remove Product Tracking",
+            "content": "Are you sure you want to stop tracking keywords for this product? This action cannot be undone."
+        },
+        "toast": {
+            "createSuccess": "Product added for tracking successfully",
+            "updateSuccess": "Keywords updated successfully",
+            "deleteSuccess": "Product tracking removed successfully",
+            "createError": "Failed to add product for tracking",
+            "updateError": "Failed to update keywords",
+            "deleteError": "Failed to remove product tracking"
+        }
+    },
     "accountSettings": {
         "title": "Account Settings",
         "pageDescription": "this is Account Setting",

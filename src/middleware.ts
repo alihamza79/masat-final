@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
     req: request,
     secret: process.env.NEXTAUTH_SECRET
   });
-
+  console.log("Checking token:", token);
   // Handle root path
   if (pathname === '/') {
     if (token) {

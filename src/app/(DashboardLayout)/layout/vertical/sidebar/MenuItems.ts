@@ -80,7 +80,7 @@ const Menuitems: MenuitemsType[] = [
     id: uniqueId(),
     title: "menu.keywordTracker",
     icon: IconZoomCode,
-    href: "/keyword-frftracker",
+    href: "/keyword-tracker",
   },
   {
     id: uniqueId(),
