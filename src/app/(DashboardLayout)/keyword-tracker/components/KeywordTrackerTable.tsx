@@ -23,7 +23,8 @@ import {
   Avatar,
   Chip,
   Skeleton,
-  Stack
+  Stack,
+  Button
 } from '@mui/material';
 import {
   IconEdit,
@@ -33,12 +34,14 @@ import {
   IconPackage,
   IconTrendingUp,
   IconTrendingDown,
-  IconMinus
+  IconMinus,
+  IconEye
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { KeywordTrackedProduct } from '@/lib/hooks/useKeywordTracker';
 import DeleteConfirmationDialog from '@/app/components/dialogs/DeleteConfirmationDialog';
+import ViewKeywordsDialog from './ViewKeywordsDialog';
 
 interface KeywordTrackerTableProps {
   trackedProducts: KeywordTrackedProduct[];
@@ -78,6 +81,8 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
   const [selectedProduct, setSelectedProduct] = useState<KeywordTrackedProduct | null>(null);
   const [openConfirmDelete, setOpenConfirmDelete] = useState<boolean>(false);
   const [deleteProductId, setDeleteProductId] = useState<string>('');
+  const [openViewKeywords, setOpenViewKeywords] = useState<boolean>(false);
+  const [viewProduct, setViewProduct] = useState<KeywordTrackedProduct | null>(null);
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -131,47 +136,46 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
     }
   };
 
+  const handleView = () => {
+    if (selectedProduct) {
+      setViewProduct(selectedProduct);
+      setOpenViewKeywords(true);
+      handleMenuClose();
+    }
+  };
+
+  const handleViewKeywords = (product: KeywordTrackedProduct) => {
+    setViewProduct(product);
+    setOpenViewKeywords(true);
+  };
+
   const getImageUrl = (product: KeywordTrackedProduct) => {
     return product.productImage || null;
   };
 
-  const renderKeywordsChips = (keywords: string[], product: KeywordTrackedProduct) => {
-    const maxVisible = 3;
-    const visibleKeywords = keywords.slice(0, maxVisible);
-    const remainingCount = keywords.length - maxVisible;
-
+  const renderKeywordCount = (keywords: string[], product: KeywordTrackedProduct) => {
     return (
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
-        {visibleKeywords.map((keyword, index) => (
-          <Chip
-            key={`${product._id}-${index}`}
-            label={keyword}
-            size="small"
-            variant="outlined"
-            sx={{
-              maxWidth: '120px',
-              '& .MuiChip-label': {
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }
-            }}
-          />
-        ))}
-        {remainingCount > 0 && (
-          <Chip
-            label={`+${remainingCount}`}
-            size="small"
-            variant="filled"
-            color="primary"
-            sx={{ 
-              minWidth: 'auto',
-              '& .MuiChip-label': {
-                px: 1
-              }
-            }}
-          />
-        )}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => handleViewKeywords(product)}
+          startIcon={<IconTag size={16} />}
+          sx={{
+            minWidth: 'auto',
+            px: 1.5,
+            py: 0.5,
+            fontSize: '0.875rem',
+            borderRadius: '6px',
+            '&:hover': {
+              backgroundColor: theme.palette.primary.main,
+              color: theme.palette.primary.contrastText,
+              borderColor: theme.palette.primary.main,
+            }
+          }}
+        >
+          {keywords.length}
+        </Button>
         <IconButton
           size="small"
           onClick={(e) => {
@@ -179,10 +183,9 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
             onEditKeywords(product);
           }}
           sx={{
-            ml: 0.5,
             color: theme.palette.primary.main,
             '&:hover': {
-              backgroundColor: theme.palette.primary.light,
+              backgroundColor: theme.palette.action.hover,
             }
           }}
         >
@@ -236,7 +239,7 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>{t('keywordTracker.table.position')}</TableCell>
+            <TableCell>{t('keywordTracker.table.srNumber')}</TableCell>
             <TableCell>{t('keywordTracker.table.product')}</TableCell>
             <TableCell>{t('keywordTracker.table.trackedKeywords')}</TableCell>
             <TableCell align="center">{t('keywordTracker.table.organicTop10')}</TableCell>
@@ -260,7 +263,7 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
                   </Box>
                 </Box>
               </TableCell>
-              <TableCell><Skeleton variant="text" width={200} /></TableCell>
+              <TableCell><Skeleton variant="text" width={80} /></TableCell>
               <TableCell><Skeleton variant="text" width={50} /></TableCell>
               <TableCell><Skeleton variant="text" width={50} /></TableCell>
               <TableCell><Skeleton variant="text" width={50} /></TableCell>
@@ -313,9 +316,9 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
         <Table stickyHeader aria-label="keyword tracker table">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ minWidth: 60 }}>{t('keywordTracker.table.position', 'Position')}</TableCell>
+              <TableCell sx={{ minWidth: 60 }}>{t('keywordTracker.table.srNumber', 'Sr #')}</TableCell>
               <TableCell sx={{ minWidth: 200 }}>{t('keywordTracker.table.product', 'Product')}</TableCell>
-              <TableCell sx={{ minWidth: 250 }}>{t('keywordTracker.table.trackedKeywords', 'Tracked Keywords')}</TableCell>
+              <TableCell sx={{ minWidth: 150 }}>{t('keywordTracker.table.trackedKeywords', 'Tracked Keywords')}</TableCell>
               <TableCell sx={{ width: 120, textAlign: 'center' }}>
                 <Typography variant="caption" sx={{ lineHeight: 1.2, display: 'block' }}>
                   {t('keywordTracker.table.organicTop10', 'Organic Top 10')}
@@ -415,8 +418,8 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
                     </Box>
                   </TableCell>
                   
-                  <TableCell onClick={() => setSelectedProduct(product)}>
-                    {renderKeywordsChips(product.keywords, product)}
+                  <TableCell>
+                    {renderKeywordCount(product.keywords, product)}
                   </TableCell>
                   
                   <TableCell align="center">
@@ -484,6 +487,13 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
           horizontal: 'right',
         }}
       >
+        <MenuItem onClick={handleView}>
+          <ListItemIcon>
+            <IconEye size={18} />
+          </ListItemIcon>
+          <ListItemText>{t('keywordTracker.actions.viewKeywords', 'View Keywords')}</ListItemText>
+        </MenuItem>
+
         <MenuItem onClick={handleEdit}>
           <ListItemIcon>
             <IconEdit size={18} />
@@ -508,6 +518,18 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
         integrationName={selectedProduct?.productName || ''}
         title={t('keywordTracker.deleteDialog.title', 'Remove Product Tracking')}
         message={t('keywordTracker.deleteDialog.content', 'Are you sure you want to stop tracking keywords for this product? This action cannot be undone.')}
+      />
+
+      <ViewKeywordsDialog
+        open={openViewKeywords}
+        onClose={() => setOpenViewKeywords(false)}
+        trackedProduct={viewProduct}
+        onEdit={() => {
+          setOpenViewKeywords(false);
+          if (viewProduct) {
+            onEditKeywords(viewProduct);
+          }
+        }}
       />
     </Paper>
   );

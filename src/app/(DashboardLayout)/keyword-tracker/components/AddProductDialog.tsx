@@ -243,31 +243,31 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
           {/* Selected Product Preview */}
           {selectedProduct && (
-            <Paper sx={{ p: 2, mb: 3, bgcolor: theme.palette.action.hover }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: 'primary.main' }}>
+            <Paper sx={{ p: 1.5, mb: 2, bgcolor: theme.palette.action.hover }}>
+              <Typography variant="caption" sx={{ mb: 0.5, color: 'primary.main', fontWeight: 500, display: 'block', fontSize: '0.65rem' }}>
                 {t('keywordTracker.form.selectedProduct', 'Selected Product')}
               </Typography>
-              <Box display="flex" alignItems="center" gap={2}>
+              <Box display="flex" alignItems="center" gap={1.5}>
                 <Avatar
                   src={selectedProduct.images?.[0]?.url}
                   alt={selectedProduct.name}
-                  sx={{ width: 40, height: 40 }}
+                  sx={{ width: 28, height: 28 }}
                 >
                   {selectedProduct.name?.charAt(0).toUpperCase()}
                 </Avatar>
                 <Box>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant="caption" fontWeight={500} sx={{ mb: 0.25, fontSize: '0.75rem', display: 'block' }}>
                     {selectedProduct.name}
                   </Typography>
-                  <Box display="flex" gap={1} mt={0.5}>
+                  <Box display="flex" gap={1.5} mt={0.25}>
                     {selectedProduct.part_number && (
-                      <Typography variant="caption" color="textSecondary">
-                        SKU: {selectedProduct.part_number}
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
+                        <strong>SKU:</strong> {selectedProduct.part_number}
                       </Typography>
                     )}
                     {selectedProduct.part_number_key && (
-                      <Typography variant="caption" color="textSecondary">
-                        PNK: {selectedProduct.part_number_key}
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
+                        <strong>PNK:</strong> {selectedProduct.part_number_key}
                       </Typography>
                     )}
                   </Box>
@@ -277,76 +277,78 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
           )}
 
           {/* Keywords Input */}
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label={t('keywordTracker.form.keywordsLabel', 'Add Keywords')}
-              placeholder={t('keywordTracker.form.keywordsPlaceholder', 'Type a keyword and press Enter...')}
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
-              onKeyPress={handleKeywordInputKeyPress}
-              error={!!errors.keywords}
-              helperText={errors.keywords || t('keywordTracker.form.keywordsHelp', 'Press Enter to add each keyword')}
-              disabled={isSubmitting}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconTag size={20} />
-                  </InputAdornment>
-                ),
-                endAdornment: keywordInput.trim() && (
-                  <InputAdornment position="end">
-                    <Button
-                      size="small"
-                      onClick={addKeyword}
-                      disabled={isSubmitting}
-                      startIcon={<IconPlus size={16} />}
-                    >
-                      Add
-                    </Button>
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Box>
-
-          {/* Keywords List */}
-          {keywords.length > 0 && (
+          <Paper sx={{ p: 2, mb: 2 }}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                {t('keywordTracker.form.keywordsList', 'Keywords to track')} ({keywords.length})
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {keywords.map((keyword, index) => (
-                  <Chip
-                    key={index}
-                    label={keyword}
-                    onDelete={() => removeKeyword(keyword)}
-                    deleteIcon={<IconX size={16} />}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                    disabled={isSubmitting}
-                  />
-                ))}
-              </Box>
+              <TextField
+                fullWidth
+                label={t('keywordTracker.form.keywordsLabel', 'Add Keywords')}
+                placeholder={t('keywordTracker.form.keywordsPlaceholder', 'Type a keyword and press Enter...')}
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyPress={handleKeywordInputKeyPress}
+                error={!!errors.keywords}
+                helperText={errors.keywords || t('keywordTracker.form.keywordsHelp', 'Press Enter to add each keyword')}
+                disabled={isSubmitting}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconTag size={20} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: keywordInput.trim() && (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        onClick={addKeyword}
+                        disabled={isSubmitting}
+                        startIcon={<IconPlus size={16} />}
+                      >
+                        Add
+                      </Button>
+                    </InputAdornment>
+                  )
+                }}
+              />
             </Box>
-          )}
+
+            {/* Keywords List */}
+            {keywords.length > 0 && (
+              <Box sx={{ mb: 0 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  {t('keywordTracker.form.keywordsList', 'Keywords to track')} ({keywords.length})
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {keywords.map((keyword, index) => (
+                    <Chip
+                      key={index}
+                      label={keyword}
+                      onDelete={() => removeKeyword(keyword)}
+                      deleteIcon={<IconX size={16} />}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      disabled={isSubmitting}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Paper>
 
           {/* Summary */}
           <Paper sx={{ p: 2, bgcolor: theme.palette.background.default }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               {t('keywordTracker.form.summary', 'Summary')}
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
               <Typography variant="body2">
                 <strong>{t('keywordTracker.form.totalKeywords', 'Total Keywords')}:</strong> {keywords.length}
               </Typography>
-              <Typography variant="body2">
+              <Typography variant="body2" color="success.main">
                 <strong>{t('keywordTracker.form.addedKeywords', 'Added Keywords')}:</strong> {keywords.length}
               </Typography>
-              <Typography variant="body2">
-                <strong>{t('keywordTracker.form.totalTracked', 'Total Keywords to Track')}:</strong> {keywords.length}
+              <Typography variant="body2" color="info.main">
+                <strong>{t('keywordTracker.form.totalUsedKeywords', 'Total Used Keywords')}:</strong> 82/∞
               </Typography>
             </Box>
           </Paper>

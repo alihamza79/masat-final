@@ -722,6 +722,7 @@
         "addButton": "Add Product",
         "refreshButton": "Refresh",
         "table": {
+            "srNumber": "Sr #",
             "position": "Position",
             "product": "Product",
             "trackedKeywords": "Tracked Keywords",
@@ -736,6 +737,7 @@
             "addFirstProduct": "Add your first product to start tracking keywords"
         },
         "actions": {
+            "viewKeywords": "View Keywords",
             "editKeywords": "Edit Keywords",
             "delete": "Delete"
         },
@@ -743,23 +745,38 @@
             "placeholder": "Search tracked products..."
         },
         "form": {
-            "selectProduct": "Select Product",
-            "searchPlaceholder": "Search by name, SKU or PNK",
-            "noProductsFound": "No products found",
+            "productLabel": "Select Product",
+            "productPlaceholder": "Search by name, SKU, or PNK...",
+            "selectedProduct": "Selected Product",
             "keywordsLabel": "Add Keywords",
             "keywordsPlaceholder": "Type a keyword and press Enter...",
             "keywordsHelp": "Press Enter to add each keyword",
             "keywordsList": "Keywords to track",
             "summary": "Summary",
             "totalKeywords": "Total Keywords",
-            "addedKeywords": "Added Keywords", 
+            "addedKeywords": "Added Keywords",
+            "totalUsedKeywords": "Total Used Keywords",
             "totalTracked": "Total Keywords to Track",
-            "cancel": "Cancel",
-            "save": "Save Product",
-            "validation": {
+            "adding": "Adding...",
+            "addButton": "Add Product",
+            "noProducts": "No products found",
+            "errors": {
                 "productRequired": "Please select a product",
-                "keywordsRequired": "At least one keyword is required"
+                "keywordsRequired": "Please add at least one keyword"
             }
+        },
+        "viewDialog": {
+            "title": "Tracked Keywords",
+            "productSummary": "Product Information",
+            "keywordsTitle": "Keywords",
+            "editButton": "Edit Keywords",
+            "editKeywords": "Edit Keywords",
+            "noKeywords": "No keywords found",
+            "performanceSummary": "Performance Summary",
+            "organicTop10": "Organic Top 10",
+            "organicTop50": "Organic Top 50",
+            "sponsoredTop10": "Sponsored Top 10",
+            "sponsoredTop50": "Sponsored Top 50"
         },
         "editDialog": {
             "title": "Edit Tracked Keywords",
@@ -768,13 +785,15 @@
             "keywordsPlaceholder": "Type a keyword and press Enter...",
             "keywordsHelp": "Press Enter to add each keyword",
             "currentKeywords": "Current Keywords",
-            "changeSummary": "Change Summary",
+            "summary": "Summary of Modifications",
             "totalKeywords": "Total Keywords",
-            "addedKeywords": "Added Keywords",
-            "deletedKeywords": "Deleted Keywords",
+            "addedKeywords": "Added",
+            "deletedKeywords": "Deleted",
+            "addedKeywordsList": "Added Keywords",
+            "deletedKeywordsList": "Deleted Keywords",
             "noChanges": "No changes made",
-            "cancel": "Cancel",
-            "saveChanges": "Save Changes",
+            "updating": "Updating...",
+            "updateButton": "Update Keywords",
             "errors": {
                 "keywordsRequired": "At least one keyword is required"
             }
@@ -793,7 +812,9 @@
             "deleteSuccess": "Product tracking removed successfully",
             "createError": "Failed to add product for tracking",
             "updateError": "Failed to update keywords",
-            "deleteError": "Failed to remove product tracking"
+            "deleteError": "Failed to remove product tracking",
+            "fetchError": "Failed to fetch tracked products",
+            "missingId": "Tracked product ID is required for update"
         }
     },
     "accountSettings": {

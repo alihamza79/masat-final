@@ -127,30 +127,30 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
       <DialogContent>
         <Box sx={{ mt: 1 }}>
           {/* Product Summary */}
-          <Paper sx={{ p: 2, mb: 3, bgcolor: theme.palette.action.hover }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: 'primary.main' }}>
+          <Paper sx={{ p: 1.5, mb: 2, bgcolor: theme.palette.action.hover }}>
+            <Typography variant="caption" sx={{ mb: 0.5, color: 'primary.main', fontWeight: 500, display: 'block', fontSize: '0.65rem' }}>
               {t('keywordTracker.editDialog.productSummary', 'Product Summary')}
             </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={1.5}>
               <Avatar
                 src={trackedProduct.productImage}
                 alt={trackedProduct.productName}
-                sx={{ width: 48, height: 48 }}
+                sx={{ width: 28, height: 28 }}
               >
                 {trackedProduct.productName.charAt(0).toUpperCase()}
               </Avatar>
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }}>
+                <Typography variant="caption" fontWeight={500} sx={{ mb: 0.25, fontSize: '0.75rem', display: 'block' }}>
                   {trackedProduct.productName}
                 </Typography>
-                <Box display="flex" gap={2} flexWrap="wrap">
+                <Box display="flex" gap={1.5} flexWrap="wrap">
                   {trackedProduct.productSKU && (
-                    <Typography variant="caption" color="textSecondary">
+                    <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
                       <strong>SKU:</strong> {trackedProduct.productSKU}
                     </Typography>
                   )}
                   {trackedProduct.productPNK && (
-                    <Typography variant="caption" color="textSecondary">
+                    <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
                       <strong>PNK:</strong> {trackedProduct.productPNK}
                     </Typography>
                   )}
@@ -160,69 +160,71 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
           </Paper>
 
           {/* Keywords Input */}
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label={t('keywordTracker.editDialog.keywordsLabel', 'Add Keywords')}
-              placeholder={t('keywordTracker.editDialog.keywordsPlaceholder', 'Type a keyword and press Enter...')}
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
-              onKeyPress={handleKeywordInputKeyPress}
-              error={!!error}
-              helperText={error || t('keywordTracker.editDialog.keywordsHelp', 'Press Enter to add each keyword')}
-              disabled={isSubmitting}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconTag size={20} />
-                  </InputAdornment>
-                ),
-                endAdornment: keywordInput.trim() && (
-                  <InputAdornment position="end">
-                    <Button
-                      size="small"
-                      onClick={addKeyword}
-                      disabled={isSubmitting}
-                      startIcon={<IconPlus size={16} />}
-                    >
-                      Add
-                    </Button>
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Box>
-
-          {/* Current Keywords List */}
-          {keywords.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                {t('keywordTracker.editDialog.currentKeywords', 'Current Keywords')} ({keywords.length})
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {keywords.map((keyword, index) => {
-                  const isNew = addedKeywords.includes(keyword);
-                  return (
-                    <Chip
-                      key={index}
-                      label={keyword}
-                      onDelete={() => removeKeyword(keyword)}
-                      deleteIcon={<IconX size={16} />}
-                      size="small"
-                      color={isNew ? 'success' : 'primary'}
-                      variant={isNew ? 'filled' : 'outlined'}
-                      disabled={isSubmitting}
-                      sx={{
-                        ...(isNew && {
-                          animation: 'pulse 1s ease-in-out'
-                        })
-                      }}
-                    />
-                  );
-                })}
-              </Box>
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                fullWidth
+                label={t('keywordTracker.editDialog.keywordsLabel', 'Add Keywords')}
+                placeholder={t('keywordTracker.editDialog.keywordsPlaceholder', 'Type a keyword and press Enter...')}
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyPress={handleKeywordInputKeyPress}
+                error={!!error}
+                helperText={error || t('keywordTracker.editDialog.keywordsHelp', 'Press Enter to add each keyword')}
+                disabled={isSubmitting}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconTag size={20} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: keywordInput.trim() && (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        onClick={addKeyword}
+                        disabled={isSubmitting}
+                        startIcon={<IconPlus size={16} />}
+                      >
+                        Add
+                      </Button>
+                    </InputAdornment>
+                  )
+                }}
+              />
             </Box>
-          )}
+
+            {/* Current Keywords List */}
+            {keywords.length > 0 && (
+              <Box sx={{ mb: 0 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  {t('keywordTracker.editDialog.currentKeywords', 'Current Keywords')} ({keywords.length})
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {keywords.map((keyword, index) => {
+                    const isNew = addedKeywords.includes(keyword);
+                    return (
+                      <Chip
+                        key={index}
+                        label={keyword}
+                        onDelete={() => removeKeyword(keyword)}
+                        deleteIcon={<IconX size={16} />}
+                        size="small"
+                        color={isNew ? 'success' : 'primary'}
+                        variant={isNew ? 'filled' : 'outlined'}
+                        disabled={isSubmitting}
+                        sx={{
+                          ...(isNew && {
+                            animation: 'pulse 1s ease-in-out'
+                          })
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+          </Paper>
 
           <Divider sx={{ my: 2 }} />
 
@@ -231,7 +233,7 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               {t('keywordTracker.editDialog.summary', 'Summary of Modifications')}
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
               <Typography variant="body2">
                 <strong>{t('keywordTracker.editDialog.totalKeywords', 'Total Keywords')}:</strong> {keywords.length}
               </Typography>
@@ -242,54 +244,6 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
                 <strong>{t('keywordTracker.editDialog.deletedKeywords', 'Deleted')}:</strong> {deletedKeywords.length}
               </Typography>
             </Box>
-            
-            {/* Show added keywords */}
-            {addedKeywords.length > 0 && (
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
-                  {t('keywordTracker.editDialog.addedKeywordsList', 'Added Keywords')}:
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                  {addedKeywords.map((keyword, index) => (
-                    <Chip
-                      key={index}
-                      label={keyword}
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                      sx={{ fontSize: '0.7rem', height: '20px' }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-            
-            {/* Show deleted keywords */}
-            {deletedKeywords.length > 0 && (
-              <Box>
-                <Typography variant="caption" color="error.main" sx={{ fontWeight: 500 }}>
-                  {t('keywordTracker.editDialog.deletedKeywordsList', 'Deleted Keywords')}:
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                  {deletedKeywords.map((keyword, index) => (
-                    <Chip
-                      key={index}
-                      label={keyword}
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                      sx={{ fontSize: '0.7rem', height: '20px', textDecoration: 'line-through' }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-            
-            {!hasChanges && (
-              <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
-                {t('keywordTracker.editDialog.noChanges', 'No changes made')}
-              </Typography>
-            )}
           </Paper>
         </Box>
       </DialogContent>
