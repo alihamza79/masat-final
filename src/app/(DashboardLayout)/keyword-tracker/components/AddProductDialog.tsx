@@ -52,10 +52,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [keywordInput, setKeywordInput] = useState<string>('');
   const [keywords, setKeywords] = useState<string[]>([]);
-  const [errors, setErrors] = useState({
-    product: '',
-    keywords: ''
-  });
+  const [error, setError] = useState<string>('');
+  const [duplicateKeywordMessage, setDuplicateKeywordMessage] = useState<string>('');
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -63,10 +61,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       setSelectedProduct(null);
       setKeywordInput('');
       setKeywords([]);
-      setErrors({
-        product: '',
-        keywords: ''
-      });
+      setError('');
+      setDuplicateKeywordMessage('');
     }
   }, [open]);
 
@@ -74,11 +70,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     setSelectedProduct(newValue);
     
     // Clear product error when a product is selected
-    if (newValue && errors.product) {
-      setErrors(prev => ({
-        ...prev,
-        product: ''
-      }));
+    if (newValue && error) {
+      setError('');
     }
   };
 
@@ -91,16 +84,29 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   const addKeyword = () => {
     const trimmedKeyword = keywordInput.trim();
-    if (trimmedKeyword && !keywords.includes(trimmedKeyword)) {
+    if (trimmedKeyword) {
+      if (keywords.includes(trimmedKeyword)) {
+        // Show duplicate keyword message
+        setDuplicateKeywordMessage(t('keywordTracker.form.errors.duplicateKeyword', 'This keyword already exists'));
+        setKeywordInput('');
+        // Clear the message after 3 seconds
+        setTimeout(() => {
+          setDuplicateKeywordMessage('');
+        }, 3000);
+        return;
+      }
+      
       setKeywords(prev => [...prev, trimmedKeyword]);
       setKeywordInput('');
       
-      // Clear keywords error when keywords are added
-      if (errors.keywords) {
-        setErrors(prev => ({
-          ...prev,
-          keywords: ''
-        }));
+      // Clear error when keywords are added
+      if (error) {
+        setError('');
+      }
+      
+      // Clear duplicate message if it exists
+      if (duplicateKeywordMessage) {
+        setDuplicateKeywordMessage('');
       }
     }
   };
@@ -123,7 +129,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       newErrors.keywords = t('keywordTracker.form.errors.keywordsRequired', 'Please add at least one keyword');
     }
     
-    setErrors(newErrors);
+    setError(newErrors.product || newErrors.keywords);
     
     return !newErrors.product && !newErrors.keywords;
   };
@@ -182,8 +188,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 {...params}
                 label={t('keywordTracker.form.productLabel', 'Select Product')}
                 placeholder={t('keywordTracker.form.productPlaceholder', 'Search by name, SKU, or PNK...')}
-                error={!!errors.product}
-                helperText={errors.product}
+                error={!!error}
+                helperText={error}
                 required
                 disabled={isSubmitting}
                 InputProps={{
@@ -286,8 +292,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyPress={handleKeywordInputKeyPress}
-                error={!!errors.keywords}
-                helperText={errors.keywords || t('keywordTracker.form.keywordsHelp', 'Press Enter to add each keyword')}
+                error={!!error || !!duplicateKeywordMessage}
+                helperText={
+                  error || 
+                  duplicateKeywordMessage || 
+                  t('keywordTracker.form.keywordsHelp', 'Press Enter to add each keyword')
+                }
                 disabled={isSubmitting}
                 InputProps={{
                   startAdornment: (
@@ -302,11 +312,31 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         onClick={addKeyword}
                         disabled={isSubmitting}
                         startIcon={<IconPlus size={16} />}
+                        variant="contained"
+                        color="primary"
+                        sx={{
+                          minWidth: 'auto',
+                          px: 1.5,
+                          py: 0.5,
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          borderRadius: '6px',
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            boxShadow: 1
+                          }
+                        }}
                       >
                         Add
                       </Button>
                     </InputAdornment>
                   )
+                }}
+                FormHelperTextProps={{
+                  sx: {
+                    color: duplicateKeywordMessage ? theme.palette.warning.main : undefined
+                  }
                 }}
               />
             </Box>

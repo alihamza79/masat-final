@@ -760,9 +760,11 @@
             "adding": "Adding...",
             "addButton": "Add Product",
             "noProducts": "No products found",
+            "searchProducts": "Search for products...",
             "errors": {
                 "productRequired": "Please select a product",
-                "keywordsRequired": "Please add at least one keyword"
+                "keywordsRequired": "At least one keyword is required",
+                "duplicateKeyword": "This keyword already exists"
             }
         },
         "viewDialog": {
@@ -789,13 +791,11 @@
             "totalKeywords": "Total Keywords",
             "addedKeywords": "Added",
             "deletedKeywords": "Deleted",
-            "addedKeywordsList": "Added Keywords",
-            "deletedKeywordsList": "Deleted Keywords",
-            "noChanges": "No changes made",
             "updating": "Updating...",
             "updateButton": "Update Keywords",
             "errors": {
-                "keywordsRequired": "At least one keyword is required"
+                "keywordsRequired": "At least one keyword is required",
+                "duplicateKeyword": "This keyword already exists"
             }
         },
         "delete": {

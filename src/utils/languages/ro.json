@@ -618,7 +618,8 @@
             "noProducts": "Nu s-au găsit produse",
             "errors": {
                 "productRequired": "Vă rugăm să selectați un produs",
-                "keywordsRequired": "Vă rugăm să adăugați cel puțin un cuvânt cheie"
+                "keywordsRequired": "Vă rugăm să adăugați cel puțin un cuvânt cheie",
+                "duplicateKeyword": "Acest cuvânt cheie există deja"
             }
         },
         "viewDialog": {
@@ -640,18 +641,16 @@
             "keywordsLabel": "Adaugă Cuvinte Cheie",
             "keywordsPlaceholder": "Tastează un cuvânt cheie și apasă Enter...",
             "keywordsHelp": "Apasă Enter pentru a adăuga fiecare cuvânt cheie",
-            "currentKeywords": "Cuvinte Cheie Curente",
+            "currentKeywords": "Cuvinte Cheie Actuale",
             "summary": "Rezumat Modificări",
             "totalKeywords": "Total Cuvinte Cheie",
             "addedKeywords": "Adăugate",
             "deletedKeywords": "Șterse",
-            "addedKeywordsList": "Cuvinte Cheie Adăugate",
-            "deletedKeywordsList": "Cuvinte Cheie Șterse",
-            "noChanges": "Nu s-au făcut modificări",
             "updating": "Se actualizează...",
             "updateButton": "Actualizează Cuvintele Cheie",
             "errors": {
-                "keywordsRequired": "Este necesar cel puțin un cuvânt cheie"
+                "keywordsRequired": "Este necesar cel puțin un cuvânt cheie",
+                "duplicateKeyword": "Acest cuvânt cheie există deja"
             }
         },
         "delete": {

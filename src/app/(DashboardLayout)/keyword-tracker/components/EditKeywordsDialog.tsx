@@ -42,6 +42,7 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
   const [keywords, setKeywords] = useState<string[]>([]);
   const [originalKeywords, setOriginalKeywords] = useState<string[]>([]);
   const [error, setError] = useState<string>('');
+  const [duplicateKeywordMessage, setDuplicateKeywordMessage] = useState<string>('');
 
   // Reset form when dialog opens or product changes
   useEffect(() => {
@@ -51,6 +52,7 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
       setOriginalKeywords([...productKeywords]);
       setKeywordInput('');
       setError('');
+      setDuplicateKeywordMessage('');
     }
   }, [open, trackedProduct]);
 
@@ -63,13 +65,29 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
 
   const addKeyword = () => {
     const trimmedKeyword = keywordInput.trim();
-    if (trimmedKeyword && !keywords.includes(trimmedKeyword)) {
+    if (trimmedKeyword) {
+      if (keywords.includes(trimmedKeyword)) {
+        // Show duplicate keyword message
+        setDuplicateKeywordMessage(t('keywordTracker.editDialog.errors.duplicateKeyword', 'This keyword already exists'));
+        setKeywordInput('');
+        // Clear the message after 3 seconds
+        setTimeout(() => {
+          setDuplicateKeywordMessage('');
+        }, 3000);
+        return;
+      }
+      
       setKeywords(prev => [...prev, trimmedKeyword]);
       setKeywordInput('');
       
       // Clear error when keywords are added
       if (error) {
         setError('');
+      }
+      
+      // Clear duplicate message if it exists
+      if (duplicateKeywordMessage) {
+        setDuplicateKeywordMessage('');
       }
     }
   };
@@ -169,8 +187,12 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyPress={handleKeywordInputKeyPress}
-                error={!!error}
-                helperText={error || t('keywordTracker.editDialog.keywordsHelp', 'Press Enter to add each keyword')}
+                error={!!error || !!duplicateKeywordMessage}
+                helperText={
+                  error || 
+                  duplicateKeywordMessage || 
+                  t('keywordTracker.editDialog.keywordsHelp', 'Press Enter to add each keyword')
+                }
                 disabled={isSubmitting}
                 InputProps={{
                   startAdornment: (
@@ -185,11 +207,31 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
                         onClick={addKeyword}
                         disabled={isSubmitting}
                         startIcon={<IconPlus size={16} />}
+                        variant="contained"
+                        color="primary"
+                        sx={{
+                          minWidth: 'auto',
+                          px: 1.5,
+                          py: 0.5,
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          borderRadius: '6px',
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            boxShadow: 1
+                          }
+                        }}
                       >
                         Add
                       </Button>
                     </InputAdornment>
                   )
+                }}
+                FormHelperTextProps={{
+                  sx: {
+                    color: duplicateKeywordMessage ? theme.palette.warning.main : undefined
+                  }
                 }}
               />
             </Box>

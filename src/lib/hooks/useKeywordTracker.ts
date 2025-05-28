@@ -42,11 +42,19 @@ const getKeywordTrackedProduct = async (id: string, t?: any) => {
 };
 
 const createKeywordTrackedProduct = async (trackedProduct: Omit<KeywordTrackedProduct, '_id'>) => {
-  const response = await axios.post('/api/keyword-tracker', trackedProduct);
-  if (!response.data.success) {
-    throw new Error(response.data.error || 'Failed to create tracked product');
+  try {
+    const response = await axios.post('/api/keyword-tracker', trackedProduct);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to create tracked product');
+    }
+    return response.data.data.trackedProduct;
+  } catch (error: any) {
+    // Extract the actual error message from axios error
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || 'Failed to create tracked product');
   }
-  return response.data.data.trackedProduct;
 };
 
 const updateKeywordTrackedProduct = async (trackedProduct: KeywordTrackedProduct, t?: any) => {
@@ -55,19 +63,35 @@ const updateKeywordTrackedProduct = async (trackedProduct: KeywordTrackedProduct
     throw new Error(t ? t('keywordTracker.toast.missingId') : 'Tracked product ID is required for update');
   }
   
-  const response = await axios.put('/api/keyword-tracker', { id: _id, ...rest });
-  if (!response.data.success) {
-    throw new Error(response.data.error || (t ? t('keywordTracker.toast.updateError') : 'Failed to update tracked product'));
+  try {
+    const response = await axios.put('/api/keyword-tracker', { id: _id, ...rest });
+    if (!response.data.success) {
+      throw new Error(response.data.error || (t ? t('keywordTracker.toast.updateError') : 'Failed to update tracked product'));
+    }
+    return response.data.data.trackedProduct;
+  } catch (error: any) {
+    // Extract the actual error message from axios error
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || (t ? t('keywordTracker.toast.updateError') : 'Failed to update tracked product'));
   }
-  return response.data.data.trackedProduct;
 };
 
 const deleteKeywordTrackedProduct = async (id: string, t?: any) => {
-  const response = await axios.delete(`/api/keyword-tracker?id=${id}`);
-  if (!response.data.success) {
-    throw new Error(response.data.error || (t ? t('keywordTracker.toast.deleteError') : 'Failed to delete tracked product'));
+  try {
+    const response = await axios.delete(`/api/keyword-tracker?id=${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || (t ? t('keywordTracker.toast.deleteError') : 'Failed to delete tracked product'));
+    }
+    return true;
+  } catch (error: any) {
+    // Extract the actual error message from axios error
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || (t ? t('keywordTracker.toast.deleteError') : 'Failed to delete tracked product'));
   }
-  return true;
 };
 
 export const useKeywordTracker = () => {
