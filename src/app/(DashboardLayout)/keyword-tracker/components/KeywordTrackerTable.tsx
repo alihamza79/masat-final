@@ -396,20 +396,24 @@ const KeywordTrackerTable: React.FC<KeywordTrackerTableProps> = ({
                           sx={{ 
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '200px'
+                            maxWidth: '280px',
+                            fontSize: '0.8rem',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            lineHeight: 1.2
                           }}
                         >
                           {product.productName}
                         </Typography>
-                        <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                        <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, flexWrap: 'nowrap' }}>
                           {product.productSKU && (
-                            <Typography variant="caption" color="textSecondary">
+                            <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
                               SKU: {product.productSKU}
                             </Typography>
                           )}
                           {product.productPNK && (
-                            <Typography variant="caption" color="textSecondary">
+                            <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
                               PNK: {product.productPNK}
                             </Typography>
                           )}

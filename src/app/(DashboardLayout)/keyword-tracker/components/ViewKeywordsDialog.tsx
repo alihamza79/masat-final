@@ -134,9 +134,17 @@ const ViewKeywordsDialog: React.FC<ViewKeywordsDialogProps> = ({
                 <Chip
                   key={index}
                   label={keyword}
-                  size="small"
+                  size="medium"
                   variant="outlined"
                   color="primary"
+                  sx={{
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    height: '32px',
+                    '& .MuiChip-label': {
+                      px: 1.5
+                    }
+                  }}
                 />
               ))}
             </Box>

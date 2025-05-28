@@ -39,23 +39,7 @@ export default function Login() {
             <Box px={3}>
               <Logo/>
               {/* Version indicator for production verification */}
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  position: 'absolute', 
-                  top: 8, 
-                  right: 16, 
-                  bgcolor: 'primary.main', 
-                  color: 'white', 
-                  px: 1, 
-                  py: 0.5, 
-                  borderRadius: 1,
-                  fontSize: '0.7rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                Auth Fix v2.1 🔐
-              </Typography>
+              
             </Box>
             <Box
               alignItems="center"
@@ -100,20 +84,7 @@ export default function Login() {
                   <Typography variant="subtitle1" color="textSecondary">
                     Admin Dashboard
                   </Typography>
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      bgcolor: 'success.light', 
-                      color: 'success.dark', 
-                      px: 0.8, 
-                      py: 0.2, 
-                      borderRadius: 0.5,
-                      fontSize: '0.65rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    UPDATED ✓
-                  </Typography>
+                  
                 </Stack>
               }
               subtitle={

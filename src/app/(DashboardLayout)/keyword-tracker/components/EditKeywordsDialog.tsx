@@ -209,11 +209,17 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
                         label={keyword}
                         onDelete={() => removeKeyword(keyword)}
                         deleteIcon={<IconX size={16} />}
-                        size="small"
+                        size="medium"
                         color={isNew ? 'success' : 'primary'}
                         variant={isNew ? 'filled' : 'outlined'}
                         disabled={isSubmitting}
                         sx={{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          height: '32px',
+                          '& .MuiChip-label': {
+                            px: 1.5
+                          },
                           ...(isNew && {
                             animation: 'pulse 1s ease-in-out'
                           })

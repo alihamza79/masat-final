@@ -324,10 +324,18 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       label={keyword}
                       onDelete={() => removeKeyword(keyword)}
                       deleteIcon={<IconX size={16} />}
-                      size="small"
+                      size="medium"
                       color="primary"
                       variant="outlined"
                       disabled={isSubmitting}
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        height: '32px',
+                        '& .MuiChip-label': {
+                          px: 1.5
+                        }
+                      }}
                     />
                   ))}
                 </Box>
