@@ -145,11 +145,11 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
       <DialogContent>
         <Box sx={{ mt: 1 }}>
           {/* Product Summary */}
-          <Paper sx={{ p: 1.5, mb: 2, bgcolor: theme.palette.action.hover }}>
-            <Typography variant="caption" sx={{ mb: 0.5, color: 'primary.main', fontWeight: 500, display: 'block', fontSize: '0.65rem' }}>
-              {t('keywordTracker.editDialog.productSummary', 'Product Summary')}
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {t('keywordTracker.editDialog.productSectionTitle', 'Product Information')}
             </Typography>
-            <Box display="flex" alignItems="center" gap={1.5}>
+            <Box display="flex" alignItems="center" gap={1.5} sx={{ bgcolor: theme.palette.action.hover, p: 1.5, borderRadius: 1 }}>
               <Avatar
                 src={trackedProduct.productImage}
                 alt={trackedProduct.productName}
@@ -179,52 +179,27 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
 
           {/* Keywords Input */}
           <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {t('keywordTracker.editDialog.keywordsSectionTitle', 'Manage Keywords')}
+            </Typography>
             <Box sx={{ mb: 2 }}>
               <TextField
                 fullWidth
                 label={t('keywordTracker.editDialog.keywordsLabel', 'Add Keywords')}
-                placeholder={t('keywordTracker.editDialog.keywordsPlaceholder', 'Type a keyword and press Enter...')}
+                placeholder={t('keywordTracker.editDialog.keywordsPlaceholder', 'Type a keyword and press Enter to add')}
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyPress={handleKeywordInputKeyPress}
                 error={!!error || !!duplicateKeywordMessage}
                 helperText={
                   error || 
-                  duplicateKeywordMessage || 
-                  t('keywordTracker.editDialog.keywordsHelp', 'Press Enter to add each keyword')
+                  duplicateKeywordMessage
                 }
                 disabled={isSubmitting}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <IconTag size={20} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: keywordInput.trim() && (
-                    <InputAdornment position="end">
-                      <Button
-                        size="small"
-                        onClick={addKeyword}
-                        disabled={isSubmitting}
-                        startIcon={<IconPlus size={16} />}
-                        variant="contained"
-                        color="primary"
-                        sx={{
-                          minWidth: 'auto',
-                          px: 1.5,
-                          py: 0.5,
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          borderRadius: '6px',
-                          textTransform: 'none',
-                          boxShadow: 'none',
-                          '&:hover': {
-                            boxShadow: 1
-                          }
-                        }}
-                      >
-                        Add
-                      </Button>
                     </InputAdornment>
                   )
                 }}
@@ -259,6 +234,7 @@ const EditKeywordsDialog: React.FC<EditKeywordsDialogProps> = ({
                           fontSize: '0.875rem',
                           fontWeight: 500,
                           height: '32px',
+                          borderRadius: '4px',
                           '& .MuiChip-label': {
                             px: 1.5
                           },

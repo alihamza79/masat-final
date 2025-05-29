@@ -73,11 +73,11 @@ const ViewKeywordsDialog: React.FC<ViewKeywordsDialogProps> = ({
       <DialogContent>
         <Box sx={{ mt: 1 }}>
           {/* Product Summary */}
-          <Paper sx={{ p: 1.5, mb: 2, bgcolor: theme.palette.action.hover }}>
-            <Typography variant="caption" sx={{ mb: 0.5, color: 'primary.main', fontWeight: 500, display: 'block', fontSize: '0.65rem' }}>
-              {t('keywordTracker.viewDialog.productSummary', 'Product Information')}
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {t('keywordTracker.viewDialog.productSectionTitle', 'Product Information')}
             </Typography>
-            <Box display="flex" alignItems="center" gap={1.5}>
+            <Box display="flex" alignItems="center" gap={1.5} sx={{ bgcolor: theme.palette.action.hover, p: 1.5, borderRadius: 1 }}>
               {trackedProduct.productImage ? (
                 <Avatar
                   src={trackedProduct.productImage}
@@ -124,9 +124,9 @@ const ViewKeywordsDialog: React.FC<ViewKeywordsDialogProps> = ({
 
           {/* Keywords List */}
           <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconTag size={18} />
-              {t('keywordTracker.viewDialog.trackedKeywords', 'Tracked Keywords')} ({trackedProduct.keywords.length})
+              {t('keywordTracker.viewDialog.keywordsSectionTitle', 'Tracked Keywords')} ({trackedProduct.keywords.length})
             </Typography>
             
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -141,6 +141,7 @@ const ViewKeywordsDialog: React.FC<ViewKeywordsDialogProps> = ({
                     fontSize: '0.875rem',
                     fontWeight: 500,
                     height: '32px',
+                    borderRadius: '4px',
                     '& .MuiChip-label': {
                       px: 1.5
                     }

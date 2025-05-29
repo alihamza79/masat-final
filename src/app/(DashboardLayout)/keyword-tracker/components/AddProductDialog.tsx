@@ -177,159 +177,136 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       <DialogContent>
         <Box component="form" sx={{ mt: 1 }}>
           {/* Product Selection */}
-          <Autocomplete
-            options={products || []}
-            getOptionLabel={(option) => option.name || ''}
-            value={selectedProduct}
-            onChange={handleProductChange}
-            loading={productsLoading}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label={t('keywordTracker.form.productLabel', 'Select Product')}
-                placeholder={t('keywordTracker.form.productPlaceholder', 'Search by name, SKU, or PNK...')}
-                error={!!error}
-                helperText={error}
-                required
-                disabled={isSubmitting}
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconSearch size={20} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <>
-                      {productsLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-                sx={{ mb: 3 }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1 }}>
-                <Avatar
-                  src={option.images?.[0]?.url}
-                  alt={option.name}
-                  sx={{ width: 32, height: 32 }}
-                >
-                  {option.name?.charAt(0).toUpperCase()}
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {option.name}
-                  </Typography>
-                  <Box display="flex" gap={1} mt={0.5}>
-                    {option.part_number && (
-                      <Typography variant="caption" color="textSecondary">
-                        SKU: {option.part_number}
-                      </Typography>
-                    )}
-                    {option.part_number_key && (
-                      <Typography variant="caption" color="textSecondary">
-                        PNK: {option.part_number_key}
-                      </Typography>
-                    )}
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {t('keywordTracker.form.productSectionTitle', 'Select Product')}
+            </Typography>
+            <Autocomplete
+              options={products || []}
+              getOptionLabel={(option) => option.name || ''}
+              value={selectedProduct}
+              onChange={handleProductChange}
+              loading={productsLoading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('keywordTracker.form.productLabel', 'Select Product')}
+                  placeholder={t('keywordTracker.form.productPlaceholder', 'Search by name, SKU, or PNK...')}
+                  error={!!error}
+                  helperText={error}
+                  required
+                  disabled={isSubmitting}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconSearch size={20} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <>
+                        {productsLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                  sx={{ mb: selectedProduct ? 2 : 0 }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1 }}>
+                  <Avatar
+                    src={option.images?.[0]?.url}
+                    alt={option.name}
+                    sx={{ width: 32, height: 32 }}
+                  >
+                    {option.name?.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {option.name}
+                    </Typography>
+                    <Box display="flex" gap={1} mt={0.5}>
+                      {option.part_number && (
+                        <Typography variant="caption" color="textSecondary">
+                          SKU: {option.part_number}
+                        </Typography>
+                      )}
+                      {option.part_number_key && (
+                        <Typography variant="caption" color="textSecondary">
+                          PNK: {option.part_number_key}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            )}
-            filterOptions={(options, { inputValue }) => {
-              return options.filter(option =>
-                option.name?.toLowerCase().includes(inputValue.toLowerCase()) ||
-                option.part_number?.toLowerCase().includes(inputValue.toLowerCase()) ||
-                option.part_number_key?.toLowerCase().includes(inputValue.toLowerCase())
-              );
-            }}
-            noOptionsText={t('keywordTracker.form.noProducts', 'No products found')}
-          />
+              )}
+              filterOptions={(options, { inputValue }) => {
+                return options.filter(option =>
+                  option.name?.toLowerCase().includes(inputValue.toLowerCase()) ||
+                  option.part_number?.toLowerCase().includes(inputValue.toLowerCase()) ||
+                  option.part_number_key?.toLowerCase().includes(inputValue.toLowerCase())
+                );
+              }}
+              noOptionsText={t('keywordTracker.form.noProducts', 'No products found')}
+            />
 
-          {/* Selected Product Preview */}
-          {selectedProduct && (
-            <Paper sx={{ p: 1.5, mb: 2, bgcolor: theme.palette.action.hover }}>
-              <Typography variant="caption" sx={{ mb: 0.5, color: 'primary.main', fontWeight: 500, display: 'block', fontSize: '0.65rem' }}>
-                {t('keywordTracker.form.selectedProduct', 'Selected Product')}
-              </Typography>
-              <Box display="flex" alignItems="center" gap={1.5}>
-                <Avatar
-                  src={selectedProduct.images?.[0]?.url}
-                  alt={selectedProduct.name}
-                  sx={{ width: 28, height: 28 }}
-                >
-                  {selectedProduct.name?.charAt(0).toUpperCase()}
-                </Avatar>
-                <Box>
-                  <Typography variant="caption" fontWeight={500} sx={{ mb: 0.25, fontSize: '0.75rem', display: 'block' }}>
-                    {selectedProduct.name}
-                  </Typography>
-                  <Box display="flex" gap={1.5} mt={0.25}>
-                    {selectedProduct.part_number && (
-                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
-                        <strong>SKU:</strong> {selectedProduct.part_number}
-                      </Typography>
-                    )}
-                    {selectedProduct.part_number_key && (
-                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
-                        <strong>PNK:</strong> {selectedProduct.part_number_key}
-                      </Typography>
-                    )}
+            {/* Selected Product Preview */}
+            {selectedProduct && (
+              <Box sx={{ mt: 1 }}>
+                <Box display="flex" alignItems="center" gap={1.5} sx={{ bgcolor: theme.palette.action.hover, p: 1.5, borderRadius: 1 }}>
+                  <Avatar
+                    src={selectedProduct.images?.[0]?.url}
+                    alt={selectedProduct.name}
+                    sx={{ width: 28, height: 28 }}
+                  >
+                    {selectedProduct.name?.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="caption" fontWeight={500} sx={{ mb: 0.25, fontSize: '0.75rem', display: 'block' }}>
+                      {selectedProduct.name}
+                    </Typography>
+                    <Box display="flex" gap={1.5} mt={0.25}>
+                      {selectedProduct.part_number && (
+                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
+                          <strong>SKU:</strong> {selectedProduct.part_number}
+                        </Typography>
+                      )}
+                      {selectedProduct.part_number_key && (
+                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.65rem' }}>
+                          <strong>PNK:</strong> {selectedProduct.part_number_key}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
               </Box>
-            </Paper>
-          )}
+            )}
+          </Paper>
 
           {/* Keywords Input */}
           <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {t('keywordTracker.form.keywordsSectionTitle', 'Add Keywords')}
+            </Typography>
             <Box sx={{ mb: 2 }}>
               <TextField
                 fullWidth
                 label={t('keywordTracker.form.keywordsLabel', 'Add Keywords')}
-                placeholder={t('keywordTracker.form.keywordsPlaceholder', 'Type a keyword and press Enter...')}
+                placeholder={t('keywordTracker.form.keywordsPlaceholder', 'Type a keyword and press Enter to add')}
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyPress={handleKeywordInputKeyPress}
                 error={!!error || !!duplicateKeywordMessage}
                 helperText={
                   error || 
-                  duplicateKeywordMessage || 
-                  t('keywordTracker.form.keywordsHelp', 'Press Enter to add each keyword')
+                  duplicateKeywordMessage
                 }
                 disabled={isSubmitting}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <IconTag size={20} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: keywordInput.trim() && (
-                    <InputAdornment position="end">
-                      <Button
-                        size="small"
-                        onClick={addKeyword}
-                        disabled={isSubmitting}
-                        startIcon={<IconPlus size={16} />}
-                        variant="contained"
-                        color="primary"
-                        sx={{
-                          minWidth: 'auto',
-                          px: 1.5,
-                          py: 0.5,
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          borderRadius: '6px',
-                          textTransform: 'none',
-                          boxShadow: 'none',
-                          '&:hover': {
-                            boxShadow: 1
-                          }
-                        }}
-                      >
-                        Add
-                      </Button>
                     </InputAdornment>
                   )
                 }}
@@ -362,6 +339,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         fontSize: '0.875rem',
                         fontWeight: 500,
                         height: '32px',
+                        borderRadius: '4px',
                         '& .MuiChip-label': {
                           px: 1.5
                         }
