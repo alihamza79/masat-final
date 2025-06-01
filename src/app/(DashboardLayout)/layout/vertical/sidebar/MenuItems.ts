@@ -31,7 +31,8 @@ import {
  
   IconCalculator,
   IconUser,
-  IconBulb
+  IconBulb,
+  IconCreditCard
 } from "@tabler/icons-react";
 
 const Menuitems: MenuitemsType[] = [
@@ -93,6 +94,12 @@ const Menuitems: MenuitemsType[] = [
     title: "menu.developmentRequests",
     icon: IconBulb,
     href: "/development-requests",
+  },
+  {
+    id: uniqueId(),
+    title: "menu.pricing",
+    icon: IconCreditCard,
+    href: "/pricing",
   },
   
 ];

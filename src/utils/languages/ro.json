@@ -39,8 +39,9 @@
         "xScan": "X Scan",
         
         "expenses": "Cheltuieli",
-        "developmentRequests": "Cereri de Dezvoltare",
-        "notifications": "Notificări"
+        "developmentRequests": "Cereri de dezvoltare",
+        "notifications": "Notificări",
+        "pricing": "Planuri de prețuri"
     },
     "profile": {
         "userProfile": "Profil Utilizator",

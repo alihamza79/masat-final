@@ -40,7 +40,8 @@
         
         "expenses": "Expenses",
         "developmentRequests": "Development Requests",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+        "pricing": "Pricing Plans"
     },
     "profile": {
         "userProfile": "User Profile",
