@@ -179,6 +179,7 @@ const Pricing = () => {
   const warninglight = theme.palette.warning.light;
   const warning = theme.palette.warning.main;
 
+
   const StyledChip = styled(Chip)({
     position: 'absolute',
     top: '15px',
