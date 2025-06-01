@@ -713,7 +713,13 @@
             "hoursAgo": "{{count}} hours ago",
             "dayAgo": "1 day ago",
             "daysAgo": "{{count}} days ago",
-            "yesterday": "yesterday"
+            "yesterday": "yesterday",
+            "lastWeek": "last week",
+            "weeksAgo": "{{count}} weeks ago",
+            "lastMonth": "last month",
+            "monthsAgo": "{{count}} months ago",
+            "lastYear": "last year",
+            "yearsAgo": "{{count}} years ago"
         }
     },
     "keywordTracker": {

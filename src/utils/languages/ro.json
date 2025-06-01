@@ -569,7 +569,13 @@
             "hoursAgo": "acum {{count}} ore",
             "dayAgo": "acum 1 zi",
             "daysAgo": "acum {{count}} zile",
-            "yesterday": "ieri"
+            "yesterday": "ieri",
+            "lastWeek": "săptămâna trecută",
+            "weeksAgo": "acum {{count}} săptămâni",
+            "lastMonth": "luna trecută",
+            "monthsAgo": "acum {{count}} luni",
+            "lastYear": "anul trecut",
+            "yearsAgo": "acum {{count}} ani"
         }
     },
     "keywordTracker": {
