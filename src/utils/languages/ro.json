@@ -556,6 +556,7 @@
             "cancel": "Anulează",
             "delete": "Șterge"
         },
+        "processing": "Se procesează...",
         "save": "Salvează",
         "update": "Actualizează",
         "cancel": "Anulează",
@@ -900,6 +901,35 @@
         "deleteAllError": "Eroare la ștergerea tuturor notificărilor",
         "search": {
             "placeholder": "Caută notificări..."
+        }
+    },
+    "subscription": {
+        "title": "Abonament și Istoric Plăți",
+        "description": "Vizualizează abonamentul și istoricul plăților",
+        "plan": "Plan",
+        "free": "Gratuit",
+        "id": "ID Abonament",
+        "startedOn": "Început la",
+        "expiresOn": "Expiră la",
+        "accessUntil": "Acces până la",
+        "date": "Data",
+        "invoiceId": "ID Factură",
+        "billingCycle": "Ciclu de Facturare",
+        "amount": "Sumă",
+        "status": "Status",
+        "paymentHistory": "Istoric Plăți",
+        "noPaymentHistory": "Nu s-au găsit plăți în istoric.",
+        "noActiveSubscription": "Nu există abonament activ",
+        "viewPricingPlans": "Vezi Planurile de Preț",
+        "seePricing": "Vezi Prețurile",
+        "manageSubscription": "Gestionează Abonamentul",
+        "renewSubscription": "Reînnoiește Abonamentul",
+        "upgradeNow": "Actualizează Acum",
+        "errors": {
+            "fetchProfile": "Eroare la obținerea profilului utilizatorului",
+            "fetchPayments": "Eroare la încărcarea istoricului de plăți",
+            "noBillingUrl": "Nu s-a primit URL pentru portalul de facturare",
+            "billingPortal": "Eroare la accesarea portalului de facturare"
         }
     }
 } 

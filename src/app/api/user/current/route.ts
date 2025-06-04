@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const user = await User.findOne({ email }).select('_id name email');
+    const user = await User.findOne({ email }).select('_id name email subscriptionPlan subscriptionStatus');
     
     if (!user) {
       return NextResponse.json(
@@ -49,7 +49,9 @@ export async function GET(request: NextRequest) {
       user: {
         id: user._id?.toString(),
         name: user.name,
-        email: user.email
+        email: user.email,
+        subscriptionPlan: user.subscriptionPlan || 'free',
+        subscriptionStatus: user.subscriptionStatus || null
       }
     });
   } catch (error: any) {

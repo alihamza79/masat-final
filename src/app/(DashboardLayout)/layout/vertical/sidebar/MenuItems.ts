@@ -55,7 +55,7 @@ const Menuitems: MenuitemsType[] = [
         id: uniqueId(),
     title: "menu.subscriptionPayment",
     icon: IconCurrencyDollar,
-    href: "/subscrfrfiption",
+    href: "/subscriptions",
       },
       {
         id: uniqueId(),

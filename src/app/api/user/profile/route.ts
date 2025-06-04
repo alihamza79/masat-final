@@ -68,7 +68,14 @@ export async function GET(request: NextRequest) {
           name: company.name,
           taxId: company.taxId,
           registrationNumber: company.registrationNumber
-        } : null
+        } : null,
+        subscriptionInfo: {
+          plan: user.subscriptionPlan || 'free',
+          status: user.subscriptionStatus,
+          expiresAt: user.subscriptionExpiresAt,
+          createdAt: user.subscriptionCreatedAt,
+          id: user.subscriptionId
+        }
       }));
     } catch (companyError: any) {
       console.error('GET /api/user/profile: Error finding company:', companyError);
@@ -77,10 +84,16 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      data: {
-        user,
-        company
-      }
+      user: {
+        ...user.toObject(),
+        // Add explicit subscription fields to ensure they're always included in the response
+        subscriptionPlan: user.subscriptionPlan || 'free',
+        subscriptionStatus: user.subscriptionStatus || null,
+        subscriptionExpiresAt: user.subscriptionExpiresAt || null,
+        subscriptionCreatedAt: user.subscriptionCreatedAt || null,
+        subscriptionId: user.subscriptionId || null
+      },
+      company
     });
   } catch (error: any) {
     console.error('Error fetching user profile:', error);

@@ -106,6 +106,11 @@ export const authOptions: NextAuthOptions = {
               facebookLinked: account.provider === 'facebook',
               credentialsLinked: false,
               emailVerified: true,
+              subscriptionStatus: null,
+              subscriptionPlan: 'free',
+              subscriptionId: null,
+              subscriptionCreatedAt: null,
+              subscriptionExpiresAt: null
             }) as IUser;
             
             user.id = String(newUser._id);

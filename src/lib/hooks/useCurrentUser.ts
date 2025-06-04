@@ -8,6 +8,8 @@ export interface UserData {
   name?: string;
   email?: string;
   isAuthenticated: boolean;
+  subscriptionPlan?: 'free' | 'premium' | 'professional' | null;
+  subscriptionStatus?: 'active' | 'canceled' | 'past_due' | 'trialing' | 'unpaid' | 'incomplete' | null;
 }
 
 /**
@@ -29,6 +31,8 @@ export function useCurrentUser() {
             id: response.data.user.id,
             name: response.data.user.name,
             email: response.data.user.email,
+            subscriptionPlan: response.data.user.subscriptionPlan || 'free',
+            subscriptionStatus: response.data.user.subscriptionStatus,
             isAuthenticated: true
           };
         }

@@ -11,6 +11,13 @@ export interface IUser extends Document {
   facebookLinked?: boolean;
   credentialsLinked?: boolean;
   emailVerified?: boolean;
+  subscriptionStatus?: 'active' | 'canceled' | 'past_due' | 'trialing' | 'unpaid' | 'incomplete' | null;
+  subscriptionPlan?: string | null;
+  subscriptionId?: string | null;
+  subscriptionCreatedAt?: Date | null;
+  subscriptionExpiresAt?: Date | null;
+  subscriptionBillingCycle?: 'monthly' | 'yearly' | null;
+  stripePriceId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,6 +63,33 @@ const UserSchema = new Schema<IUser>(
     emailVerified: {
       type: Boolean,
       default: false,
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ['active', 'canceled', 'past_due', 'trialing', 'unpaid', 'incomplete', null],
+      default: null,
+    },
+    subscriptionPlan: {
+      type: String,
+      default: 'free',
+    },
+    subscriptionId: {
+      type: String,
+      index: true,
+    },
+    subscriptionCreatedAt: {
+      type: Date,
+    },
+    subscriptionExpiresAt: {
+      type: Date,
+    },
+    subscriptionBillingCycle: {
+      type: String,
+      enum: ['monthly', 'yearly'],
+    },
+    stripePriceId: {
+      type: String,
+      index: true,
     },
   },
   {

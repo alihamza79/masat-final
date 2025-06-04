@@ -1,0 +1,134 @@
+{
+  "pricing": [
+    {
+      "id": 1,
+      "package": "Free",
+      "plan": "Free",
+      "monthlyplan": 0,
+      "yearlyplan": 0,
+      "avatar": "/images/backgrounds/silver.jpeg",
+      "badge": false,
+      "btntext": "Choose Free Plan",
+      "rules": [
+        {
+          "limit": true,
+          "title": "Learning & Training"
+        },
+        {
+          "limit": false,
+          "title": "24/7 Customer Support"
+        },
+        {
+          "limit": true,
+          "title": "Limited eMAG API Integration"
+        },
+        {
+          "limit": true,
+          "title": "Access to Community"
+        },
+        {
+          "limit": true,
+          "title": "Limited Access to Masat Tools"
+        },
+        {
+          "limit": true,
+          "title": "1 API Integration"
+        },
+        {
+          "limit": true,
+          "title": "PxL Calculator (5 calcs/day)"
+        },
+        {
+          "limit": false,
+          "title": "Expenses Management"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "package": "Premium",
+      "monthlyplan": 9,
+      "yearlyplan": 97,
+      "avatar": "/images/backgrounds/bronze.jpeg",
+      "badge": true,
+      "btntext": "Choose Premium",
+      "rules": [
+        {
+          "limit": true,
+          "title": "Learning & Training"
+        },
+        {
+          "limit": true,
+          "title": "24/7 Customer Support"
+        },
+        {
+          "limit": true,
+          "title": "Limited eMAG API Integration"
+        },
+        {
+          "limit": true,
+          "title": "Access to Community"
+        },
+        {
+          "limit": true,
+          "title": "Limited Access to Masat Tools"
+        },
+        {
+          "limit": true,
+          "title": "4 API Integrations"
+        },
+        {
+          "limit": true,
+          "title": "Unlimited PxL Calculations"
+        },
+        {
+          "limit": true,
+          "title": "Early Bird Access to New Features"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "package": "Professional",
+      "monthlyplan": 19,
+      "yearlyplan": 193,
+      "avatar": "/images/backgrounds/gold.jpeg",
+      "badge": false,
+      "btntext": "Choose Professional",
+      "rules": [
+        {
+          "limit": true,
+          "title": "Learning & Training"
+        },
+        {
+          "limit": true,
+          "title": "24/7 Customer Support"
+        },
+        {
+          "limit": true,
+          "title": "Full eMAG API Integration"
+        },
+        {
+          "limit": true,
+          "title": "Access to Community"
+        },
+        {
+          "limit": true,
+          "title": "Full Access to Masat Tools"
+        },
+        {
+          "limit": true,
+          "title": "6 API Integrations"
+        },
+        {
+          "limit": true,
+          "title": "Expenses Management"
+        },
+        {
+          "limit": true,
+          "title": "VIP Access to New Features"
+        }
+      ]
+    }
+  ]
+} 

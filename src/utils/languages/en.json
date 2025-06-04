@@ -721,7 +721,8 @@
             "monthsAgo": "{{count}} months ago",
             "lastYear": "last year",
             "yearsAgo": "{{count}} years ago"
-        }
+        },
+        "processing": "Processing..."
     },
     "keywordTracker": {
         "pageTitle": "Keyword Tracker",
@@ -901,6 +902,35 @@
                 "noMatch": "Passwords do not match",
                 "changeFailed": "Failed to change password"
             }
+        }
+    },
+    "subscription": {
+        "title": "Subscription & Payment History",
+        "description": "View your subscription and payment history",
+        "plan": "Plan",
+        "free": "Free",
+        "id": "Subscription ID",
+        "startedOn": "Started on",
+        "expiresOn": "Expires on",
+        "accessUntil": "Access until",
+        "date": "Date",
+        "invoiceId": "Invoice ID",
+        "billingCycle": "Billing Cycle",
+        "amount": "Amount",
+        "status": "Status",
+        "paymentHistory": "Payment History",
+        "noPaymentHistory": "No payment history found.",
+        "noActiveSubscription": "No active subscription",
+        "viewPricingPlans": "View Pricing Plans",
+        "seePricing": "See Pricing",
+        "manageSubscription": "Manage Subscription",
+        "renewSubscription": "Renew Subscription",
+        "upgradeNow": "Upgrade Now",
+        "errors": {
+            "fetchProfile": "Failed to fetch user profile",
+            "fetchPayments": "Failed to load payment history",
+            "noBillingUrl": "No billing portal URL received",
+            "billingPortal": "Failed to access billing portal"
         }
     }
 }

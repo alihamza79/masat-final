@@ -80,7 +80,12 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       name,
       credentialsLinked: true,
-      emailVerified: true
+      emailVerified: true,
+      subscriptionStatus: null,
+      subscriptionPlan: 'free',
+      subscriptionId: null,
+      subscriptionCreatedAt: null,
+      subscriptionExpiresAt: null
     });
     
     // Delete all OTPs for this email with registration purpose

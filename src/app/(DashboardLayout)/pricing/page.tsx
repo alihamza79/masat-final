@@ -1,314 +1,212 @@
 'use client'
 
-import React from 'react';
-import {
-  Grid,
-  Typography,
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  Button,
-  CardContent,
-  ListItemIcon,
-  Chip,
-  Switch,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { styled } from '@mui/material/styles';
-import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
+import React, { useState } from 'react';
+import { Grid, Box } from '@mui/material';
 import PageContainer from '@/app/components/container/PageContainer';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import useCurrentUser from '@/lib/hooks/useCurrentUser';
 
-import { IconCheck, IconX } from '@tabler/icons-react';
-import BlankCard from '@/app/components/shared/BlankCard';
-import Image from 'next/image';
+// Import components
+import PricingCard from './components/PricingCard';
+import PricingHeader from './components/PricingHeader';
+import SubscriptionDialog from './components/SubscriptionDialog';
 
-
-const BCrumb = [
-  {
-    to: '/',
-    title: 'Home',
-  },
-  {
-    title: 'Pricing',
-  },
-];
-
-const pricing = [
-  {
-    id: 1,
-    package: 'Free',
-    plan: 'Free',
-    monthlyplan: 0,
-    yearlyplan: 0,
-    avatar: "/images/backgrounds/silver.png",
-    badge: false,
-    btntext: 'Choose Free Plan',
-    rules: [
-      {
-        limit: true,
-        title: 'Learning & Training',
-      },
-      {
-        limit: false,
-        title: '24/7 Customer Support',
-      },
-      {
-        limit: true,
-        title: 'Limited eMAG API Integration',
-      },
-      {
-        limit: true,
-        title: 'Access to Community',
-      },
-      {
-        limit: true,
-        title: 'Limited Access to Masat Tools',
-      },
-      {
-        limit: true,
-        title: '1 API Integration',
-      },
-      {
-        limit: true,
-        title: 'PxL Calculator (5 calcs/day)',
-      },
-      {
-        limit: false,
-        title: 'Expenses Management',
-      },
-    ],
-  },
-  {
-    id: 2,
-    package: 'Premium',
-    monthlyplan: 9,
-    yearlyplan: 97,
-    avatar: "/images/backgrounds/bronze.png",
-    badge: true,
-    btntext: 'Choose Premium',
-    rules: [
-      {
-        limit: true,
-        title: 'Learning & Training',
-      },
-      {
-        limit: true,
-        title: '24/7 Customer Support',
-      },
-      {
-        limit: true,
-        title: 'Limited eMAG API Integration',
-      },
-      {
-        limit: true,
-        title: 'Access to Community',
-      },
-      {
-        limit: true,
-        title: 'Limited Access to Masat Tools',
-      },
-      {
-        limit: true,
-        title: '4 API Integrations',
-      },
-      {
-        limit: true,
-        title: 'Unlimited PxL Calculations',
-      },
-      {
-        limit: true,
-        title: 'Early Bird Access to New Features',
-      },
-    ],
-  },
-  {
-    id: 3,
-    package: 'Professional',
-    monthlyplan: 19,
-    yearlyplan: 193,
-    avatar: "/images/backgrounds/gold.png",
-    badge: false,
-    btntext: 'Choose Professional',
-    rules: [
-      {
-        limit: true,
-        title: 'Learning & Training',
-      },
-      {
-        limit: true,
-        title: '24/7 Customer Support',
-      },
-      {
-        limit: true,
-        title: 'Full eMAG API Integration',
-      },
-      {
-        limit: true,
-        title: 'Access to Community',
-      },
-      {
-        limit: true,
-        title: 'Full Access to Masat Tools',
-      },
-      {
-        limit: true,
-        title: '6 API Integrations',
-      },
-      {
-        limit: true,
-        title: 'Expenses Management',
-      },
-      {
-        limit: true,
-        title: 'VIP Access to New Features',
-      },
-    ],
-  },
-];
+// Import pricing data
+import pricingData from '@/data/pricingData.json';
 
 const Pricing = () => {
-  const [show, setShow] = React.useState(false);
+  const [showYearly, setShowYearly] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const { user, isLoading: userLoading } = useCurrentUser();
+  const router = useRouter();
+  const [portalLoading, setPortalLoading] = useState(false);
 
-  const yearlyPrice = (a: any) => {
-    if (a === 0) return 'Free';
-    return a;
+  // Function to determine if this is the user's current plan
+  const isCurrentPlan = (planName: string): boolean => {
+    if (!user || !user.subscriptionPlan) return planName.toLowerCase() === 'free';
+    return user.subscriptionPlan.toLowerCase() === planName.toLowerCase();
   };
 
-  const theme = useTheme();
-  const warninglight = theme.palette.warning.light;
-  const warning = theme.palette.warning.main;
+  // Function to get button text based on subscription status
+  const getButtonText = (planName: string): string => {
+    if (isCurrentPlan(planName)) {
+      if (user?.subscriptionStatus === 'active') {
+        return 'Current Plan';
+      } else if (user?.subscriptionStatus === 'canceled') {
+        return 'Reactivate Plan';
+      }
+      return 'Current Plan';
+    }
+    return `Choose ${planName}`;
+  };
 
+  const handleSubscription = async (plan: string) => {
+    if (!session) {
+      // Redirect to login if user is not authenticated
+      router.push('/auth/auth1/login');
+      return;
+    }
 
-  const StyledChip = styled(Chip)({
-    position: 'absolute',
-    top: '15px',
-    right: '30px',
-    backgroundColor: warninglight,
-    color: warning,
-    textTransform: 'uppercase',
-    fontSize: '11px',
-  });
+    // Skip payment process for free plan
+    if (plan.toLowerCase() === 'free') {
+      toast.success('You have successfully subscribed to the Free plan!');
+      return;
+    }
+
+    // If user already has an active paid subscription, show warning dialog
+    if (user?.subscriptionStatus === 'active' && 
+        user?.subscriptionPlan && 
+        user.subscriptionPlan !== 'free' && 
+        plan.toLowerCase() !== user.subscriptionPlan.toLowerCase()) {
+      setSelectedPlan(plan);
+      setDialogOpen(true);
+      return;
+    }
+
+    // Otherwise proceed with subscription
+    proceedWithSubscription(plan);
+  };
+
+  const proceedWithSubscription = async (plan: string) => {
+    try {
+      setLoading(plan);
+      
+      // Use environment variables for price IDs
+      const priceIds = {
+        premium: {
+          monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY || "price_1RW8oGHs3TKfjUbMx0qbfnyV",
+          yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY || 'price_1RW8rUHs3TKfjUbMZIKyGGJM'
+        },
+        professional: {
+          monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PROFESSIONAL_MONTHLY || 'price_1RW8slHs3TKfjUbMMEOXyNXn',
+          yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PROFESSIONAL_YEARLY || 'price_1RW8tVHs3TKfjUbMDKg5dbt9'
+        }
+      };
+      
+      // Get the appropriate price ID based on the plan and billing cycle
+      const planKey = plan.toLowerCase() as keyof typeof priceIds;
+      const priceId = showYearly ? priceIds[planKey]?.yearly : priceIds[planKey]?.monthly;
+      const billingCycle = showYearly ? 'yearly' : 'monthly';
+      
+      if (!priceId) {
+        toast.error('Invalid plan selected');
+        setLoading(null);
+        return;
+      }
+
+      console.log('Creating checkout session with:', {
+        priceId,
+        plan: plan.toLowerCase(),
+        billingCycle
+      });
+
+      // Call our API to create a checkout session
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          plan: plan.toLowerCase(),
+          billingCycle,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.url) {
+        console.log('Redirecting to checkout URL:', data.url);
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        console.error('Checkout session error:', data.error || 'Unknown error');
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Function to open Stripe billing portal
+  const handleGoToSubscription = async () => {
+    if (!user?.subscriptionPlan || user.subscriptionPlan === 'free') {
+      toast.error('No active subscription to manage');
+      setDialogOpen(false);
+      return;
+    }
+
+    try {
+      setPortalLoading(true);
+      const response = await fetch('/api/stripe/billing-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to access billing portal');
+      }
+      
+      // Redirect to Stripe billing portal
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No billing portal URL received');
+      }
+          
+    } catch (err: any) {
+      console.error('Error accessing billing portal:', err);
+      toast.error(err.message || 'Failed to access billing portal');
+      setDialogOpen(false);
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   return (
     <PageContainer title="Pricing" description="this is Pricing">
-      {/* breadcrumb */}
-      <Breadcrumb title="Pricing" items={BCrumb} />
-      {/* end breadcrumb */}
-
-      <Grid container spacing={3} justifyContent="center" mt={3}>
-        <Grid item xs={12} sm={10} lg={8} textAlign="center">
-          <Typography variant="h2">
-            Flexible Plans Tailored to Fit Your Business Needs
-          </Typography>
-          <Box display="flex" alignItems="center" mt={3} justifyContent="center">
-            <Typography variant="subtitle1">Monthly</Typography>
-            <Switch onChange={() => setShow(!show)} />
-            <Typography variant="subtitle1">Yearly</Typography>
-          </Box>
-        </Grid>
-      </Grid>
+      {/* Pricing Header with Toggle */}
+      <PricingHeader 
+        showYearly={showYearly} 
+        onToggle={() => setShowYearly(!showYearly)} 
+      />
+      
+      {/* Pricing Cards */}
       <Grid container spacing={3} mt={5}>
-        {pricing.map((price, i) => (
+        {pricingData.pricing.map((price, i) => (
           <Grid item xs={12} lg={4} sm={6} key={i}>
-            <BlankCard>
-              <CardContent sx={{ p: '30px' }}>
-                {price.badge ? <StyledChip label="Popular" size="small"></StyledChip> : null}
-
-                <Typography
-                  variant="subtitle1"
-                  fontSize="12px"
-                  mb={3}
-                  color="textSecondary"
-                  textTransform="uppercase"
-                >
-                  {price.package}
-                </Typography>
-                <Image src={price.avatar} alt={price.avatar} width={90} height={90} />
-                <Box my={4}>
-                  {price.monthlyplan === 0 ? (
-                    <Box fontSize="50px" mt={5} fontWeight="600">
-                      Free
-                    </Box>
-                  ) : (
-                    <Box display="flex">
-                      <Typography variant="h6" mr="8px" mt="-12px">
-                        €
-                      </Typography>
-                      {show ? (
-                        <>
-                          <Typography fontSize="48px" fontWeight="600">
-                            {yearlyPrice(price.yearlyplan)}
-                          </Typography>
-                          <Typography
-                            fontSize="15px"
-                            fontWeight={400}
-                            ml={1}
-                            color="textSecondary"
-                            mt={1}
-                          >
-                            /yr
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <Typography fontSize="48px" fontWeight="600">
-                            {price.monthlyplan}
-                          </Typography>
-                          <Typography
-                            fontSize="15px"
-                            fontWeight={400}
-                            ml={1}
-                            color="textSecondary"
-                            mt={1}
-                          >
-                            /mo
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  )}
-                </Box>
-
-                <Box mt={3}>
-                  <List>
-                    {price.rules.map((rule, i) => (
-                      <Box key={i}>
-                        {rule.limit ? (
-                          <>
-                            <ListItem disableGutters>
-                              <ListItemIcon sx={{ color: 'primary.main', minWidth: '32px' }}>
-                                <IconCheck width={18} />
-                              </ListItemIcon>
-                              <ListItemText>{rule.title}</ListItemText>
-                            </ListItem>
-                          </>
-                        ) : (
-                          <ListItem disableGutters sx={{ color: 'grey.400' }}>
-                            <ListItemIcon sx={{ color: 'grey.400', minWidth: '32px' }}>
-                              <IconX width={18} />
-                            </ListItemIcon>
-                            <ListItemText>{rule.title}</ListItemText>
-                          </ListItem>
-                        )}
-                      </Box>
-                    ))}
-                  </List>
-                </Box>
-
-                <Button
-                  sx={{ width: '100%', mt: 3 }}
-                  variant="contained"
-                  size="large"
-                  color="primary"
-                >
-                  {price.btntext}
-                </Button>
-              </CardContent>
-            </BlankCard>
+            <PricingCard
+              {...price}
+              isCurrentPlan={isCurrentPlan(price.package)}
+              buttonText={getButtonText(price.package)}
+              loading={loading}
+              showYearly={showYearly}
+              onSubscribe={handleSubscription}
+            />
           </Grid>
         ))}
       </Grid>
+
+      {/* Subscription Dialog */}
+      <SubscriptionDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onManageSubscription={handleGoToSubscription}
+        user={user || null}
+        portalLoading={portalLoading}
+      />
     </PageContainer>
   );
 };
